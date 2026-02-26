@@ -444,30 +444,6 @@ export interface Database {
                     }
                 ]
             }
-            system_settings: {
-                Row: {
-                    key: string
-                    value: any
-                    description: string | null
-                    created_at: string
-                    updated_at: string
-                }
-                Insert: {
-                    key: string
-                    value?: any
-                    description?: string | null
-                    created_at?: string
-                    updated_at?: string
-                }
-                Update: {
-                    key?: string
-                    value?: any
-                    description?: string | null
-                    created_at?: string
-                    updated_at?: string
-                }
-                Relationships: []
-            }
         }
         Views: {
             [_ in never]: never
