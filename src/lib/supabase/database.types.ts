@@ -349,6 +349,60 @@ export interface Database {
                     }
                 ]
             }
+            shipping_orders: {
+                Row: {
+                    id: string
+                    order_id: string
+                    shipping_date: string | null
+                    status: 'pending' | 'shipped'
+                    tracking_number: string | null
+                    handler_id: string | null
+                    shipped_quantity: number
+                    shipping_memo: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    order_id: string
+                    shipping_date?: string | null
+                    status?: 'pending' | 'shipped'
+                    tracking_number?: string | null
+                    handler_id?: string | null
+                    shipped_quantity?: number
+                    shipping_memo?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    order_id?: string
+                    shipping_date?: string | null
+                    status?: 'pending' | 'shipped'
+                    tracking_number?: string | null
+                    handler_id?: string | null
+                    shipped_quantity?: number
+                    shipping_memo?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "shipping_orders_order_id_fkey"
+                        columns: ["order_id"]
+                        isOneToOne: false
+                        referencedRelation: "orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "shipping_orders_handler_id_fkey"
+                        columns: ["handler_id"]
+                        isOneToOne: false
+                        referencedRelation: "profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
         }
         Views: {
             [_ in never]: never
@@ -363,6 +417,7 @@ export interface Database {
             user_role: 'admin' | 'head' | 'sales' | 'sample_team' | 'support'
             product_category: 'bottle' | 'pump' | 'jar' | 'cap'
             order_status: 'draft' | 'confirmed' | 'production' | 'shipped'
+            shipping_status: 'pending' | 'shipped'
         }
         CompositeTypes: {
             [_ in never]: never
