@@ -314,6 +314,41 @@ export interface Database {
                     }
                 ]
             }
+            sales_plans: {
+                Row: {
+                    id: string
+                    sales_person_id: string
+                    target_month: string
+                    target_amount: number
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    sales_person_id: string
+                    target_month: string
+                    target_amount?: number
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    sales_person_id?: string
+                    target_month?: string
+                    target_amount?: number
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "sales_plans_sales_person_id_fkey"
+                        columns: ["sales_person_id"]
+                        isOneToOne: false
+                        referencedRelation: "profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
         }
         Views: {
             [_ in never]: never
