@@ -34,7 +34,7 @@ export async function signup(formData: FormData) {
         department: formData.get('department') as string,
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -46,8 +46,18 @@ export async function signup(formData: FormData) {
     })
 
     if (error) {
-        console.error('Sign Up Error:', error.message)
+        console.error('Sign Up Error (Supabase):', error)
+        // Check for common errors
+        if (error.message.includes('Database error saving user')) {
+            return { error: '데이터베이스 오류: 역할(Role) 설정 중 문제가 발생했습니다. 관리자에게 문의하세요.' }
+        }
         return { error: error.message }
+    }
+
+    // Check if email confirmation is required (session will be null)
+    if (authData.user && !authData.session) {
+        console.log('Signup success but verification required')
+        return { success: true, verificationRequired: true }
     }
 
     revalidatePath('/', 'layout')

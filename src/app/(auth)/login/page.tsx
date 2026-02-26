@@ -48,11 +48,14 @@ export default function LoginPage() {
             toast.error('회원가입 실패', {
                 description: result.error,
             })
+        } else if (result?.verificationRequired) {
+            toast.success('회원가입 완료!', {
+                description: '이메일 인증이 필요합니다. 메일함을 확인해 주세요.',
+            })
         } else {
             toast.success('회원가입 성공!', {
                 description: '관리자 승인 후 로그인 가능합니다.',
             })
-            // Optionally switch to login tab or stay
         }
 
         setIsLoading(false)
