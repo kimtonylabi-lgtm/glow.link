@@ -1,0 +1,71 @@
+export type ClientTier = 'S' | 'A' | 'B' | 'C';
+export type ClientStatus = 'active' | 'inactive';
+
+export interface Client {
+    id: string;
+    company_name: string;
+    business_number: string | null;
+    contact_person: string | null;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    memo: string | null;
+    tier: ClientTier;
+    status: ClientStatus;
+    managed_by: string | null;
+    created_at: string;
+}
+
+// A combined type optionally returning the profile relation
+export interface ClientWithProfile extends Client {
+    profiles?: {
+        full_name: string | null;
+    };
+}
+
+export type ActivityType = 'meeting' | 'call' | 'email' | 'meal' | 'other';
+
+export interface Activity {
+    id: string;
+    client_id: string;
+    user_id: string;
+    type: ActivityType;
+    title: string;
+    content: string | null;
+    activity_date: string;
+    created_at: string;
+}
+
+export interface ActivityWithRelations extends Activity {
+    clients?: {
+        company_name: string;
+    };
+    profiles?: {
+        full_name: string | null;
+    };
+}
+
+export type SampleStatus = 'pending' | 'processing' | 'shipped';
+
+export interface SampleRequest {
+    id: string;
+    client_id: string;
+    sales_person_id: string;
+    product_name: string;
+    quantity: number;
+    status: SampleStatus;
+    shipping_address: string | null;
+    completion_image_url: string | null;
+    request_date: string;
+    created_at: string;
+}
+
+export interface SampleRequestWithRelations extends SampleRequest {
+    clients?: {
+        company_name: string;
+        address: string | null;
+    };
+    profiles?: {
+        full_name: string | null;
+    };
+}
