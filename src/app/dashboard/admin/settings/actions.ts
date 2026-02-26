@@ -34,15 +34,15 @@ export async function updateSystemSetting(key: string, newValue: any) {
     // but standard upsert with merging logic handled here for simplicity or using a custom RPC
     // Since we want safety, let's use a small RPC if available or just fetch-and-merge
 
-    // Fetch current value
-    const { data: current, error: fetchError } = await supabase
+    // Fetch current value safely
+    const { data: current } = await supabase
         .from('system_settings')
         .select('value')
         .eq('key', key)
-        .single()
+        .maybeSingle()
 
     let mergedValue = newValue
-    if (current && typeof current.value === 'object' && typeof newValue === 'object') {
+    if (current?.value && typeof current.value === 'object' && typeof newValue === 'object') {
         mergedValue = { ...current.value, ...newValue }
     }
 
@@ -52,11 +52,13 @@ export async function updateSystemSetting(key: string, newValue: any) {
             key,
             value: mergedValue,
             updated_at: new Date().toISOString()
+        }, {
+            onConflict: 'key'
         })
 
     if (upsertError) {
         console.error(`Failed to update setting ${key}:`, upsertError)
-        return { success: false, error: '설정 저장 실패' }
+        return { success: false, error: '설정 저장 실패 (Upsert 에러)' }
     }
 
     revalidatePath('/dashboard/admin/settings')
