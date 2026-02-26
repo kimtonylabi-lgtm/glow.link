@@ -13,7 +13,7 @@ export interface Database {
                 Row: {
                     id: string
                     email: string
-                    role: 'admin' | 'head' | 'sales' | 'sample_team' | 'support'
+                    role: 'admin' | 'head' | 'sales' | 'sample_team' | 'support' | 'pending' | 'inactive'
                     full_name: string | null
                     department: string | null
                     created_at: string
@@ -21,7 +21,7 @@ export interface Database {
                 Insert: {
                     id: string
                     email: string
-                    role?: 'admin' | 'head' | 'sales' | 'sample_team' | 'support'
+                    role?: 'admin' | 'head' | 'sales' | 'sample_team' | 'support' | 'pending' | 'inactive'
                     full_name?: string | null
                     department?: string | null
                     created_at?: string
@@ -29,7 +29,7 @@ export interface Database {
                 Update: {
                     id?: string
                     email?: string
-                    role?: 'admin' | 'head' | 'sales' | 'sample_team' | 'support'
+                    role?: 'admin' | 'head' | 'sales' | 'sample_team' | 'support' | 'pending' | 'inactive'
                     full_name?: string | null
                     department?: string | null
                     created_at?: string
@@ -472,11 +472,11 @@ export interface Database {
         Functions: {
             get_my_role: {
                 Args: Record<PropertyKey, never>
-                Returns: 'admin' | 'head' | 'sales' | 'sample_team' | 'support'
+                Returns: 'admin' | 'head' | 'sales' | 'sample_team' | 'support' | 'pending' | 'inactive'
             }
         }
         Enums: {
-            user_role: 'admin' | 'head' | 'sales' | 'sample_team' | 'support'
+            user_role: 'admin' | 'head' | 'sales' | 'sample_team' | 'support' | 'pending' | 'inactive'
             product_category: 'bottle' | 'pump' | 'jar' | 'cap'
             order_status: 'draft' | 'confirmed' | 'production' | 'shipped'
             shipping_status: 'pending' | 'shipped'
