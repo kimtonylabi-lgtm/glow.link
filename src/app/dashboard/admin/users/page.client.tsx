@@ -61,13 +61,18 @@ export function AdminUsersClient({ initialProfiles, currentUserId }: { initialPr
     const [pendingApprovals, setPendingApprovals] = useState<Record<string, UserRole>>({})
 
     // Filtered lists
-    const pendingUsers = useMemo(() => profiles.filter(p => p.role === 'pending'), [profiles])
+    const pendingUsers = useMemo(() => {
+        return profiles.filter(p => p.role === ('pending' as UserRole))
+    }, [profiles])
+
     const activeUsers = useMemo(() => {
-        return profiles.filter(p => p.role !== 'pending' && p.role !== 'inactive').filter(profile => {
-            const matchesSearch = profile.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                profile.email?.toLowerCase().includes(searchQuery.toLowerCase())
-            return matchesSearch
-        })
+        return profiles
+            .filter(p => p.role !== ('pending' as UserRole) && p.role !== ('inactive' as UserRole))
+            .filter(profile => {
+                const matchesSearch = profile.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    profile.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                return matchesSearch
+            })
     }, [profiles, searchQuery])
 
     const handleRoleChange = async (userId: string, newRole: UserRole) => {

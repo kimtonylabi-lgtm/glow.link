@@ -28,27 +28,37 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
+    // IMPORTANT: Avoid writing any logic between createServerClient and supabase.auth.getUser()
     const {
         data: { user },
     } = await supabase.auth.getUser()
 
     const url = request.nextUrl.clone()
 
+    // 1. Role-based protection for authenticated users
     if (user && url.pathname.startsWith('/dashboard')) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
+        try {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single()
 
-        if (profile) {
+            // If profile doesn't exist yet (race condition with trigger), treat as pending or error
+            if (error || !profile) {
+                // If it's a new user, they might not have a profile for a split second
+                if (url.pathname !== '/dashboard/pending') {
+                    url.pathname = '/dashboard/pending'
+                    return NextResponse.redirect(url)
+                }
+                return supabaseResponse
+            }
+
             if (profile.role === 'inactive') {
-                // Force logout and redirect to login with error
                 await supabase.auth.signOut()
                 url.pathname = '/login'
                 url.searchParams.set('error', 'account_deactivated')
                 const response = NextResponse.redirect(url)
-                // Copy cookies to the new response
                 supabaseResponse.cookies.getAll().forEach((cookie) => {
                     response.cookies.set(cookie.name, cookie.value)
                 })
@@ -64,9 +74,13 @@ export async function updateSession(request: NextRequest) {
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
             }
+        } catch (e) {
+            console.error('Middleware role check error:', e)
+            // Safety fallback
         }
     }
 
+    // 2. Auth protection
     if (
         !user &&
         url.pathname.startsWith('/dashboard')
@@ -75,7 +89,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // If user is already logged in, redirect /login to /dashboard
+    // 3. Login redirect
     if (
         user &&
         url.pathname === '/login'
