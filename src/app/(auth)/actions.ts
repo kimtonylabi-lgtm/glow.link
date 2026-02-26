@@ -39,13 +39,14 @@ export async function signup(formData: FormData) {
         password: data.password,
         options: {
             data: {
-                full_name: data.full_name,
-                department: data.department,
+                full_name: data.full_name || '익명',
+                department: data.department || '미지정',
             }
         }
     })
 
     if (error) {
+        console.error('Sign Up Error:', error.message)
         return { error: error.message }
     }
 

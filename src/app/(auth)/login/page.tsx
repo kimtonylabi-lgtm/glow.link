@@ -172,6 +172,9 @@ export default function LoginPage() {
                                                 <SelectItem value="관리팀">관리팀</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        {/* Radix Select with name prop automatically adds a hidden input, 
+                                            but adding one explicitly can be safer if there's any hydration mismatch.
+                                            Actually, let's keep it clean since Radix handles it. */}
                                     </div>
                                     <div className="space-y-1">
                                         <Label htmlFor="signup-email">이메일</Label>
