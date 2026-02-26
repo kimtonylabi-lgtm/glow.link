@@ -403,6 +403,71 @@ export interface Database {
                     }
                 ]
             }
+            monthly_closings: {
+                Row: {
+                    id: string
+                    closing_month: string
+                    total_revenue: number
+                    status: 'open' | 'closed'
+                    closed_by: string | null
+                    closed_at: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    closing_month: string
+                    total_revenue?: number
+                    status?: 'open' | 'closed'
+                    closed_by?: string | null
+                    closed_at?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    closing_month?: string
+                    total_revenue?: number
+                    status?: 'open' | 'closed'
+                    closed_by?: string | null
+                    closed_at?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "monthly_closings_closed_by_fkey"
+                        columns: ["closed_by"]
+                        isOneToOne: false
+                        referencedRelation: "profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            system_settings: {
+                Row: {
+                    key: string
+                    value: any
+                    description: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    key: string
+                    value?: any
+                    description?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    key?: string
+                    value?: any
+                    description?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
         }
         Views: {
             [_ in never]: never
@@ -418,6 +483,7 @@ export interface Database {
             product_category: 'bottle' | 'pump' | 'jar' | 'cap'
             order_status: 'draft' | 'confirmed' | 'production' | 'shipped'
             shipping_status: 'pending' | 'shipped'
+            closing_status: 'open' | 'closed'
         }
         CompositeTypes: {
             [_ in never]: never
