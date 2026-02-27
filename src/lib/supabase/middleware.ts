@@ -47,9 +47,14 @@ export async function updateSession(request: NextRequest) {
         try {
             const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, email')
                 .eq('id', user.id)
                 .single()
+
+            // ADMIN BYPASS: Never block the main admin account
+            if (user.email === 'admin@glow.link') {
+                return supabaseResponse
+            }
 
             // If profile doesn't exist yet (race condition with trigger), treat as pending
             if (error || !profile) {

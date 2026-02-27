@@ -62,11 +62,9 @@ export async function signup(formData: FormData) {
         return { error: error.message }
     }
 
-    // Check if email confirmation is required (session will be null)
-    if (authData.user && !authData.session) {
-        console.log('Signup success but verification required')
-        return { success: true, verificationRequired: true }
-    }
+    // Prevent automatic login after signup by signing out immediately
+    // This ensures that the user remains on the login page and must wait for approval
+    await supabase.auth.signOut()
 
     revalidatePath('/', 'layout')
     return { success: true }
