@@ -66,8 +66,5 @@ export async function signup(formData: FormData) {
     // This physically clears the session before the user can even reach the dashboard
     await supabase.auth.signOut()
 
-    revalidatePath('/', 'layout')
-
-    // Force redirect to login with a success parameter to prevent client-side intercept by dashboard
-    redirect('/login?success=signup')
+    return { success: true }
 }

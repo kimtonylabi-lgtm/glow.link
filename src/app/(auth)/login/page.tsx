@@ -14,19 +14,20 @@ import { Loader2, ArrowRight, UserPlus } from 'lucide-react'
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false)
+    const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
+    const router = useRouter()
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-    const [hasToasted, setHasToasted] = useState(false)
 
     useEffect(() => {
-        if (searchParams?.get('success') === 'signup' && !hasToasted) {
+        // Success check from legacy URL params if any
+        if (searchParams?.get('success') === 'signup') {
             toast.success('회원가입 완료!', {
                 description: '가입이 완료되었습니다. 관리자 승인 후 로그인해 주세요.',
             })
-            setHasToasted(true)
             // Clean up URL
             window.history.replaceState({}, '', '/login')
         }
-    }, [searchParams, hasToasted])
+    }, [searchParams])
 
     const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -61,8 +62,15 @@ export default function LoginPage() {
                 description: result.error,
             })
             setIsLoading(false)
+        } else if (result?.success) {
+            toast.success('회원가입 요청 성공!', {
+                description: '관리자 승인 대기 중입니다. 승인 후 로그인이 가능합니다.',
+            })
+            // Switch to login tab and refresh to ensure clean state
+            setActiveTab('login')
+            setIsLoading(false)
+            router.refresh()
         }
-        // Success case will be handled by server redirect and query param
     }
 
     return (
@@ -79,7 +87,7 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <Tabs defaultValue="login" className="w-full">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-muted/50 mb-4">
                         <TabsTrigger value="login">로그인</TabsTrigger>
                         <TabsTrigger value="signup">회원가입</TabsTrigger>
