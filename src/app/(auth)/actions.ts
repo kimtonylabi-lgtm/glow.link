@@ -21,6 +21,7 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
+    // middleware will handle the redirection based on role
     redirect('/dashboard')
 }
 

@@ -35,7 +35,7 @@ export default async function DashboardLayout({
 
     // Redirect to pending if no profile (race condition defense) or if role is pending
     if (!profile || profile.role === 'pending') {
-        redirect('/pending')
+        return redirect('/pending')
     }
 
     const currentProfile: Profile = profile as unknown as Profile

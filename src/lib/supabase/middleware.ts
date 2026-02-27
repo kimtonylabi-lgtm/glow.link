@@ -65,12 +65,12 @@ export async function updateSession(request: NextRequest) {
                 return response
             }
 
-            if (profile.role === 'pending' && url.pathname !== '/dashboard/pending') {
-                url.pathname = '/dashboard/pending'
+            if (profile.role === 'pending' && url.pathname !== '/pending') {
+                url.pathname = '/pending'
                 return NextResponse.redirect(url)
             }
 
-            if (profile.role !== 'pending' && url.pathname === '/dashboard/pending') {
+            if (profile.role !== 'pending' && url.pathname === '/pending') {
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
             }
@@ -83,7 +83,7 @@ export async function updateSession(request: NextRequest) {
     // 2. Auth protection
     if (
         !user &&
-        url.pathname.startsWith('/dashboard')
+        (url.pathname.startsWith('/dashboard') || url.pathname === '/pending')
     ) {
         url.pathname = '/login'
         return NextResponse.redirect(url)
