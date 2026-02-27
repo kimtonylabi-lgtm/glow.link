@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, signup } from '../actions'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,19 @@ import { Loader2, ArrowRight, UserPlus } from 'lucide-react'
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false)
-    const router = useRouter()
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+    const [hasToasted, setHasToasted] = useState(false)
+
+    useEffect(() => {
+        if (searchParams?.get('success') === 'signup' && !hasToasted) {
+            toast.success('회원가입 완료!', {
+                description: '가입이 완료되었습니다. 관리자 승인 후 로그인해 주세요.',
+            })
+            setHasToasted(true)
+            // Clean up URL
+            window.history.replaceState({}, '', '/login')
+        }
+    }, [searchParams, hasToasted])
 
     const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -48,13 +60,9 @@ export default function LoginPage() {
             toast.error('회원가입 실패', {
                 description: result.error,
             })
-        } else {
-            toast.success('회원가입 완료!', {
-                description: '가입이 완료되었습니다. 관리자 승인 후 로그인해 주세요.',
-            })
+            setIsLoading(false)
         }
-
-        setIsLoading(false)
+        // Success case will be handled by server redirect and query param
     }
 
     return (
