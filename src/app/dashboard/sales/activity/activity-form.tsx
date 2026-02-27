@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
@@ -43,6 +43,8 @@ interface ActivityFormProps {
 
 export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps) {
     const [isLoading, setIsLoading] = useState(false)
+    const [isClientPopoverOpen, setIsClientPopoverOpen] = useState(false)
+    const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
     const isEditing = !!activity
 
     const form = useForm({
@@ -55,6 +57,27 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
             activity_date: activity?.activity_date ? new Date(activity.activity_date) : new Date(),
         },
     })
+
+    // Update form values when editing activity changes (Fix for bug #2)
+    useEffect(() => {
+        if (activity) {
+            form.reset({
+                client_id: activity.client_id || '',
+                type: activity.type || 'meeting',
+                title: activity.title || '',
+                content: activity.content || '',
+                activity_date: activity.activity_date ? new Date(activity.activity_date) : new Date(),
+            })
+        } else {
+            form.reset({
+                client_id: '',
+                type: 'meeting',
+                title: '',
+                content: '',
+                activity_date: new Date(),
+            })
+        }
+    }, [activity, form])
 
     async function onSubmit(data: any /* ActivityFormValues inferred */) {
         setIsLoading(true)
@@ -75,7 +98,13 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                 description: '영업 활동 내역이 저장되었습니다.',
             })
             if (!isEditing) {
-                form.reset()
+                form.reset({
+                    client_id: '',
+                    type: 'meeting',
+                    title: '',
+                    content: '',
+                    activity_date: new Date(),
+                })
             }
             onSuccess?.()
         }
@@ -98,7 +127,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                         render={({ field }) => (
                             <FormItem className="flex flex-col">
                                 <FormLabel>고객사</FormLabel>
-                                <Popover>
+                                <Popover open={isClientPopoverOpen} onOpenChange={setIsClientPopoverOpen}>
                                     <PopoverTrigger asChild>
                                         <FormControl>
                                             <Button
@@ -116,7 +145,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                             </Button>
                                         </FormControl>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-full p-0 bg-card/95 backdrop-blur-md border border-border/50">
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-card/95 backdrop-blur-md border border-border/50">
                                         <Command>
                                             <CommandInput placeholder="고객사 이름 검색..." />
                                             <CommandList>
@@ -128,6 +157,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                                             key={client.id}
                                                             onSelect={() => {
                                                                 form.setValue("client_id", client.id)
+                                                                setIsClientPopoverOpen(false) // Auto-close UX improvement (Bug #6)
                                                             }}
                                                         >
                                                             <Check
@@ -159,7 +189,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>활동 유형</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="bg-background/50 border-border/50">
                                                 <SelectValue placeholder="유형 선택" />
@@ -185,7 +215,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                     <FormLabel>활동 날짜</FormLabel>
-                                    <Popover>
+                                    <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
                                         <PopoverTrigger asChild>
                                             <FormControl>
                                                 <Button
@@ -208,7 +238,10 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                             <Calendar
                                                 mode="single"
                                                 selected={field.value}
-                                                onSelect={field.onChange}
+                                                onSelect={(date) => {
+                                                    field.onChange(date)
+                                                    setIsDatePopoverOpen(false) // Auto-close UX improvement (Bug #6)
+                                                }}
                                                 disabled={(date) =>
                                                     date > new Date() || date < new Date("1900-01-01")
                                                 }

@@ -14,6 +14,9 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
+import { Edit2, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
 type Order = {
     id: string
     client_id: string
@@ -28,7 +31,8 @@ type Order = {
     profiles: { full_name: string | null } | null
 }
 
-export function OrderList({ orders }: { orders: Order[] }) {
+export function OrderList({ orders, userRole }: { orders: Order[], userRole: string }) {
+    const canManage = ['admin', 'head', 'support'].includes(userRole)
 
     const statusConfig = {
         'draft': { label: '초안', color: 'bg-muted/50 text-muted-foreground border-border/50' },
@@ -59,12 +63,13 @@ export function OrderList({ orders }: { orders: Order[] }) {
                                 <TableHead className="font-semibold text-right">수주 총액</TableHead>
                                 <TableHead className="font-semibold hidden md:table-cell">수주일</TableHead>
                                 <TableHead className="font-semibold hidden lg:table-cell">납기일</TableHead>
+                                {canManage && <TableHead className="font-semibold text-center">관리</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                    <TableCell colSpan={canManage ? 7 : 6} className="h-24 text-center text-muted-foreground">
                                         조회된 수주 내역이 없습니다.
                                     </TableCell>
                                 </TableRow>
@@ -97,6 +102,18 @@ export function OrderList({ orders }: { orders: Order[] }) {
                                             <TableCell className="text-muted-foreground hidden lg:table-cell text-sm">
                                                 {order.due_date ? format(new Date(order.due_date), 'yy. MM. dd', { locale: ko }) : '-'}
                                             </TableCell>
+                                            {canManage && (
+                                                <TableCell className="text-center">
+                                                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                                                            <Edit2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     )
                                 })

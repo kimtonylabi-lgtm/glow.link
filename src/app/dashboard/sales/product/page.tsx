@@ -12,10 +12,17 @@ export default async function ProductPage() {
         .select('*')
         .order('created_at', { ascending: false })
 
-    if (error) {
-        console.error('Error fetching products:', error)
-    }
+    const { data: { user } } = await supabase.auth.getUser()
 
+    let userRole = 'sales'
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+        userRole = profile?.role || 'sales'
+    }
     const products = productsData || []
 
     return (
@@ -28,7 +35,7 @@ export default async function ProductPage() {
                 <ProductForm />
             </div>
 
-            <ProductGrid initialProducts={products} />
+            <ProductGrid initialProducts={products} userRole={userRole} />
         </div>
     )
 }

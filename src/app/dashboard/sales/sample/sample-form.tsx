@@ -28,6 +28,13 @@ import {
     CommandItem,
     CommandList,
 } from '@/components/ui/command'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Loader2, Check, ChevronsUpDown } from 'lucide-react'
 
 interface SampleFormProps {
@@ -44,18 +51,11 @@ export function SampleForm({ clients }: SampleFormProps) {
             product_name: '',
             quantity: 1,
             shipping_address: '',
+            contact_person: '',
+            special_instructions: '',
+            sample_type: 'random',
         },
     })
-
-    // Watch for client selection to auto-fill address
-    const handleClientSelect = (clientId: string) => {
-        form.setValue("client_id", clientId)
-        const client = clients.find(c => c.id === clientId)
-        if (client && client.address) {
-            form.setValue("shipping_address", client.address)
-            toast.info('배송지 자동 입력', { description: '선택한 고객사의 기본 주소가 입력되었습니다.' })
-        }
-    }
 
     async function onSubmit(data: any /* SampleRequestFormValues inferred */) {
         setIsLoading(true)
@@ -111,7 +111,7 @@ export function SampleForm({ clients }: SampleFormProps) {
                                                         <CommandItem
                                                             value={client.company_name}
                                                             key={client.id}
-                                                            onSelect={() => handleClientSelect(client.id)}
+                                                            onSelect={() => form.setValue("client_id", client.id)}
                                                         >
                                                             <Check
                                                                 className={cn(
@@ -131,6 +131,45 @@ export function SampleForm({ clients }: SampleFormProps) {
                             </FormItem>
                         )}
                     />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="contact_person"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>고객사 담당자</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="담당자 성함" {...field} className="bg-background/50 border-border/50" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="sample_type"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>샘플 종류</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="bg-background/50 border-border/50">
+                                                <SelectValue placeholder="종류 선택" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="random">랜덤 발송</SelectItem>
+                                            <SelectItem value="ct">CT (내용물 테스트용)</SelectItem>
+                                            <SelectItem value="design">디자인 (인쇄/후가공 확인용)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
 
                     <FormField
                         control={form.control}
@@ -175,6 +214,20 @@ export function SampleForm({ clients }: SampleFormProps) {
                                 <FormLabel>배송지 주소</FormLabel>
                                 <FormControl>
                                     <Input placeholder="정확한 발송지 입력" {...field} className="bg-background/50 border-border/50" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="special_instructions"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>특이사항</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="특이사항 작성 (없으면 '없음' 입력)" {...field} className="bg-background/50 border-border/50" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

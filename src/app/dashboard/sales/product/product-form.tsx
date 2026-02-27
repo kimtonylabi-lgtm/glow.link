@@ -34,6 +34,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
+import { z } from 'zod'
 import { productSchema, ProductFormValues } from '@/lib/validations/product-order'
 import { addProduct, checkItemCodeUnique } from './actions'
 import Image from 'next/image'
@@ -50,13 +51,13 @@ export function ProductForm() {
 
     const router = useRouter()
 
-    const form = useForm<ProductFormValues>({
+    const form = useForm<z.input<typeof productSchema>>({
         resolver: zodResolver(productSchema),
         defaultValues: {
             name: "",
             item_code: "",
             category: "bottle",
-            price: 0,
+            price: "" as any,
         },
     })
 
@@ -104,8 +105,11 @@ export function ProductForm() {
         }
     }
 
-    async function onSubmit(data: ProductFormValues) {
+    async function onSubmit(data: z.input<typeof productSchema>) {
         setIsLoading(true)
+
+        // The resolver will transform the data to ProductFormValues (output)
+        const validatedData = productSchema.parse(data)
 
         // Final Double Check Unique before submission
         const isDuplicate = await checkItemCodeUnique(data.item_code)
@@ -116,7 +120,7 @@ export function ProductForm() {
         }
 
         try {
-            const result = await addProduct(data, imageFile)
+            const result = await addProduct(validatedData, imageFile)
 
             if (result.success) {
                 toast.success('제품이 성공적으로 등록되었습니다.')
@@ -285,16 +289,22 @@ export function ProductForm() {
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₩</span>
                                             <Input
-                                                type="number"
+                                                type="text"
                                                 className="pl-8"
-                                                placeholder="0"
+                                                placeholder="단가를 입력하세요"
                                                 {...field}
-                                                onChange={e => field.onChange(Number(e.target.value))}
+                                                value={field.value !== undefined ? field.value.toLocaleString('ko-KR') : ''}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/,/g, '');
+                                                    if (/^\d*$/.test(val)) {
+                                                        field.onChange(val === '' ? 0 : val);
+                                                    }
+                                                }}
                                             />
                                         </div>
                                     </FormControl>
                                     <FormDescription>
-                                        세팅된 기준 단가는 수주 등록 시 자동으로 불러와집니다.
+                                        세팅된 기준 단가는 수주 등록 시 자동으로 불러와집니다. (숫자만 입력 가능)
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>

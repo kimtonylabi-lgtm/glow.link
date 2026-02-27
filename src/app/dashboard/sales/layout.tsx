@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Target, Briefcase, Users, ShoppingCart, FlaskConical } from 'lucide-react'
+import { Target, Briefcase, Users, ShoppingCart, FlaskConical, FileText } from 'lucide-react'
 
 const salesTabs = [
     { name: '영업기획', href: '/dashboard/sales/planning', icon: Target },
@@ -12,6 +12,7 @@ const salesTabs = [
     { name: 'CRM(고객)', href: '/dashboard/sales/crm', icon: Users },
     { name: '수주/납기', href: '/dashboard/sales/order', icon: ShoppingCart },
     { name: '샘플요청', href: '/dashboard/sales/sample', icon: FlaskConical },
+    { name: '업무보고', href: '/dashboard/sales/reports', icon: FileText },
 ]
 
 export default function SalesLayout({ children }: { children: React.ReactNode }) {

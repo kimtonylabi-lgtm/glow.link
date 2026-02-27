@@ -21,11 +21,26 @@ export default async function OrderPage() {
         console.error('Error fetching orders:', ordersError)
     }
 
+    // Fetch user role for permission control
+    const { data: { user } } = await supabase.auth.getUser()
+
+    let userRole = 'sales'
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+        userRole = profile?.role || 'sales'
+    }
+
     // 2. Fetch Clients for dropdown
     const { data: clientsData } = await supabase
         .from('clients')
         .select('id, company_name')
+        .eq('status', 'active')
         .order('company_name', { ascending: true })
+        .limit(1000)
 
     // 3. Fetch Products for dropdown
     const { data: productsData } = await supabase
@@ -35,7 +50,10 @@ export default async function OrderPage() {
 
     const orders = ordersData || []
     const clients = clientsData || []
-    const products = productsData || []
+    const products = (productsData || []).map(p => ({
+        ...p,
+        base_price: p.price
+    }))
 
     return (
         <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh] space-y-6">
@@ -53,7 +71,7 @@ export default async function OrderPage() {
                 </div>
             </div>
 
-            <OrderList orders={orders} />
+            <OrderList orders={orders} userRole={userRole} />
         </div>
     )
 }

@@ -72,7 +72,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 pb-10 sm:pb-0 overflow-x-hidden">
 
                 <FormField
                     control={form.control}
@@ -146,19 +146,14 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
                     />
                 </div>
 
+                {/* 배송지 입력 칸 삭제 (요청사항에 따라 숨김 처리) */}
+                {/* 
                 <FormField
                     control={form.control}
                     name="address"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>주소</FormLabel>
-                            <FormControl>
-                                <Input placeholder="서울시 강남구 테헤란로..." {...field} value={field.value || ''} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                    render={({ field }) => ( ... )}
+                /> 
+                */}
 
                 <div className="grid grid-cols-2 gap-4">
                     <FormField

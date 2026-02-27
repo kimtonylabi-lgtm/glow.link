@@ -68,7 +68,7 @@ export async function upsertTargetAmount(targetMonth: string, amount: number) {
         .upsert({
             sales_person_id: user.id,
             target_month: targetMonth,
-            target_amount: amount
+            target_amount: Number(amount)
         }, {
             onConflict: 'sales_person_id,target_month'
         })

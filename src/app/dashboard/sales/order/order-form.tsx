@@ -1,33 +1,31 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useFieldArray } from "react-hook-form"
-import { Plus, Loader2, AlertCircle, Trash2, CalendarIcon, Check } from "lucide-react"
-import { format } from "date-fns"
-import { ko } from "date-fns/locale"
-import { toast } from "sonner"
-
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
+import { useForm, useFieldArray } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
+import { orderSchema, type OrderFormValues } from '@/lib/validations/product-order'
+import { addOrder } from './actions'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover'
 import {
     Command,
     CommandEmpty,
@@ -35,33 +33,46 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from "@/components/ui/command"
+} from '@/components/ui/command'
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Textarea } from '@/components/ui/textarea'
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet'
+import {
+    Calendar as CalendarIcon,
+    Check,
+    ChevronsUpDown,
+    Plus,
+    Trash2,
+    ShoppingCart,
+    Loader2
+} from 'lucide-react'
+import { Calendar } from '@/components/ui/calendar'
 
-import { orderSchema, OrderFormValues } from '@/lib/validations/product-order'
-import { addOrder } from './actions'
-import { cn } from '@/lib/utils'
+interface OrderFormProps {
+    clients: { id: string; company_name: string }[]
+    products: { id: string; name: string; base_price: number }[]
+    onSuccess?: () => void
+}
 
-export function OrderForm({ clients, products }: { clients: { id: string, company_name: string }[], products: any[] }) {
+export function OrderForm({ clients, products, onSuccess }: OrderFormProps) {
+    const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
-    const router = useRouter()
+    const [isClientPopoverOpen, setIsClientPopoverOpen] = useState(false)
+    const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
 
     const form = useForm<OrderFormValues>({
         resolver: zodResolver(orderSchema),
         defaultValues: {
-            client_id: "",
+            client_id: '',
             due_date: undefined,
-            memo: "",
-            items: [
-                { product_id: "", quantity: 1, unit_price: 0 }
-            ],
+            items: [{ product_id: '', quantity: 1, unit_price: 0 }],
+            memo: '',
         },
     })
 
@@ -70,40 +81,31 @@ export function OrderForm({ clients, products }: { clients: { id: string, compan
         name: "items",
     })
 
-    // Watch values for auto calculation
-    const watchItems = form.watch("items")
-
-    // Real-time calculation of subtotal and total amount
-    const totalAmount = useMemo(() => {
-        return watchItems.reduce((acc, item) => {
-            const qty = item.quantity || 0
-            const price = item.unit_price || 0
-            return acc + (qty * price)
-        }, 0)
-    }, [watchItems])
-
-    // Auto-fill price when product is selected
-    const handleProductSelect = (index: number, productId: string) => {
-        const selectedProduct = products.find(p => p.id === productId)
-        if (selectedProduct) {
-            form.setValue(`items.${index}.product_id`, productId)
-            form.setValue(`items.${index}.unit_price`, parseFloat(selectedProduct.price)) // auto-fill default price
+    // Reset form when opening/closing sheet
+    useEffect(() => {
+        if (!isOpen) {
+            form.reset({
+                client_id: '',
+                due_date: undefined,
+                items: [{ product_id: '', quantity: 1, unit_price: 0 }],
+                memo: '',
+            })
         }
-    }
+    }, [isOpen, form])
 
     async function onSubmit(data: OrderFormValues) {
         setIsLoading(true)
-
         try {
             const result = await addOrder(data)
 
             if (result.success) {
-                toast.success('수주가 성공적으로 등록되었습니다.')
+                toast.success('등록 완료', { description: '성공적으로 등록되었습니다.' })
                 setIsOpen(false)
                 form.reset()
                 router.refresh()
+                onSuccess?.()
             } else {
-                toast.error(result.error || '수주 등록에 실패했습니다.')
+                toast.error('등록 실패', { description: result.error || '수주 등록에 실패했습니다.' })
             }
         } catch (error) {
             toast.error('서버 오류가 발생했습니다.')
@@ -115,73 +117,72 @@ export function OrderForm({ clients, products }: { clients: { id: string, compan
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_theme(colors.primary.DEFAULT)/50] transition-shadow">
-                    <Plus className="w-4 h-4 mr-2" />
+                <Button className="shadow-[0_0_15px_theme(colors.primary.DEFAULT)/30] hover:shadow-[0_0_20px_theme(colors.primary.DEFAULT)/50] transition-all">
+                    <Plus className="mr-2 h-4 w-4" />
                     수주 등록
                 </Button>
             </SheetTrigger>
-            <SheetContent className="overflow-y-auto w-full sm:max-w-2xl border-l border-border/40 bg-background/95 backdrop-blur-xl">
+            <SheetContent className="w-full sm:max-w-[600px] overflow-y-auto bg-card/95 backdrop-blur-2xl border-l-border/50 p-6">
                 <SheetHeader className="mb-6">
-                    <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
-                        신규 수주 등록
-                    </SheetTitle>
-                    <SheetDescription className="text-muted-foreground">
-                        고객사를 선택하고 여러 제품을 장바구니처럼 담아 1건의 수주 마스터를 생성합니다.
+                    <SheetTitle className="text-2xl text-primary">신규 수주/납기 등록</SheetTitle>
+                    <SheetDescription>
+                        수주 정보를 입력하고 상세 품목을 추가하십시오.
                     </SheetDescription>
                 </SheetHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-10">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-20 sm:pb-0 overflow-x-hidden">
                         {/* Master Info */}
                         <div className="space-y-4 p-4 rounded-xl bg-muted/20 border border-border/40">
                             <h3 className="font-semibold text-lg">기본 정보</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Client Selection */}
                                 <FormField
                                     control={form.control}
                                     name="client_id"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel>고객사 *</FormLabel>
-                                            <Popover>
+                                            <Popover open={isClientPopoverOpen} onOpenChange={setIsClientPopoverOpen}>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
                                                         <Button
                                                             variant="outline"
                                                             role="combobox"
                                                             className={cn(
-                                                                "w-full justify-between bg-card/50",
+                                                                "w-full justify-between bg-background/50 border-border/50",
                                                                 !field.value && "text-muted-foreground"
                                                             )}
                                                         >
                                                             {field.value
                                                                 ? clients.find((client) => client.id === field.value)?.company_name
-                                                                : "고객사 검색"}
+                                                                : "고객사 검색..."}
+                                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                         </Button>
                                                     </FormControl>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="w-[300px] p-0">
+                                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-card/95 backdrop-blur-md">
                                                     <Command>
                                                         <CommandInput placeholder="고객사 이름 검색..." />
                                                         <CommandList>
-                                                            <CommandEmpty>결과가 없습니다.</CommandEmpty>
+                                                            <CommandEmpty>결과 없음</CommandEmpty>
                                                             <CommandGroup>
                                                                 {clients.map((client) => (
                                                                     <CommandItem
-                                                                        value={client.company_name}
                                                                         key={client.id}
+                                                                        value={client.company_name}
                                                                         onSelect={() => {
                                                                             form.setValue("client_id", client.id)
+                                                                            setIsClientPopoverOpen(false) // Auto-close
                                                                         }}
                                                                     >
-                                                                        {client.company_name}
                                                                         <Check
                                                                             className={cn(
-                                                                                "ml-auto h-4 w-4",
-                                                                                client.id === field.value
-                                                                                    ? "opacity-100"
-                                                                                    : "opacity-0"
+                                                                                "mr-2 h-4 w-4",
+                                                                                client.id === field.value ? "opacity-100" : "opacity-0"
                                                                             )}
                                                                         />
+                                                                        {client.company_name}
                                                                     </CommandItem>
                                                                 ))}
                                                             </CommandGroup>
@@ -194,24 +195,25 @@ export function OrderForm({ clients, products }: { clients: { id: string, compan
                                     )}
                                 />
 
+                                {/* Due Date */}
                                 <FormField
                                     control={form.control}
                                     name="due_date"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>납기일 (선택)</FormLabel>
-                                            <Popover>
+                                            <FormLabel>납기 예정일</FormLabel>
+                                            <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
                                                         <Button
                                                             variant={"outline"}
                                                             className={cn(
-                                                                "w-full pl-3 text-left font-normal bg-card/50",
+                                                                "w-full pl-3 text-left font-normal bg-background/50 border-border/50",
                                                                 !field.value && "text-muted-foreground"
                                                             )}
                                                         >
                                                             {field.value ? (
-                                                                format(field.value, "PPP", { locale: ko })
+                                                                format(field.value, "PP", { locale: ko })
                                                             ) : (
                                                                 <span>날짜 선택</span>
                                                             )}
@@ -219,11 +221,17 @@ export function OrderForm({ clients, products }: { clients: { id: string, compan
                                                         </Button>
                                                     </FormControl>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
+                                                <PopoverContent className="w-auto p-0 bg-card border border-border/50" align="start">
                                                     <Calendar
                                                         mode="single"
                                                         selected={field.value}
-                                                        onSelect={field.onChange}
+                                                        onSelect={(date) => {
+                                                            field.onChange(date)
+                                                            setIsDatePopoverOpen(false) // Auto-close
+                                                        }}
+                                                        disabled={(date) =>
+                                                            date < new Date("1900-01-01")
+                                                        }
                                                         initialFocus
                                                     />
                                                 </PopoverContent>
@@ -233,202 +241,193 @@ export function OrderForm({ clients, products }: { clients: { id: string, compan
                                     )}
                                 />
                             </div>
-
-                            <FormField
-                                control={form.control}
-                                name="memo"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>메모</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="주문 관련 특이사항 등 메모" className="resize-none bg-card/50" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                         </div>
 
-                        {/* Order Items (Dynamic Details) */}
+                        {/* Items Area */}
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
-                                <h3 className="font-semibold text-lg">주문 내역</h3>
+                                <h3 className="font-semibold text-lg flex items-center gap-2">
+                                    <ShoppingCart className="w-5 h-5 text-primary" />
+                                    품목 리스트 ({fields.length})
+                                </h3>
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => append({ product_id: "", quantity: 1, unit_price: 0 })}
+                                    onClick={() => append({ product_id: '', quantity: 1, unit_price: 0 })}
                                     className="border-primary/50 text-primary hover:bg-primary/10"
                                 >
                                     <Plus className="w-4 h-4 mr-1" /> 품목 추가
                                 </Button>
                             </div>
 
-                            {form.formState.errors.items?.root && (
-                                <p className="text-sm font-medium text-destructive">{form.formState.errors.items.root.message}</p>
-                            )}
-
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {fields.map((field, index) => (
-                                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start p-3 bg-card/40 border border-border/40 rounded-lg relative">
+                                    <div key={field.id} className="p-4 rounded-xl bg-card border border-border/50 shadow-sm relative group animate-in slide-in-from-right duration-300">
+                                        {fields.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => remove(index)}
+                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/30 transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        )}
 
-                                        <div className="md:col-span-12 flex justify-between absolute -top-3 -right-2">
-                                            {fields.length > 1 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="w-6 h-6 rounded-full shadow-lg h-6 w-6"
-                                                    onClick={() => remove(index)}
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </Button>
-                                            )}
-                                        </div>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {/* Product Selection */}
+                                            <FormField
+                                                control={form.control}
+                                                name={`items.${index}.product_id`}
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col">
+                                                        <FormLabel className="text-xs text-muted-foreground">제품</FormLabel>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <FormControl>
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        role="combobox"
+                                                                        className={cn(
+                                                                            "w-full justify-between bg-muted/20 text-xs h-9",
+                                                                            !field.value && "text-muted-foreground"
+                                                                        )}
+                                                                    >
+                                                                        {field.value
+                                                                            ? products.find((p) => p.id === field.value)?.name
+                                                                            : "제품 선택..."}
+                                                                        <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                                                                    </Button>
+                                                                </FormControl>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-card/95 backdrop-blur-md">
+                                                                <Command>
+                                                                    <CommandInput placeholder="제품명 검색..." className="h-9 text-xs" />
+                                                                    <CommandList>
+                                                                        <CommandEmpty>결과 없음</CommandEmpty>
+                                                                        <CommandGroup>
+                                                                            {products.map((p) => (
+                                                                                <CommandItem
+                                                                                    key={p.id}
+                                                                                    value={p.name}
+                                                                                    onSelect={() => {
+                                                                                        form.setValue(`items.${index}.product_id`, p.id)
+                                                                                        form.setValue(`items.${index}.unit_price`, p.base_price)
+                                                                                    }}
+                                                                                    className="text-xs"
+                                                                                >
+                                                                                    <Check
+                                                                                        className={cn(
+                                                                                            "mr-2 h-3 w-3",
+                                                                                            p.id === field.value ? "opacity-100" : "opacity-0"
+                                                                                        )}
+                                                                                    />
+                                                                                    {p.name} ({p.base_price.toLocaleString()}원)
+                                                                                </CommandItem>
+                                                                            ))}
+                                                                        </CommandGroup>
+                                                                    </CommandList>
+                                                                </Command>
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                        <FormField
-                                            control={form.control}
-                                            name={`items.${index}.product_id`}
-                                            render={({ field: selectField }) => (
-                                                <FormItem className="md:col-span-5 flex flex-col pt-2">
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`items.${index}.quantity`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-xs text-muted-foreground">수량</FormLabel>
                                                             <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    role="combobox"
-                                                                    className={cn(
-                                                                        "w-full justify-between bg-card/50",
-                                                                        !selectField.value && "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    {selectField.value
-                                                                        ? products.find((p) => p.id === selectField.value)?.name
-                                                                        : "제품 선택"}
-                                                                </Button>
+                                                                <Input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    {...field}
+                                                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                                                    className="h-9 text-xs"
+                                                                />
                                                             </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-[300px] p-0">
-                                                            <Command>
-                                                                <CommandInput placeholder="제품명 검색..." />
-                                                                <CommandList>
-                                                                    <CommandEmpty>결과가 없습니다.</CommandEmpty>
-                                                                    <CommandGroup>
-                                                                        {products.map((product) => (
-                                                                            <CommandItem
-                                                                                value={product.name}
-                                                                                key={product.id}
-                                                                                onSelect={() => handleProductSelect(index, product.id)}
-                                                                            >
-                                                                                <span className="truncate">{product.name}</span>
-                                                                                <span className="ml-2 text-xs text-muted-foreground">({product.item_code})</span>
-                                                                                <Check
-                                                                                    className={cn(
-                                                                                        "ml-auto h-4 w-4",
-                                                                                        product.id === selectField.value
-                                                                                            ? "opacity-100"
-                                                                                            : "opacity-0"
-                                                                                    )}
-                                                                                />
-                                                                            </CommandItem>
-                                                                        ))}
-                                                                    </CommandGroup>
-                                                                </CommandList>
-                                                            </Command>
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name={`items.${index}.quantity`}
-                                            render={({ field: inputField }) => (
-                                                <FormItem className="md:col-span-2 pt-2">
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">수량</span>
-                                                            <Input
-                                                                type="number"
-                                                                className="pl-9 h-10 text-right pr-2"
-                                                                min="1"
-                                                                {...inputField}
-                                                                onChange={e => inputField.onChange(Number(e.target.value))}
-                                                            />
-                                                        </div>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name={`items.${index}.unit_price`}
-                                            render={({ field: inputField }) => (
-                                                <FormItem className="md:col-span-3 pt-2">
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">단가</span>
-                                                            <Input
-                                                                type="text"
-                                                                className="pl-9 h-10 text-right pr-2 font-mono text-sm"
-                                                                min="0"
-                                                                // Convert to comma format for display, but keep number for form value
-                                                                value={inputField.value.toLocaleString('ko-KR')}
-                                                                // Remove commas when user types and parse as float
-                                                                onChange={e => {
-                                                                    const val = e.target.value.replace(/,/g, '')
-                                                                    inputField.onChange(val === '' ? 0 : Number(val))
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <div className="md:col-span-2 pt-2 flex flex-col justify-center h-10">
-                                            <div className="text-right text-sm">
-                                                <span className="text-muted-foreground text-xs block mb-1 leading-none">소계</span>
-                                                <span className="font-bold font-mono text-primary truncate leading-none">
-                                                    {((watchItems[index]?.quantity || 0) * (watchItems[index]?.unit_price || 0)).toLocaleString('ko-KR')}
-                                                </span>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`items.${index}.unit_price`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-xs text-muted-foreground">단가</FormLabel>
+                                                            <FormControl>
+                                                                <div className="relative">
+                                                                    <Input
+                                                                        type="number"
+                                                                        {...field}
+                                                                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                                                        className="h-9 text-xs pr-7"
+                                                                    />
+                                                                    <span className="absolute right-2 top-2 text-[10px] text-muted-foreground">원</span>
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
                                             </div>
                                         </div>
-
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Total Footer */}
-                        <div className="sticky bottom-0 bg-background/95 backdrop-blur-xl border-t border-border/40 p-4 -mx-6 rounded-b-xl flex justify-between items-center z-10">
-                            <div>
-                                <p className="text-sm text-muted-foreground">총 주문 금액 (VAT 별도)</p>
-                                <p className="text-3xl font-bold font-mono bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
-                                    {totalAmount.toLocaleString('ko-KR')} <span className="text-lg text-foreground font-sans">원</span>
-                                </p>
+                        <FormField
+                            control={form.control}
+                            name="memo"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>비고 (메모)</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="특이사항이나 배송 요청사항을 입력하세요."
+                                            className="resize-none bg-muted/20 border-border/40 focus:border-primary/50"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="pt-4 flex flex-col gap-3">
+                            <div className="flex justify-between items-center px-2 py-3 bg-primary/5 rounded-lg border border-primary/20">
+                                <span className="text-sm font-medium">총 합계 금액</span>
+                                <span className="text-lg font-bold text-primary">
+                                    {form.watch('items')
+                                        .reduce((sum, item) => sum + (item.quantity * item.unit_price || 0), 0)
+                                        .toLocaleString()}원
+                                </span>
                             </div>
 
-                            <div className="flex gap-3">
-                                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-                                    취소
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_theme(colors.primary.DEFAULT)/30]"
-                                >
-                                    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                    수주 저장
-                                </Button>
-                            </div>
+                            <Button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full h-12 shadow-[0_0_20px_theme(colors.primary.DEFAULT)/30] hover:shadow-[0_0_30px_theme(colors.primary.DEFAULT)/50] transition-all"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        등록 중...
+                                    </>
+                                ) : (
+                                    '최종 등록 완료'
+                                )}
+                            </Button>
                         </div>
-
                     </form>
                 </Form>
             </SheetContent>

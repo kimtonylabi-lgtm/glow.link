@@ -7,6 +7,9 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Button } from '@/components/ui/button'
 import { Menu } from 'lucide-react'
 import { RealtimeListener } from '@/components/dashboard/realtime-listener'
+import { MobileSidebar } from '@/components/dashboard/mobile-sidebar'
+
+export const dynamic = 'force-dynamic'
 
 export default async function DashboardLayout({
     children,
@@ -30,15 +33,12 @@ export default async function DashboardLayout({
         .eq('id', user.id)
         .single()
 
-    // Default to 'sales' if profile is not found (fallback)
-    const currentProfile: Profile = profile as unknown as Profile || {
-        id: user.id,
-        email: user.email || '',
-        role: 'sales',
-        full_name: user.user_metadata?.full_name || null,
-        department: null,
-        created_at: new Date().toISOString()
+    // Redirect to pending if no profile (race condition defense) or if role is pending
+    if (!profile || profile.role === 'pending') {
+        redirect('/pending')
     }
+
+    const currentProfile: Profile = profile as unknown as Profile
 
     return (
         <div className="flex h-screen overflow-hidden bg-background text-foreground relative selection:bg-primary/30">
@@ -59,21 +59,8 @@ export default async function DashboardLayout({
                 {/* Mobile Sidebar & Header Wrap */}
                 <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 md:border-none md:bg-transparent">
 
-                    {/* Mobile Sidebar Sheet */}
-                    <div className="md:hidden flex items-center pl-4 py-3">
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary transition-colors">
-                                    <Menu className="h-6 w-6" />
-                                    <span className="sr-only">Toggle menu</span>
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="left" className="p-0 bg-transparent border-none w-64 shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
-                                <SheetTitle className="sr-only">내비게이션 메뉴</SheetTitle>
-                                <Sidebar userRole={currentProfile.role} />
-                            </SheetContent>
-                        </Sheet>
-                    </div>
+                    {/* Mobile Sidebar (Handles auto-close on navigation) */}
+                    <MobileSidebar userRole={currentProfile.role} />
 
                     <div className="flex-1 md:w-full">
                         <Header profile={currentProfile} />

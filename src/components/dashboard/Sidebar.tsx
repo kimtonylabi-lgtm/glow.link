@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
     { title: '제품관리 (Product)', href: '/dashboard/sales/product', icon: PackageSearch, roles: ['admin', 'head', 'sales'] },
     { title: '수주/납기', href: '/dashboard/sales/order', icon: ShoppingCart, roles: ['admin', 'head', 'sales'] },
     { title: '샘플요청', href: '/dashboard/sales/sample', icon: FlaskConical, roles: ['admin', 'head', 'sales'] },
+    { title: '업무보고 (Reports)', href: '/dashboard/sales/reports', icon: FileText, roles: ['admin', 'head', 'sales'] },
 
     // Sample Team workspace
     { title: '목록 (칸반 보드)', href: '/dashboard/sample_team', icon: Inbox, roles: ['admin', 'head', 'sample_team'] },
