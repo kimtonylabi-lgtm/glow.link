@@ -50,16 +50,19 @@ export default function LandingPage() {
         {/* 1. Hero Section */}
         <section className="container mx-auto px-4 pt-20 pb-32 text-center relative">
           <motion.div initial="hidden" animate="visible" variants={fadeIn} className="max-w-4xl mx-auto space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-4 shadow-[0_0_15px_rgba(var(--primary),0.1)]">
               <Sparkles className="w-4 h-4" />
-              <span>Next Generation SaaS for Cosmetic Manufacturing</span>
+              <span>✨ Make the Impossible, Possible</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight">
-              2026 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Smart & Sustainable</span> Beauty
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Beyond Limits</span>, Connect the Future
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              화장품 용기 제조업체를 위한 가장 완벽하고 통합된 영업 및 제작 관리 자동화 솔루션. GlowLink와 함께 글로벌 트렌드를 선도하세요.
-            </p>
+            <div className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed space-y-4">
+              <p className="text-foreground font-semibold text-2xl tracking-tight">"불가능한 일은 없다, 아직 일어나지 않은 일일 뿐..."</p>
+              <p className="text-lg">
+                화장품 용기 제조의 한계를 돌파하는 태성산업의 완벽한 통합 영업/제작 관리 솔루션. GlowLink와 함께 새로운 미래를 선도하세요.
+              </p>
+            </div>
             <div className="pt-8">
               <Link href="/login">
                 <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity border-none shadow-[0_0_30px_theme(colors.primary.DEFAULT)/50] hover:shadow-[0_0_50px_theme(colors.accent.DEFAULT)/60]">
