@@ -62,10 +62,12 @@ export async function signup(formData: FormData) {
         return { error: error.message }
     }
 
-    // Prevent automatic login after signup by signing out immediately
-    // This ensures that the user remains on the login page and must wait for approval
+    // [NUCLEAR OPTION] Prevent automatic login after signup by signing out immediately
+    // This physically clears the session before the user can even reach the dashboard
     await supabase.auth.signOut()
 
     revalidatePath('/', 'layout')
-    return { success: true }
+
+    // Force redirect to login with a success parameter to prevent client-side intercept by dashboard
+    redirect('/login?success=signup')
 }
