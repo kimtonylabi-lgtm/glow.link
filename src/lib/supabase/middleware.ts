@@ -34,9 +34,16 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     const url = request.nextUrl.clone()
+    const pathname = url.pathname
+
+    // 0. Bypass specific paths (Logout, API, etc.)
+    const isAuthAction = pathname.startsWith('/auth') || pathname.includes('logout') || pathname.startsWith('/api/')
+    if (isAuthAction) {
+        return supabaseResponse
+    }
 
     // 1. Role-based protection for authenticated users
-    if (user && url.pathname.startsWith('/dashboard')) {
+    if (user) {
         try {
             const { data: profile, error } = await supabase
                 .from('profiles')
@@ -44,14 +51,11 @@ export async function updateSession(request: NextRequest) {
                 .eq('id', user.id)
                 .single()
 
-            // If profile doesn't exist yet (race condition with trigger), treat as pending or error
+            // If profile doesn't exist yet (race condition with trigger), treat as pending
             if (error || !profile) {
-                // If it's a new user, they might not have a profile for a split second
-                if (url.pathname !== '/dashboard/pending') {
-                    url.pathname = '/dashboard/pending'
-                    return NextResponse.redirect(url)
-                }
-                return supabaseResponse
+                if (pathname === '/pending') return supabaseResponse
+                url.pathname = '/pending'
+                return NextResponse.redirect(url)
             }
 
             if (profile.role === 'inactive') {
@@ -59,43 +63,52 @@ export async function updateSession(request: NextRequest) {
                 url.pathname = '/login'
                 url.searchParams.set('error', 'account_deactivated')
                 const response = NextResponse.redirect(url)
+                // Transfer cookies to ensure session clearing is reflected
                 supabaseResponse.cookies.getAll().forEach((cookie) => {
                     response.cookies.set(cookie.name, cookie.value)
                 })
                 return response
             }
 
-            if (profile.role === 'pending' && url.pathname !== '/pending') {
+            // PENDING ROLE DEFENSE
+            if (profile.role === 'pending') {
+                // [CRITICAL] Early return if already on /pending to prevent Redirect Loop
+                if (pathname === '/pending') {
+                    return supabaseResponse
+                }
+
+                // Redirect anyone with pending role to /pending room
                 url.pathname = '/pending'
+                const response = NextResponse.redirect(url)
+                // Copy cookies to maintain session
+                supabaseResponse.cookies.getAll().forEach((cookie) => {
+                    response.cookies.set(cookie.name, cookie.value)
+                })
+                return response
+            }
+
+            // AUTHORIZED ROLE DEFENSE
+            // If user is NOT pending but stays on /pending page, move them to dashboard
+            if (profile.role !== 'pending' && pathname === '/pending') {
+                url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
             }
 
-            if (profile.role !== 'pending' && url.pathname === '/pending') {
+            // LOGIN PAGE DEFENSE
+            if (pathname === '/login') {
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
             }
         } catch (e) {
             console.error('Middleware role check error:', e)
-            // Safety fallback
         }
-    }
-
-    // 2. Auth protection
-    if (
-        !user &&
-        (url.pathname.startsWith('/dashboard') || url.pathname === '/pending')
-    ) {
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
-    }
-
-    // 3. Login redirect
-    if (
-        user &&
-        url.pathname === '/login'
-    ) {
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
+    } else {
+        // 2. Auth protection for unauthenticated users
+        const isProtectedRoute = pathname.startsWith('/dashboard') || pathname === '/pending'
+        if (isProtectedRoute) {
+            url.pathname = '/login'
+            return NextResponse.redirect(url)
+        }
     }
 
     return supabaseResponse
