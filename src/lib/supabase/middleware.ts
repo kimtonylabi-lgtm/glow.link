@@ -71,7 +71,8 @@ export async function updateSession(request: NextRequest) {
             }
 
             // PENDING ROLE DEFENSE
-            if (profile.role === 'pending') {
+            const userRole = profile.role as string
+            if (userRole === 'pending') {
                 // [CRITICAL] Early return if already on /pending to prevent Redirect Loop
                 if (pathname === '/pending') {
                     return supabaseResponse
@@ -89,7 +90,7 @@ export async function updateSession(request: NextRequest) {
 
             // AUTHORIZED ROLE DEFENSE
             // If user is NOT pending but stays on /pending page, move them to dashboard
-            if (profile.role !== 'pending' && pathname === '/pending') {
+            if (userRole !== 'pending' && pathname === '/pending') {
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
             }
