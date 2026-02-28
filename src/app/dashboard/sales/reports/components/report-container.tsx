@@ -14,7 +14,7 @@ export function ReportContainer({ children, title, subtitle }: ReportContainerPr
             {/* Report Page */}
             <div className={cn(
                 "w-full max-w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-2xl relative transition-all duration-500",
-                "print:shadow-none print:w-full print:max-w-none print:min-h-0 print:p-0",
+                "print:shadow-none print:w-full print:max-w-none print:min-h-0 print:p-0 print:m-0 print:block print:pt-0 print:mt-0",
                 "p-[20mm] flex flex-col gap-8 rounded-sm"
             )}>
                 {/* Header Decoration */}

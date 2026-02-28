@@ -26,7 +26,7 @@ const typeMap: Record<string, { label: string; color: string }> = {
 
 export function ActivityTimeline({ activities }: ActivityTimelineProps) {
     return (
-        <div className="flex flex-col gap-4 break-inside-avoid">
+        <div className="flex flex-col gap-4 print:break-before-page print:block print:pt-10">
             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-slate-800 pl-3">상세 영업활동 내역</h3>
             <div className="rounded-lg border border-slate-100 overflow-hidden">
                 <Table>
@@ -48,7 +48,7 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
                             </TableRow>
                         ) : (
                             activities.map((item) => (
-                                <TableRow key={item.id} className="border-b border-slate-50">
+                                <TableRow key={item.id} className="border-b border-slate-50 print:break-inside-avoid">
                                     <TableCell className="text-xs font-mono text-slate-500">
                                         {format(new Date(item.date), 'MM/dd HH:mm', { locale: ko })}
                                     </TableCell>

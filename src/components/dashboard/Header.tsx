@@ -47,7 +47,7 @@ export function Header({ profile, onMenuClick }: HeaderProps) {
     const initials = displayName.slice(0, 2).toUpperCase()
 
     return (
-        <header className="h-16 flex items-center justify-between px-4 md:px-6 bg-card/60 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30">
+        <header className="h-16 flex items-center justify-between px-4 md:px-6 bg-card/60 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 print:hidden">
 
             {/* Mobile Menu Button - Hidden on Desktop */}
             <div className="flex md:hidden items-center">
