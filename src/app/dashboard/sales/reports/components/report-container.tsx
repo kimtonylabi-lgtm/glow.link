@@ -10,7 +10,7 @@ interface ReportContainerProps {
 
 export function ReportContainer({ children, title, subtitle }: ReportContainerProps) {
     return (
-        <div className="flex flex-col items-center w-full gap-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex flex-col items-center w-full gap-8 py-2 md:py-4 animate-in fade-in slide-in-from-bottom-4 duration-700 print:py-0">
             {/* Report Page */}
             <div className={cn(
                 "w-full max-w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-2xl relative transition-all duration-500",

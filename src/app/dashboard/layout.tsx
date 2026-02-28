@@ -68,7 +68,10 @@ export default async function DashboardLayout({
                 </div>
 
                 {/* Scrollable Children */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar print:p-0 print:overflow-visible print:h-auto print:block">
+                <main className={cn(
+                    "flex-1 overflow-y-auto custom-scrollbar print:p-0 print:overflow-visible print:h-auto print:block",
+                    isReportPage ? "p-0" : "p-4 md:p-8"
+                )}>
                     {children}
                 </main>
             </div>

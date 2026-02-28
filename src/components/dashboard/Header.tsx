@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types/auth'
 import { Button } from '@/components/ui/button'
@@ -31,9 +31,13 @@ interface HeaderProps {
 }
 
 export function Header({ profile, onMenuClick }: HeaderProps) {
+    const pathname = usePathname()
     const router = useRouter()
     const supabase = createClient()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+    // 보고서 페이지에서는 헤더를 아예 렌더링하지 않음
+    if (pathname === '/dashboard/sales/reports') return null
 
     const handleLogout = async () => {
         setIsLoggingOut(true)

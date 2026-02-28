@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, Printer, Loader2 } from "lucide-react"
+import { CalendarIcon, Printer, Loader2, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ReportContainer } from "./components/report-container"
 import { SummaryView } from "./components/summary-view"
@@ -21,6 +21,7 @@ import { ActivityTimeline } from "./components/activity-table"
 import { ClientHistoryView } from "./components/client-history-view"
 import { getReportData, ReportData, ReportPeriod } from "./actions"
 import { toast } from "sonner"
+import { useRouter } from 'next/navigation'
 
 interface Client {
     id: string
@@ -28,6 +29,7 @@ interface Client {
 }
 
 export function ReportsClient({ clients }: { clients: Client[] }) {
+    const router = useRouter()
     const [period, setPeriod] = useState<ReportPeriod>('daily')
     const [date, setDate] = useState<Date>(new Date())
     const [data, setData] = useState<ReportData | null>(null)
@@ -66,13 +68,25 @@ export function ReportsClient({ clients }: { clients: Client[] }) {
     }
 
     return (
-        <div className="space-y-6 print:space-y-0 print:p-0">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic uppercase">Reporting Center</h2>
-                    <p className="text-muted-foreground text-sm">경영진 보고용 정규 양식 및 실적 통계를 제공합니다.</p>
+        <div className="space-y-6 pt-2 md:pt-4 print:space-y-0 print:p-0">
+            {/* 상단 컨트롤 영역 (GNB 대신 돌아가기/인쇄 버튼) */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4 print:hidden">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.back()}
+                        className="gap-2 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        돌아가기
+                    </Button>
+                    <div className="h-4 w-[1px] bg-border/40" />
+                    <div>
+                        <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic uppercase">Reporting Center</h2>
+                    </div>
                 </div>
-                <Button onClick={handlePrint} className="gap-2 shadow-lg shadow-primary/20">
+                <Button onClick={handlePrint} className="gap-2 shadow-lg shadow-primary/20 print:hidden">
                     <Printer className="w-4 h-4" />
                     보고서 인쇄 / PDF 저장
                 </Button>
