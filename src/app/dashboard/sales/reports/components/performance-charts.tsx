@@ -25,11 +25,11 @@ const COLORS = ['#0f172a', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'
 
 export function PerformanceCharts({ revenueData, performanceData }: PerformanceChartsProps) {
     return (
-        <div className="flex flex-col gap-12 break-inside-avoid">
+        <div className="flex flex-col gap-12 break-inside-avoid print:gap-6">
             {/* Row 1: Revenue Flow & Sales Contribution */}
-            <div className="grid grid-cols-5 gap-8 h-[300px]">
-                <div className="col-span-3 border border-slate-100 p-6 rounded-lg flex flex-col gap-4">
-                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-primary pl-3">기간별 매출 흐름</h3>
+            <div className="grid grid-cols-5 gap-8 h-[300px] print:h-[200px] print:gap-4">
+                <div className="col-span-3 border border-slate-100 p-6 rounded-lg flex flex-col gap-4 print:p-3 print:gap-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-primary pl-3 print:text-[10px]">기간별 매출 흐름</h3>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -61,16 +61,16 @@ export function PerformanceCharts({ revenueData, performanceData }: PerformanceC
                     </ResponsiveContainer>
                 </div>
 
-                <div className="col-span-2 border border-slate-100 p-6 rounded-lg flex flex-col gap-4">
-                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-blue-500 pl-3">영업 비중 (매출 기준)</h3>
+                <div className="col-span-2 border border-slate-100 p-6 rounded-lg flex flex-col gap-4 print:p-3 print:gap-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-blue-500 pl-3 print:text-[10px]">영업 비중 (매출 기준)</h3>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={performanceData}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
+                                innerRadius={40}
+                                outerRadius={60}
                                 paddingAngle={5}
                                 dataKey="revenue"
                                 isAnimationActive={false}
@@ -80,15 +80,15 @@ export function PerformanceCharts({ revenueData, performanceData }: PerformanceC
                                 ))}
                             </Pie>
                             <Tooltip formatter={(val: any) => `₩ ${val?.toLocaleString()}`} />
-                            <Legend verticalAlign="bottom" align="center" iconType="circle" />
+                            <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
             {/* Row 2: Detailed Performance Bar Chart */}
-            <div className="border border-slate-100 p-6 rounded-lg h-[350px] flex flex-col gap-4">
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-purple-500 pl-3">영업사원별 실적 데이터 (매출 & 활동)</h3>
+            <div className="border border-slate-100 p-6 rounded-lg h-[350px] flex flex-col gap-4 print:h-[240px] print:p-3 print:gap-2">
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-l-4 border-purple-500 pl-3 print:text-[10px]">영업사원별 실적 데이터 (매출 & 활동)</h3>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

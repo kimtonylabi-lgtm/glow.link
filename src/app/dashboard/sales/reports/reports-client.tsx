@@ -99,7 +99,7 @@ export function ReportsClient({ clients }: { clients: Client[] }) {
                 </TabsList>
 
                 <TabsContent value="period" className="mt-6 space-y-6">
-                    <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border/40">
+                    <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border/40 print:hidden">
                         <div className="flex bg-background rounded-lg border border-border/40 p-1">
                             <Button
                                 variant={period === 'daily' ? 'secondary' : 'ghost'}

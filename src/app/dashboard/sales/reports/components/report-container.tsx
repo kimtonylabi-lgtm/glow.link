@@ -21,9 +21,9 @@ export function ReportContainer({ children, title, subtitle }: ReportContainerPr
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary print:hidden" />
 
                 {/* Formal Header */}
-                <div className="border-b-2 border-slate-950 pb-6 flex justify-between items-end">
+                <div className="border-b-2 border-slate-950 pb-6 flex justify-between items-end print:pb-4">
                     <div>
-                        <h1 className="text-4xl font-black tracking-tighter text-slate-950 uppercase mb-1">
+                        <h1 className="text-4xl font-black tracking-tighter text-slate-950 uppercase mb-1 print:text-2xl print:leading-tight">
                             {title}
                         </h1>
                         {subtitle && (
@@ -41,7 +41,7 @@ export function ReportContainer({ children, title, subtitle }: ReportContainerPr
                 </div>
 
                 {/* Content area */}
-                <div className="flex-1 flex flex-col gap-10">
+                <div className="flex-1 flex flex-col gap-10 print:gap-6">
                     {children}
                 </div>
 
