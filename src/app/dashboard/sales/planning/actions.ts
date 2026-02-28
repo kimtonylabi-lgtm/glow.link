@@ -48,10 +48,40 @@ export async function getSalesPlanning(targetMonth: string) {
     // Calculate percentage
     const percentage = target > 0 ? Math.min(Math.round((actual / target) * 100), 1000) : 0 // Cap visual at 1000% purely for safety
 
+    // 3. Get Pipeline statistics
+    const { data: activityStats, error: statsError } = await supabase
+        .from('activities')
+        .select('pipeline_status')
+        .eq('created_by', user.id)
+
+    const pipelineStats: Record<string, number> = {
+        lead: 0,
+        quote: 0,
+        negotiation: 0,
+        deal_closed: 0,
+        dropped: 0,
+        sample_sent: 0
+    }
+
+    if (activityStats) {
+        activityStats.forEach(a => {
+            const status = a.pipeline_status || 'lead'
+            pipelineStats[status] = (pipelineStats[status] || 0) + 1
+        })
+    }
+
+    // 4. Get Demand Prediction highlights
+    const { data: predictions } = await supabase
+        .from('v_sales_analysis' as any)
+        .select('*')
+        .limit(5)
+
     return {
         target,
         actual,
-        percentage
+        percentage,
+        pipelineStats,
+        predictions: predictions || []
     }
 }
 
