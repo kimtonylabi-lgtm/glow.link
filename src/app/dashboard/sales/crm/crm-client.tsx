@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ClientWithProfile } from '@/types/crm'
 import { deleteClient } from './actions'
 import { ClientForm } from './client-form'
@@ -49,6 +50,7 @@ interface CrmClientProps {
 }
 
 export function CrmClient({ initialData }: CrmClientProps) {
+    const router = useRouter()
     const [data, setData] = useState<ClientWithProfile[]>(initialData)
 
     // States for Search & Filter
@@ -101,10 +103,8 @@ export function CrmClient({ initialData }: CrmClientProps) {
 
     const handleFormSuccess = () => {
         setIsSheetOpen(false)
-        // Server action `revalidatePath` will refresh the page data in next navigation
-        // So we invoke a refresh by triggering router.refresh or just let user reload if needed
-        // Actually window.location.reload() or router.refresh() is good, but Server Actions auto-refresh Server Components
-        window.location.reload()
+        // Router refresh for seamless UX
+        router.refresh()
     }
 
     return (
@@ -222,7 +222,7 @@ export function CrmClient({ initialData }: CrmClientProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                                        {client.profiles?.full_name || '미배정'}
+                                        {client.managed_by_name || '미배정'}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>

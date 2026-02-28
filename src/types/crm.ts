@@ -21,6 +21,7 @@ export interface ClientWithProfile extends Client {
     profiles?: {
         full_name: string | null;
     };
+    managed_by_name?: string | null;
     total_revenue?: number;
     conversion_rate?: number;
 }

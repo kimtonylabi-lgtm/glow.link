@@ -11,10 +11,7 @@ export default async function CrmPage() {
     // Supabase automatically understands the foreign key reference
     const { data: clients, error } = await supabase
         .from('v_sales_analysis' as any)
-        .select(`
-      *,
-      profiles:managed_by (full_name)
-    `)
+        .select('*')
         .order('total_revenue', { ascending: false })
 
     if (error) {

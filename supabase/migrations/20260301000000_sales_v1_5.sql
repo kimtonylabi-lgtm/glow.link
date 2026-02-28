@@ -7,7 +7,9 @@ UPDATE public.activities SET pipeline_status = 'lead' WHERE pipeline_status IS N
 
 -- 2. Create View for Sales Analysis
 -- This view calculates average order interval and conversion rate
-CREATE OR REPLACE VIEW public.v_sales_analysis AS
+CREATE OR REPLACE VIEW public.v_sales_analysis 
+WITH (security_invoker = true)
+AS
 WITH order_intervals AS (
     SELECT 
         client_id,
@@ -45,10 +47,12 @@ SELECT
         WHEN cs.sample_count > 0 THEN ROUND((cs.confirmed_order_count::float / cs.sample_count::float) * 100)::int
         ELSE 0 
     END as conversion_rate,
-    cs.total_revenue
+    cs.total_revenue,
+    p.full_name as managed_by_name
 FROM public.clients c
 LEFT JOIN avg_intervals ai ON ai.client_id = c.id
-LEFT JOIN conversion_stats cs ON cs.client_id = c.id;
+LEFT JOIN conversion_stats cs ON cs.client_id = c.id
+LEFT JOIN public.profiles p ON p.id = c.managed_by;
 
 -- 3. Auto-Tiering Function and Trigger
 CREATE OR REPLACE FUNCTION public.fn_calculate_client_tier()
