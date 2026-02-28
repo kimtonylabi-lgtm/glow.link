@@ -3,11 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { Header } from '@/components/dashboard/Header'
 import { Profile } from '@/types/auth'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Menu } from 'lucide-react'
 import { RealtimeListener } from '@/components/dashboard/realtime-listener'
 import { MobileSidebar } from '@/components/dashboard/mobile-sidebar'
+import { DashboardMain } from '@/components/dashboard/dashboard-main'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,13 +65,10 @@ export default async function DashboardLayout({
                     </div>
                 </div>
 
-                {/* Scrollable Children */}
-                <main className={cn(
-                    "flex-1 overflow-y-auto custom-scrollbar print:p-0 print:overflow-visible print:h-auto print:block",
-                    isReportPage ? "p-0" : "p-4 md:p-8"
-                )}>
+                {/* Scrollable Children Wrapped in Client Component for path-based classes */}
+                <DashboardMain>
                     {children}
-                </main>
+                </DashboardMain>
             </div>
         </div>
     )
