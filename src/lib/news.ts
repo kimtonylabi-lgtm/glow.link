@@ -38,10 +38,7 @@ export async function getNews(query: string): Promise<NewsItem[]> {
                     'X-Naver-Client-Id': CLIENT_ID,
                     'X-Naver-Client-Secret': CLIENT_SECRET,
                 },
-                next: {
-                    revalidate: 604800, // 1 week in seconds
-                    tags: ['news']
-                },
+                cache: 'no-store', // Force cache purge for hotfix
             }
         );
 
@@ -50,13 +47,16 @@ export async function getNews(query: string): Promise<NewsItem[]> {
         }
 
         const data = await response.json();
-        return data.items.map((item: any) => ({
-            title: cleanText(item.title),
-            // Use originallink as priority, fallback to link, and clean both
-            link: cleanText(item.originallink || item.link),
-            description: cleanText(item.description),
-            pubDate: item.pubDate,
-        }));
+        return data.items.map((item: any) => {
+            const finalLink = cleanText(item.originallink || item.link);
+            console.log(`[News API] Query: ${query} | Title: ${cleanText(item.title)} | Final Link: ${finalLink}`);
+            return {
+                title: cleanText(item.title),
+                link: finalLink,
+                description: cleanText(item.description),
+                pubDate: item.pubDate,
+            };
+        });
     } catch (error) {
         console.error(`Failed to fetch news for query "${query}":`, error);
         return [];
