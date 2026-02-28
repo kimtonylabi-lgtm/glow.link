@@ -41,23 +41,23 @@ export default async function DashboardLayout({
     const currentProfile: Profile = profile as unknown as Profile
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background text-foreground relative selection:bg-primary/30">
+        <div className="flex h-screen overflow-hidden bg-background text-foreground relative selection:bg-primary/30 print:h-auto print:overflow-visible print:bg-white print:text-black">
             <RealtimeListener />
 
             {/* Background ambient lighting */}
-            <div className="absolute top-[-20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10" />
-            <div className="absolute bottom-[-20%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-accent/5 blur-[120px] pointer-events-none -z-10" />
+            <div className="absolute top-[-20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10 print:hidden" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-accent/5 blur-[120px] pointer-events-none -z-10 print:hidden" />
 
             {/* Desktop Sidebar (Hidden on Mobile) */}
-            <aside className="hidden md:block h-full shrink-0 z-20">
+            <aside className="hidden md:block h-full shrink-0 z-20 print:hidden">
                 <Sidebar userRole={currentProfile.role} />
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden z-10">
+            <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden z-10 print:h-auto print:overflow-visible print:block">
 
                 {/* Mobile Sidebar & Header Wrap */}
-                <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 md:border-none md:bg-transparent">
+                <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 md:border-none md:bg-transparent print:hidden">
 
                     {/* Mobile Sidebar (Handles auto-close on navigation) */}
                     <MobileSidebar userRole={currentProfile.role} />
@@ -68,7 +68,7 @@ export default async function DashboardLayout({
                 </div>
 
                 {/* Scrollable Children */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar print:p-0 print:overflow-visible print:h-auto print:block">
                     {children}
                 </main>
             </div>

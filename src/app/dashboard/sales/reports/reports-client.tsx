@@ -78,8 +78,8 @@ export function ReportsClient({ clients }: { clients: Client[] }) {
                 </Button>
             </div>
 
-            <Tabs defaultValue="period" className="w-full print:hidden">
-                <TabsList className="grid w-[400px] grid-cols-2 bg-background/50 border border-border/40">
+            <Tabs defaultValue="period" className="w-full">
+                <TabsList className="grid w-[400px] grid-cols-2 bg-background/50 border border-border/40 print:hidden">
                     <TabsTrigger value="period">기간별 보고</TabsTrigger>
                     <TabsTrigger value="client">고객사별 히스토리</TabsTrigger>
                 </TabsList>

@@ -184,7 +184,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                         )}
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Activity Type Selection */}
                         <FormField
                             control={form.control}
@@ -198,7 +198,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                                 <SelectValue placeholder="유형 선택" />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent className="bg-card/95 backdrop-blur-md border-border/50">
+                                        <SelectContent className="bg-card/95 backdrop-blur-md border-border/50 z-[100]">
                                             <SelectItem value="meeting">📝 오프라인 미팅</SelectItem>
                                             <SelectItem value="call">📞 전화 상담</SelectItem>
                                             <SelectItem value="email">📧 이메일 발송</SelectItem>
@@ -224,7 +224,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                                 <SelectValue placeholder="단계 선택" />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent className="bg-card/95 backdrop-blur-md border-border/50">
+                                        <SelectContent className="bg-card/95 backdrop-blur-md border-border/50 z-[100]">
                                             <SelectItem value="lead">잠재 고객 (Lead)</SelectItem>
                                             <SelectItem value="sample_sent">샘플 발송</SelectItem>
                                             <SelectItem value="quote_submitted">견적 제출</SelectItem>
@@ -264,13 +264,13 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 bg-card/95 backdrop-blur-xl border border-border/50" align="start">
+                                        <PopoverContent className="w-auto p-0 bg-card/95 backdrop-blur-xl border border-border/50 z-[100]" align="start">
                                             <Calendar
                                                 mode="single"
                                                 selected={field.value}
                                                 onSelect={(date) => {
                                                     field.onChange(date)
-                                                    setIsDatePopoverOpen(false) // Auto-close UX improvement (Bug #6)
+                                                    setIsDatePopoverOpen(false)
                                                 }}
                                                 disabled={(date) =>
                                                     date > new Date() || date < new Date("1900-01-01")
