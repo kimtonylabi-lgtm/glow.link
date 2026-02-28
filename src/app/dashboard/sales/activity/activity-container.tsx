@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { ActivityWithRelations, Client } from '@/types/crm'
 import { ActivityForm } from './activity-form'
