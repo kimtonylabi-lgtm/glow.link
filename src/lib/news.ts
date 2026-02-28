@@ -3,6 +3,7 @@ import { FALLBACK_NEWS } from './data/news-fallback';
 export interface NewsItem {
     title: string;
     link: string;
+    originallink?: string;
     description: string;
     pubDate: string;
 }
@@ -10,7 +11,7 @@ export interface NewsItem {
 const CLIENT_ID = process.env.NAVER_CLIENT_ID;
 const CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
 
-function cleanText(text: string): string {
+export function cleanText(text: string): string {
     if (!text) return '';
     return text.replace(/<[^>]*>?/gm, '') // Remove HTML tags
         .replace(/&quot;/g, '"')
@@ -48,11 +49,13 @@ export async function getNews(query: string): Promise<NewsItem[]> {
 
         const data = await response.json();
         return data.items.map((item: any) => {
-            const finalLink = cleanText(item.originallink || item.link);
-            console.log(`[News API] Query: ${query} | Title: ${cleanText(item.title)} | Final Link: ${finalLink}`);
+            const link = cleanText(item.link);
+            const originallink = cleanText(item.originallink);
+            console.log(`[News API] Query: ${query} | Title: ${cleanText(item.title)} | Original: ${originallink} | Link: ${link}`);
             return {
                 title: cleanText(item.title),
-                link: finalLink,
+                link: link,
+                originallink: originallink || link,
                 description: cleanText(item.description),
                 pubDate: item.pubDate,
             };

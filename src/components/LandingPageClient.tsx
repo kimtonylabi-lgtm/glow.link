@@ -190,6 +190,9 @@ export default function LandingPageClient({ newsData, upcomingExhibitions }: Lan
 }
 
 function NewsCard({ item }: { item: NewsItem }) {
+    // Priority: originallink -> link
+    const finalHref = item.originallink || item.link;
+
     return (
         <Card className="h-full border-border/40 bg-card/60 backdrop-blur-xl hover:border-primary/50 transition-all group relative overflow-hidden flex flex-col">
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-[40px] group-hover:bg-primary/20 transition-colors" />
@@ -203,7 +206,7 @@ function NewsCard({ item }: { item: NewsItem }) {
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground flex-grow">
                 <p className="line-clamp-3 mb-4">{item.description}</p>
-                <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-xs font-semibold hover:underline">
+                <a href={finalHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-xs font-semibold hover:underline">
                     자세히 보기 <ExternalLink className="w-3 h-3" />
                 </a>
             </CardContent>
