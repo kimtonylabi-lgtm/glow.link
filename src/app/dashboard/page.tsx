@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sparkles, Calendar, TrendingUp } from 'lucide-react'
+import { DemandPredictionAlert } from '@/components/sales/DemandPredictionAlert'
 
 export default async function DashboardHome() {
     const supabase = await createClient()
@@ -11,6 +12,12 @@ export default async function DashboardHome() {
 
     const name = user?.user_metadata?.full_name || '사용자'
 
+    // Fetch demand prediction data
+    const { data: predictions } = await supabase
+        .from('v_sales_analysis' as any)
+        .select('client_id, company_name, predicted_interval, last_order_date')
+        .limit(10)
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
@@ -19,6 +26,10 @@ export default async function DashboardHome() {
                     GlowLink 대시보드에 오신 것을 환영합니다. 좌측 메뉴를 통해 업무를 시작해 보세요.
                 </p>
             </div>
+
+            {predictions && predictions.length > 0 && (
+                <DemandPredictionAlert predictions={predictions as any} />
+            )}
 
             <div className="grid gap-4 md:grid-cols-3">
                 <Card className="bg-card/40 backdrop-blur-xl border-border/40">

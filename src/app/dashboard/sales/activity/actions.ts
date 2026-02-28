@@ -109,3 +109,30 @@ export async function deleteActivity(id: string) {
         return { error: 'Unknown API error' }
     }
 }
+export async function updateActivityStatus(id: string, status: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            return { error: '인증되지 않은 사용자입니다.' }
+        }
+
+        const { error: updateError } = await supabase
+            .from('activities')
+            .update({ pipeline_status: status } as any)
+            .eq('id', id)
+
+        if (updateError) {
+            return { error: updateError.message }
+        }
+
+        revalidatePath('/dashboard/sales/activity')
+        return { success: true }
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            return { error: err.message }
+        }
+        return { error: 'Unknown API error' }
+    }
+}

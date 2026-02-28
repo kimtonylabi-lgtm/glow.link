@@ -1,9 +1,10 @@
-'use client'
-
 import { useState } from 'react'
 import { ActivityWithRelations, Client } from '@/types/crm'
 import { ActivityForm } from './activity-form'
 import { Timeline } from './timeline'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SalesKanban } from '@/components/sales/SalesKanban'
+import { LayoutDashboard, ListTodo } from 'lucide-react'
 
 interface Props {
     clients: Client[]
@@ -24,25 +25,46 @@ export function ActivityContainer({ clients, initialActivities }: Props) {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left Column: Form */}
-            <div className="lg:col-span-4 xl:col-span-3">
-                <div className="sticky top-6">
-                    <ActivityForm
-                        clients={clients}
-                        activity={editingActivity}
-                        onSuccess={handleFormSuccess}
-                    />
+        <div className="flex flex-col gap-8">
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* Left Column: Form */}
+                <div className="lg:col-span-4 xl:col-span-3 lg:w-1/4 xl:w-1/5">
+                    <div className="sticky top-6">
+                        <ActivityForm
+                            clients={clients}
+                            activity={editingActivity}
+                            onSuccess={handleFormSuccess}
+                        />
+                    </div>
                 </div>
-            </div>
 
-            {/* Right Column: Timeline Feed */}
-            <div className="lg:col-span-8 xl:col-span-9">
-                <Timeline
-                    clients={clients}
-                    activities={initialActivities}
-                    onEdit={handleEdit}
-                />
+                {/* Right Column: Dynamic View */}
+                <div className="lg:col-span-8 xl:col-span-9 lg:w-3/4 xl:w-4/5">
+                    <Tabs defaultValue="timeline" className="w-full">
+                        <div className="flex justify-start mb-6">
+                            <TabsList className="bg-card/40 backdrop-blur-md border border-border/40 p-1">
+                                <TabsTrigger value="timeline" className="flex items-center gap-2 px-6">
+                                    <ListTodo className="h-4 w-4" /> 타임라인
+                                </TabsTrigger>
+                                <TabsTrigger value="kanban" className="flex items-center gap-2 px-6">
+                                    <LayoutDashboard className="h-4 w-4" /> 파이프라인 칸반
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
+
+                        <TabsContent value="timeline" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                            <Timeline
+                                clients={clients}
+                                activities={initialActivities}
+                                onEdit={handleEdit}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="kanban" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                            <SalesKanban initialActivities={initialActivities} />
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
         </div>
     )

@@ -52,6 +52,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
         defaultValues: {
             client_id: activity?.client_id || '',
             type: activity?.type || 'meeting',
+            pipeline_status: activity?.pipeline_status || 'lead',
             title: activity?.title || '',
             content: activity?.content || '',
             activity_date: activity?.activity_date ? new Date(activity.activity_date) : new Date(),
@@ -64,6 +65,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
             form.reset({
                 client_id: activity.client_id || '',
                 type: activity.type || 'meeting',
+                pipeline_status: activity.pipeline_status || 'lead',
                 title: activity.title || '',
                 content: activity.content || '',
                 activity_date: activity.activity_date ? new Date(activity.activity_date) : new Date(),
@@ -72,6 +74,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
             form.reset({
                 client_id: '',
                 type: 'meeting',
+                pipeline_status: 'lead',
                 title: '',
                 content: '',
                 activity_date: new Date(),
@@ -181,7 +184,7 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                         )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Activity Type Selection */}
                         <FormField
                             control={form.control}
@@ -195,12 +198,39 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                                                 <SelectValue placeholder="유형 선택" />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent className="bg-card/95 backdrop-blur-md border border-border/50">
+                                        <SelectContent className="bg-card/95 backdrop-blur-md border-border/50">
                                             <SelectItem value="meeting">📝 오프라인 미팅</SelectItem>
                                             <SelectItem value="call">📞 전화 상담</SelectItem>
                                             <SelectItem value="email">📧 이메일 발송</SelectItem>
                                             <SelectItem value="meal">🍽️ 회식/식사</SelectItem>
                                             <SelectItem value="other">📌 기타</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Pipeline Status Selection */}
+                        <FormField
+                            control={form.control}
+                            name="pipeline_status"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>파이프라인 단계</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="bg-background/50 border-border/50">
+                                                <SelectValue placeholder="단계 선택" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent className="bg-card/95 backdrop-blur-md border-border/50">
+                                            <SelectItem value="lead">잠재 고객 (Lead)</SelectItem>
+                                            <SelectItem value="sample_sent">샘플 발송</SelectItem>
+                                            <SelectItem value="quote_submitted">견적 제출</SelectItem>
+                                            <SelectItem value="negotiating">단가 네고</SelectItem>
+                                            <SelectItem value="confirmed">수주 확정</SelectItem>
+                                            <SelectItem value="dropped">드랍 (Dropped)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

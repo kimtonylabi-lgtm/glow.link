@@ -21,15 +21,19 @@ export interface ClientWithProfile extends Client {
     profiles?: {
         full_name: string | null;
     };
+    total_revenue?: number;
+    conversion_rate?: number;
 }
 
 export type ActivityType = 'meeting' | 'call' | 'email' | 'meal' | 'other';
+export type PipelineStatus = 'lead' | 'sample_sent' | 'quote_submitted' | 'negotiating' | 'confirmed' | 'dropped';
 
 export interface Activity {
     id: string;
     client_id: string;
     user_id: string;
     type: ActivityType;
+    pipeline_status: PipelineStatus | null;
     title: string;
     content: string | null;
     activity_date: string;

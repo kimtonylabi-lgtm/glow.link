@@ -155,6 +155,8 @@ export function CrmClient({ initialData }: CrmClientProps) {
                         <TableRow className="border-border/50">
                             <TableHead className="w-[200px] text-primary">회사명</TableHead>
                             <TableHead>등급/상태</TableHead>
+                            <TableHead className="hidden sm:table-cell">누적 매출</TableHead>
+                            <TableHead className="hidden sm:table-cell">샘플 전환율</TableHead>
                             <TableHead>담당자</TableHead>
                             <TableHead className="hidden md:table-cell">연락처/이메일</TableHead>
                             <TableHead className="hidden lg:table-cell">영업담당</TableHead>
@@ -164,7 +166,7 @@ export function CrmClient({ initialData }: CrmClientProps) {
                     <TableBody>
                         {filteredData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                     <div className="flex flex-col items-center justify-center gap-2">
                                         <Building2 className="h-8 w-8 opacity-20" />
                                         <p>등록된 고객사가 없습니다.</p>
@@ -191,6 +193,25 @@ export function CrmClient({ initialData }: CrmClientProps) {
                                             <span className={client.status === 'active' ? "text-green-400 text-xs mt-0.5" : "text-slate-500 text-xs mt-0.5"}>
                                                 {client.status === 'active' ? 'Active' : 'Inactive'}
                                             </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <div className="text-sm font-semibold text-emerald-400">
+                                            ₩{(client.total_revenue || 0).toLocaleString()}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <div className="flex flex-col gap-1 w-24">
+                                            <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
+                                                <span>전환율</span>
+                                                <span className="text-primary">{client.conversion_rate || 0}%</span>
+                                            </div>
+                                            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-primary transition-all duration-500"
+                                                    style={{ width: `${client.conversion_rate || 0}%` }}
+                                                />
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>{client.contact_person || '-'}</TableCell>
