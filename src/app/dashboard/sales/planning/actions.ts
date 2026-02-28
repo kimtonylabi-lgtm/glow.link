@@ -49,10 +49,13 @@ export async function getSalesPlanning(targetMonth: string) {
     const percentage = target > 0 ? Math.min(Math.round((actual / target) * 100), 1000) : 0 // Cap visual at 1000% purely for safety
 
     // 3. Get Pipeline statistics
-    const { data: activityStats, error: statsError } = await supabase
-        .from('activities')
+    const statsResult = await supabase
+        .from('activities' as any)
         .select('pipeline_status')
-        .eq('created_by', user.id)
+        .eq('created_by', user.id) as any
+
+    const activityStats = statsResult.data
+    const statsError = statsResult.error
 
     const pipelineStats: Record<string, number> = {
         lead: 0,
@@ -64,7 +67,7 @@ export async function getSalesPlanning(targetMonth: string) {
     }
 
     if (activityStats) {
-        activityStats.forEach(a => {
+        activityStats.forEach((a: any) => {
             const status = a.pipeline_status || 'lead'
             pipelineStats[status] = (pipelineStats[status] || 0) + 1
         })
