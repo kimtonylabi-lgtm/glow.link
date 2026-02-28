@@ -61,15 +61,15 @@ export default function LandingPageClient({ newsData, upcomingExhibitions }: Lan
                     <motion.div initial="hidden" animate="visible" variants={fadeIn} className="max-w-4xl mx-auto space-y-8">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-4 shadow-[0_0_15px_rgba(var(--primary),0.1)]">
                             <Sparkles className="w-4 h-4" />
-                            <span>✨ In-house Trend Portal</span>
+                            <span>✨ Make the Impossible, Possible</span>
                         </div>
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight">
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">GlowLink Portal</span>, <br />사내 트렌드 마스터
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Beyond Limits</span>, Connect the Future
                         </h1>
                         <div className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed space-y-4">
-                            <p className="text-foreground font-semibold text-2xl tracking-tight">"데이터로 연결하고, 트렌드로 앞서가다"</p>
+                            <p className="text-foreground font-semibold text-2xl tracking-tight">"불가능한 일은 없다, 아직 일어나지 않은 일일 뿐..."</p>
                             <p className="text-lg">
-                                업계 동향부터 글로벌 뷰티 트렌드까지, GlowLink가 제공하는 100% 자동화된 인사이트 포털입니다.
+                                화장품 용기 제조의 한계를 돌파하는 태성산업의 완벽한 통합 영업/제작 관리 솔루션. GlowLink와 함께 새로운 미래를 선도하세요.
                             </p>
                         </div>
                     </motion.div>
@@ -203,9 +203,9 @@ function NewsCard({ item }: { item: NewsItem }) {
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground flex-grow">
                 <p className="line-clamp-3 mb-4">{item.description}</p>
-                <Link href={item.link} target="_blank" className="inline-flex items-center gap-1 text-primary text-xs font-semibold hover:underline">
+                <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-xs font-semibold hover:underline">
                     자세히 보기 <ExternalLink className="w-3 h-3" />
-                </Link>
+                </a>
             </CardContent>
         </Card>
     )
