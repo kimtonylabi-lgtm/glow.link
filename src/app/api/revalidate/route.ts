@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        revalidateTag('news');
+        revalidateTag('news', { expire: 0 });
         return NextResponse.json({ revalidated: true, now: Date.now() });
     } catch (err) {
         return NextResponse.json({ message: 'Error revalidating' }, { status: 500 });
