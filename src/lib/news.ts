@@ -10,13 +10,18 @@ export interface NewsItem {
 const CLIENT_ID = process.env.NAVER_CLIENT_ID;
 const CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
 
-function stripHtml(text: string): string {
-    return text.replace(/<[^>]*>?/gm, '')
+function cleanText(text: string): string {
+    if (!text) return '';
+    return text.replace(/<[^>]*>?/gm, '') // Remove HTML tags
         .replace(/&quot;/g, '"')
         .replace(/&apos;/g, "'")
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
-        .replace(/&amp;/g, '&');
+        .replace(/&amp;/g, '&')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#39;/g, "'")
+        .replace(/&#34;/g, '"')
+        .trim();
 }
 
 export async function getNews(query: string): Promise<NewsItem[]> {
@@ -46,9 +51,10 @@ export async function getNews(query: string): Promise<NewsItem[]> {
 
         const data = await response.json();
         return data.items.map((item: any) => ({
-            title: stripHtml(item.title),
-            link: item.link,
-            description: stripHtml(item.description),
+            title: cleanText(item.title),
+            // Use originallink as priority, fallback to link, and clean both
+            link: cleanText(item.originallink || item.link),
+            description: cleanText(item.description),
             pubDate: item.pubDate,
         }));
     } catch (error) {
