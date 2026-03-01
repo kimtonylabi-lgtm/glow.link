@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function getSalesPlanning(targetMonth: string) {
+export async function getSalesPlanning(targetMonth: string, type: 'all' | 'personal' = 'personal') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -14,14 +14,20 @@ export async function getSalesPlanning(targetMonth: string) {
     // 1. Parse targetMonth (yyyy-MM) to Year and Month
     const [year, month] = targetMonth.split('-').map(Number)
 
-    // 2. Get user's target amount from NEW TABLE: monthly_sales_goals
-    const { data: goalData } = await (supabase
+    // 2. Get target amount base on type
+    const query = supabase
         .from('monthly_sales_goals' as any)
         .select('target_amount')
-        .eq('sales_person_id', user.id)
         .eq('target_year', year)
         .eq('target_month', month)
-        .single() as any)
+
+    if (type === 'personal') {
+        query.eq('sales_person_id', user.id)
+    } else {
+        query.is('sales_person_id', null)
+    }
+
+    const { data: goalData } = await (query.single() as any)
 
     const target = goalData?.target_amount || 0
 
@@ -35,14 +41,19 @@ export async function getSalesPlanning(targetMonth: string) {
     endOfMonthKST.setHours(endOfMonthKST.getHours() - 9) // Adjust to UTC
     const endDate = endOfMonthKST.toISOString()
 
-    const { data: ordersData, error: ordersError } = await supabase
+    const ordersQuery = supabase
         .from('orders')
         .select('total_amount')
-        .eq('sales_person_id', user.id)
         .in('status', ['confirmed', 'production', 'shipped'])
         .not('status', 'eq', 'canceled') // Double-guard against canceled
         .gte('order_date', startDate)
         .lte('order_date', endDate)
+
+    if (type === 'personal') {
+        ordersQuery.eq('sales_person_id', user.id)
+    }
+
+    const { data: ordersData, error: ordersError } = await ordersQuery
 
     if (ordersError) {
         console.error('Error fetching orders for planning:', ordersError)
@@ -92,7 +103,7 @@ export async function getSalesPlanning(targetMonth: string) {
     }
 }
 
-export async function getYearlyGoals(year: number) {
+export async function getYearlyGoals(year: number, type: 'all' | 'personal' = 'personal') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -100,12 +111,18 @@ export async function getYearlyGoals(year: number) {
         throw new Error('Unauthorized')
     }
 
-    const { data: goals, error } = await (supabase
+    const query = supabase
         .from('monthly_sales_goals' as any)
         .select('target_month, target_amount')
-        .eq('sales_person_id', user.id)
         .eq('target_year', year)
-        .order('target_month', { ascending: true }) as any)
+
+    if (type === 'personal') {
+        query.eq('sales_person_id', user.id)
+    } else {
+        query.is('sales_person_id', null)
+    }
+
+    const { data: goals, error } = await (query.order('target_month', { ascending: true }) as any)
 
     if (error) {
         console.error('Failed to fetch yearly goals:', error)
@@ -119,7 +136,11 @@ export async function getYearlyGoals(year: number) {
     }))
 }
 
-export async function upsertMonthlyGoals(year: number, goals: { month: number, target_amount: any }[]) {
+export async function upsertMonthlyGoals(
+    year: number,
+    goals: { month: number, target_amount: any }[],
+    type: 'all' | 'personal' = 'personal'
+) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -129,7 +150,7 @@ export async function upsertMonthlyGoals(year: number, goals: { month: number, t
 
     try {
         const dataToUpsert = goals.map(g => ({
-            sales_person_id: user.id,
+            sales_person_id: type === 'personal' ? user.id : null,
             target_year: year,
             target_month: g.month,
             // 무적의 숫자 파싱: 문자열로 변환 후 콤마 제거하고 숫자로 변환

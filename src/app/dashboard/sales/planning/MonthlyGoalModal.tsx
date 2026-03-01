@@ -19,6 +19,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import {
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from '@/components/ui/tabs'
 import { getYearlyGoals, upsertMonthlyGoals } from './actions'
 import { toast } from 'sonner'
 import { Loader2, Calendar, Target, Save } from 'lucide-react'
@@ -35,6 +40,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
     // KST Current Year
     const kstYear = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getFullYear()
     const [selectedYear, setSelectedYear] = useState(kstYear.toString())
+    const [targetType, setTargetType] = useState<'all' | 'personal'>('personal')
 
     // Goals state: Array<{ month: number, target_amount: string }>
     const [goals, setGoals] = useState<{ month: number, target_amount: string }[]>(
@@ -43,10 +49,10 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
 
     const years = Array.from({ length: 5 }, (_, i) => (kstYear - 1 + i).toString())
 
-    const fetchYearlyGoals = async (year: string) => {
+    const fetchYearlyGoals = async (year: string, type: 'all' | 'personal') => {
         setIsLoading(true)
         try {
-            const data = await getYearlyGoals(parseInt(year))
+            const data = await getYearlyGoals(parseInt(year), type)
             const newGoals = Array.from({ length: 12 }, (_, i) => {
                 const month = i + 1
                 const match = data.find((g: any) => g.month === month)
@@ -66,9 +72,9 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
 
     useEffect(() => {
         if (open) {
-            fetchYearlyGoals(selectedYear)
+            fetchYearlyGoals(selectedYear, targetType)
         }
-    }, [open, selectedYear])
+    }, [open, selectedYear, targetType])
 
     const formatNumber = (val: string) => {
         const num = val.toString().replace(/,/g, '')
@@ -94,7 +100,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                 target_amount: Number(goal.target_amount.replace(/,/g, '')) || 0
             }))
 
-            const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals)
+            const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals, targetType)
             if (result.success) {
                 toast.success(`${selectedYear}년 목표가 저장되었습니다.`)
                 if (onSuccess) onSuccess()
@@ -136,18 +142,27 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                             </DialogDescription>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-background/50 p-1 rounded-xl border border-border/40">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground mr-2 ml-2">기준 연도</Label>
-                            <Select value={selectedYear} onValueChange={setSelectedYear}>
-                                <SelectTrigger className="w-28 h-9 border-none bg-transparent font-mono font-bold focus:ring-0">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/40">
-                                    {years.map(y => (
-                                        <SelectItem key={y} value={y} className="font-mono font-bold">{y}년</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <div className="flex items-center gap-4">
+                            <Tabs value={targetType} onValueChange={(v: any) => setTargetType(v)} className="w-[180px]">
+                                <TabsList className="grid w-full grid-cols-2 h-9 bg-background/50 border border-border/40 p-1 rounded-xl">
+                                    <TabsTrigger value="all" className="text-[10px] font-black uppercase rounded-lg">전사</TabsTrigger>
+                                    <TabsTrigger value="personal" className="text-[10px] font-black uppercase rounded-lg">개인</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+
+                            <div className="flex items-center gap-2 bg-background/50 p-1 rounded-xl border border-border/40">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground mr-2 ml-2">기준 연도</Label>
+                                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                                    <SelectTrigger className="w-28 h-9 border-none bg-transparent font-mono font-bold focus:ring-0 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card/95 backdrop-blur-xl border-border/40">
+                                        {years.map(y => (
+                                            <SelectItem key={y} value={y} className="font-mono font-bold text-xs">{y}년</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
                 </DialogHeader>
