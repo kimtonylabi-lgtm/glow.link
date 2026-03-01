@@ -57,7 +57,7 @@ export function ActivityContainer({ clients, products, clientProducts, initialAc
                             <span>새 활동 등록</span>
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-2xl border-border/50 p-0 shadow-2xl">
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-2xl border-border/50 p-0 shadow-2xl">
                         <DialogHeader className="p-6 pb-0">
                             <DialogTitle className="text-xl font-black">
                                 {editingActivity ? '활동 내역 수정' : '새로운 영업 활동 기록'}

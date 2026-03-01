@@ -269,11 +269,6 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                                     </CardTitle>
                                     <CardDescription className="text-xs">현재 관리 중인 전체 딜의 단계별 분포입니다.</CardDescription>
                                 </div>
-                                <Button variant="ghost" size="sm" asChild className="text-xs hover:bg-primary/10 transition-all font-bold">
-                                    <Link href="/dashboard/sales/activity" className="flex items-center gap-1">
-                                        상세 칸반 보드 <ArrowRight className="w-3 h-3" />
-                                    </Link>
-                                </Button>
                             </div>
                         </CardHeader>
                         <CardContent>
