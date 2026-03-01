@@ -113,7 +113,7 @@ export async function addOrder(data: OrderFormValues) {
                 'products',
                 'name',
                 item.product_name,
-                { base_price: item.unit_price } // Optional initial price
+                { price: item.unit_price, category: 'bottle' } // Optional initial price & default category
             );
             if (isNewProd) newMasterItems.push(`제품: ${item.product_name}`);
 

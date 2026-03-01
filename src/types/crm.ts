@@ -30,7 +30,9 @@ export interface Product {
     id: string;
     name: string;
     item_code: string | null;
-    base_price: number;
+    category: 'bottle' | 'pump' | 'jar' | 'cap';
+    price: number;
+    image_url: string | null;
     created_at: string;
 }
 

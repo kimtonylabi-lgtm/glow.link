@@ -9,6 +9,7 @@ import { ko } from 'date-fns/locale'
 import { orderSchema, type OrderFormValues } from '@/lib/validations/product-order'
 import { addOrder } from './actions'
 import { toast } from 'sonner'
+import { Product } from '@/types/crm'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -56,7 +57,7 @@ import { CreatableCombobox } from '@/components/ui/creatable-combobox'
 
 interface OrderFormProps {
     clients: { id: string; company_name: string }[]
-    products: { id: string; name: string; base_price: number }[]
+    products: Product[]
     clientProducts: { id: string; name: string }[]
     onSuccess?: () => void
 }
@@ -275,7 +276,7 @@ export function OrderForm({ clients, products, clientProducts, onSuccess }: Orde
                                                                     // Auto-fill price if existing product selected
                                                                     const existing = products.find(p => p.name === val);
                                                                     if (existing) {
-                                                                        form.setValue(`items.${index}.unit_price`, existing.base_price);
+                                                                        form.setValue(`items.${index}.unit_price`, existing.price);
                                                                     }
                                                                 }}
                                                                 placeholder="제품 선택 또는 입력..."
