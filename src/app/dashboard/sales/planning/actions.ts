@@ -19,8 +19,8 @@ export async function getSalesPlanning(targetMonth: string) {
         .from('monthly_sales_goals' as any)
         .select('target_amount')
         .eq('sales_person_id', user.id)
-        .eq('year', year)
-        .eq('month', month)
+        .eq('target_year', year)
+        .eq('target_month', month)
         .single() as any)
 
     const target = goalData?.target_amount || 0
@@ -102,17 +102,21 @@ export async function getYearlyGoals(year: number) {
 
     const { data: goals, error } = await (supabase
         .from('monthly_sales_goals' as any)
-        .select('month, target_amount')
+        .select('target_month, target_amount')
         .eq('sales_person_id', user.id)
-        .eq('year', year)
-        .order('month', { ascending: true }) as any)
+        .eq('target_year', year)
+        .order('target_month', { ascending: true }) as any)
 
     if (error) {
         console.error('Failed to fetch yearly goals:', error)
         return []
     }
 
-    return goals || []
+    // Map DB columns to frontend expected format { month, target_amount }
+    return (goals || []).map((g: any) => ({
+        month: g.target_month,
+        target_amount: g.target_amount
+    }))
 }
 
 export async function upsertMonthlyGoals(year: number, goals: { month: number, target_amount: any }[]) {
@@ -126,8 +130,8 @@ export async function upsertMonthlyGoals(year: number, goals: { month: number, t
     try {
         const dataToUpsert = goals.map(g => ({
             sales_person_id: user.id,
-            year: year,
-            month: g.month,
+            target_year: year,
+            target_month: g.month,
             // 무적의 숫자 파싱: 문자열로 변환 후 콤마 제거하고 숫자로 변환
             target_amount: Number(String(g.target_amount || '0').replace(/,/g, '')),
             updated_at: new Date().toISOString()
@@ -136,7 +140,7 @@ export async function upsertMonthlyGoals(year: number, goals: { month: number, t
         const { error } = await (supabase
             .from('monthly_sales_goals' as any)
             .upsert(dataToUpsert as any, {
-                onConflict: 'sales_person_id,year,month'
+                onConflict: 'sales_person_id,target_year,target_month'
             }) as any)
 
         if (error) {
