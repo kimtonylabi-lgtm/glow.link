@@ -45,8 +45,6 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
         resolver: zodResolver(activitySchema),
         defaultValues: {
             client_name: activity?.clients?.company_name || '',
-            product_name: activity?.products?.name || '',
-            client_product_name: activity?.client_products?.name || '',
             type: (activity?.type as any) || 'meeting',
             pipeline_status: (activity?.pipeline_status as any) || 'lead',
             title: activity?.title || '',
@@ -61,8 +59,6 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
         if (activity) {
             form.reset({
                 client_name: activity.clients?.company_name || '',
-                product_name: activity.products?.name || '',
-                client_product_name: activity.client_products?.name || '',
                 type: (activity.type as any) || 'meeting',
                 pipeline_status: (activity.pipeline_status as any) || 'lead',
                 title: activity.title || '',
@@ -74,8 +70,6 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
         } else {
             form.reset({
                 client_name: '',
-                product_name: '',
-                client_product_name: '',
                 type: 'meeting',
                 pipeline_status: 'lead',
                 title: '',
@@ -116,8 +110,6 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
             if (!isEditing) {
                 form.reset({
                     client_name: '',
-                    product_name: '',
-                    client_product_name: '',
                     type: 'meeting',
                     pipeline_status: 'lead',
                     title: '',
@@ -134,102 +126,18 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
     }
 
     const clientOptions = clients.map(c => ({ id: c.id, name: c.company_name }))
-    const productOptions = products.map(p => ({ id: p.id, name: p.name }))
-    const clientProductOptions = clientProducts.map(cp => ({ id: cp.id, name: cp.name }))
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    {/* Client Selection - Full Width */}
-                    <FormField
-                        control={form.control}
-                        name="client_name"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col md:col-span-2">
-                                <FormLabel className="font-bold flex items-center gap-1">
-                                    고객사 <span className="text-primary">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                    <CreatableCombobox
-                                        options={clientOptions}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        placeholder="고객사 선택 또는 직접 입력"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 md:gap-5">
 
-                    {/* Title - Full Width */}
-                    <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                                <FormLabel className="font-bold flex items-center gap-1">
-                                    활동 제목 <span className="text-primary">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="미팅 핵심 주제 요약"
-                                        {...field}
-                                        className="h-11 bg-background/50 border-border/50 focus:border-primary/50 text-base"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Product Selection - Half */}
-                    <FormField
-                        control={form.control}
-                        name="product_name"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel className="font-bold">제품명 (마스터)</FormLabel>
-                                <FormControl>
-                                    <CreatableCombobox
-                                        options={productOptions}
-                                        value={field.value || ''}
-                                        onChange={field.onChange}
-                                        placeholder="제품명 선택 또는 입력"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Client Product Selection - Half */}
-                    <FormField
-                        control={form.control}
-                        name="client_product_name"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel className="font-bold">고객사 제품명</FormLabel>
-                                <FormControl>
-                                    <CreatableCombobox
-                                        options={clientProductOptions}
-                                        value={field.value || ''}
-                                        onChange={field.onChange}
-                                        placeholder="고객사 전용 코드/품명"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Activity Type - Half */}
+                    {/* [Row 1] Type (2) / Status (2) / Date (2) */}
                     <FormField
                         control={form.control}
                         name="type"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="md:col-span-2">
                                 <FormLabel className="font-bold">활동 유형</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
@@ -250,12 +158,11 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                         )}
                     />
 
-                    {/* Pipeline Status - Half */}
                     <FormField
                         control={form.control}
                         name="pipeline_status"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="md:col-span-2">
                                 <FormLabel className="font-bold">파이프라인 단계</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
@@ -277,12 +184,11 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                         )}
                     />
 
-                    {/* Activity Date - Half */}
                     <FormField
                         control={form.control}
                         name="activity_date"
                         render={({ field }) => (
-                            <FormItem className="flex flex-col">
+                            <FormItem className="flex flex-col md:col-span-2">
                                 <FormLabel className="font-bold">활동 날짜</FormLabel>
                                 <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
                                     <PopoverTrigger asChild>
@@ -323,12 +229,99 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                         )}
                     />
 
-                    {/* Next Action Date - Half */}
+                    {/* [Row 2] Client (3) / Title (3) */}
+                    <FormField
+                        control={form.control}
+                        name="client_name"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col md:col-span-3">
+                                <FormLabel className="font-bold flex items-center gap-1">
+                                    고객사 <span className="text-primary">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                    <CreatableCombobox
+                                        options={clientOptions}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="고객사 선택 또는 직접 입력"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-3">
+                                <FormLabel className="font-bold flex items-center gap-1">
+                                    활동 제목 <span className="text-primary">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="미팅 핵심 주제 요약"
+                                        {...field}
+                                        className="h-11 bg-background/50 border-border/50 focus:border-primary/50 text-base"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* [Row 3] Content (6) */}
+                    <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-6">
+                                <FormLabel className="font-bold">상세 활동 내용</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                        rows={5}
+                                        placeholder="회의록 정리, 협의 사항, 향후 계획 등을 자유롭게 기재하세요."
+                                        className="resize-none bg-background/50 border-border/50 focus:border-primary/50 text-base leading-relaxed min-h-[140px]"
+                                        {...field}
+                                        value={field.value || ''}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* [Row 4] Next Action (4) / Next Action Date (2) */}
+                    <FormField
+                        control={form.control}
+                        name="next_action"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FormLabel className="font-bold text-primary flex items-center gap-1">
+                                        다음 액션 계획 (Next Action)
+                                    </FormLabel>
+                                    <div className="h-[1px] flex-1 bg-primary/20" />
+                                </div>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        value={field.value || ''}
+                                        placeholder="예: 샘플 피드백 확인 미팅"
+                                        className="h-11 bg-primary/5 border-primary/20 focus:border-primary/50 text-base"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
                     <FormField
                         control={form.control}
                         name="next_action_date"
                         render={({ field }) => (
-                            <FormItem className="flex flex-col">
+                            <FormItem className="flex flex-col md:col-span-2">
                                 <FormLabel className="font-bold">액션 예정일</FormLabel>
                                 <Popover open={isNextDatePopoverOpen} onOpenChange={setIsNextDatePopoverOpen}>
                                     <PopoverTrigger asChild>
@@ -341,9 +334,9 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                                                 )}
                                             >
                                                 {field.value ? (
-                                                    format(field.value, "PPP", { locale: ko })
+                                                    format(field.value, "PP", { locale: ko })
                                                 ) : (
-                                                    <span>날짜 선택 (선택 사항)</span>
+                                                    <span>날짜 선택</span>
                                                 )}
                                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                             </Button>
@@ -368,54 +361,9 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                             </FormItem>
                         )}
                     />
-
-                    {/* Next Action Content - Full Width */}
-                    <FormField
-                        control={form.control}
-                        name="next_action"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <FormLabel className="font-bold text-primary flex items-center gap-1">
-                                        다음 액션 계획 (Next Action)
-                                    </FormLabel>
-                                    <div className="h-[1px] flex-1 bg-primary/20" />
-                                </div>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        value={field.value || ''}
-                                        placeholder="예: 샘플 피드백 확인 미팅"
-                                        className="h-11 bg-primary/5 border-primary/20 focus:border-primary/50 text-base"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Detailed Content - Full Width */}
-                    <FormField
-                        control={form.control}
-                        name="content"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                                <FormLabel className="font-bold">상세 활동 내용</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        placeholder="회의록 정리, 협의 사항, 향후 계획 등을 자유롭게 기재하세요."
-                                        className="resize-none h-40 bg-background/50 border-border/50 focus:border-primary/50 text-base leading-relaxed"
-                                        {...field}
-                                        value={field.value || ''}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </div>
 
-                <div className="pt-4 sticky bottom-0 bg-card py-4 md:static md:bg-transparent">
+                <div className="pt-4">
                     <Button
                         type="submit"
                         disabled={isLoading}
