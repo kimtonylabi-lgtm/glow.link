@@ -4,39 +4,42 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { activitySchema, type ActivityFormValues } from '@/lib/validations/activity'
 
-async function upsertMasterItem(supabase: any, table: string, name: string, nameColumn: string = 'name') {
-    const trimmedName = name.trim()
-    if (!trimmedName) return null
+async function upsertMasterItem(supabase: any, table: string, name: string, nameColumn: string = 'name', additionalData: any = {}) {
+    const normalizedName = name.trim().toUpperCase()
+    if (!normalizedName) return null
 
     // Check if exists
-    const { data: existing } = await supabase
-        .from(table)
-        .select('id')
-        .eq(nameColumn, trimmedName)
-        .maybeSingle()
+    let query = supabase.from(table).select('id').eq(nameColumn, normalizedName)
+
+    // Support composite unique(client_id, name)
+    if (additionalData.client_id && table === 'client_products') {
+        query = query.eq('client_id', additionalData.client_id)
+    }
+
+    const { data: existing } = await query.maybeSingle()
 
     if (existing) {
-        return { id: existing.id, isNew: false, name: trimmedName }
+        return { id: existing.id, isNew: false, name: normalizedName }
     }
 
     // Insert new
     const { data: inserted, error } = await supabase
         .from(table)
-        .insert({ [nameColumn]: trimmedName })
+        .insert({ [nameColumn]: normalizedName, ...additionalData })
         .select('id')
         .single()
 
     if (error) {
-        // Handle race conditions (another user inserted at the same time)
-        const { data: retry } = await supabase
-            .from(table)
-            .select('id')
-            .eq(nameColumn, trimmedName)
-            .single()
-        return { id: retry?.id, isNew: false, name: trimmedName }
+        // Handle race conditions
+        let retryQuery = supabase.from(table).select('id').eq(nameColumn, normalizedName)
+        if (additionalData.client_id && table === 'client_products') {
+            retryQuery = retryQuery.eq('client_id', additionalData.client_id)
+        }
+        const { data: retry } = await retryQuery.maybeSingle()
+        return { id: retry?.id, isNew: false, name: normalizedName }
     }
 
-    return { id: inserted.id, isNew: true, name: trimmedName }
+    return { id: inserted.id, isNew: true, name: normalizedName }
 }
 
 export async function addActivity(data: ActivityFormValues) {
@@ -59,8 +62,8 @@ export async function addActivity(data: ActivityFormValues) {
         const productResult = parsedData.data.product_name
             ? await upsertMasterItem(supabase, 'products', parsedData.data.product_name)
             : null
-        const clientProductResult = parsedData.data.client_product_name
-            ? await upsertMasterItem(supabase, 'client_products', parsedData.data.client_product_name)
+        const clientProductResult = (parsedData.data.client_product_name && clientResult?.id)
+            ? await upsertMasterItem(supabase, 'client_products', parsedData.data.client_product_name, 'name', { client_id: clientResult.id })
             : null
 
         // 2. Prepare Activity Payload
@@ -120,8 +123,8 @@ export async function updateActivity(id: string, data: ActivityFormValues) {
         const productResult = parsedData.data.product_name
             ? await upsertMasterItem(supabase, 'products', parsedData.data.product_name)
             : null
-        const clientProductResult = parsedData.data.client_product_name
-            ? await upsertMasterItem(supabase, 'client_products', parsedData.data.client_product_name)
+        const clientProductResult = (parsedData.data.client_product_name && clientResult?.id)
+            ? await upsertMasterItem(supabase, 'client_products', parsedData.data.client_product_name, 'name', { client_id: clientResult.id })
             : null
 
         const updatePayload = {

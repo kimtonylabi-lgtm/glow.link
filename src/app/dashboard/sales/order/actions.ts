@@ -15,15 +15,18 @@ async function upsertMasterItem(
     nameValue: string,
     additionalData: any = {}
 ) {
-    const trimmedName = nameValue.trim();
-    if (!trimmedName) return { id: null, isNew: false };
+    const normalizedName = nameValue.trim().toUpperCase();
+    if (!normalizedName) return { id: null, isNew: false };
 
     // 1. Try to find existing
-    const { data: existing } = await supabase
-        .from(table)
-        .select('id')
-        .eq(nameColumn, trimmedName)
-        .maybeSingle();
+    let query = supabase.from(table).select('id').eq(nameColumn, normalizedName);
+
+    // Support composite unique(client_id, name) for client_products
+    if (additionalData.client_id && table === 'client_products') {
+        query = query.eq('client_id', additionalData.client_id);
+    }
+
+    const { data: existing } = await query.maybeSingle();
 
     if (existing) {
         return { id: existing.id, isNew: false };
@@ -32,17 +35,17 @@ async function upsertMasterItem(
     // 2. Insert new if not found
     const { data: inserted, error } = await supabase
         .from(table)
-        .insert({ [nameColumn]: trimmedName, ...additionalData })
+        .insert({ [nameColumn]: normalizedName, ...additionalData })
         .select('id')
         .single();
 
     if (error) {
-        // Handle race condition: check again if someone else inserted it
-        const { data: retry } = await supabase
-            .from(table)
-            .select('id')
-            .eq(nameColumn, trimmedName)
-            .maybeSingle();
+        // Handle race condition
+        let retryQuery = supabase.from(table).select('id').eq(nameColumn, normalizedName);
+        if (additionalData.client_id && table === 'client_products') {
+            retryQuery = retryQuery.eq('client_id', additionalData.client_id);
+        }
+        const { data: retry } = await retryQuery.maybeSingle();
 
         if (retry) return { id: retry.id, isNew: false };
         throw error;
@@ -119,12 +122,13 @@ export async function addOrder(data: OrderFormValues) {
 
             // Upsert Client Product if provided
             let clientProductId = null;
-            if (item.client_product_name) {
+            if (item.client_product_name && clientId) {
                 const { id: cpId, isNew: isNewCP } = await upsertMasterItem(
                     supabase,
                     'client_products',
                     'name',
-                    item.client_product_name
+                    item.client_product_name,
+                    { client_id: clientId }
                 );
                 clientProductId = cpId;
                 if (isNewCP) newMasterItems.push(`고객사 제품: ${item.client_product_name}`);
@@ -153,6 +157,7 @@ export async function addOrder(data: OrderFormValues) {
         }
 
         revalidatePath('/dashboard/sales/order')
+        revalidatePath('/dashboard/sales/activity')
         return {
             success: true,
             newMasterItems: newMasterItems.length > 0 ? newMasterItems : undefined

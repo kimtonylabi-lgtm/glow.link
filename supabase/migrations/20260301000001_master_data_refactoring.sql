@@ -14,8 +14,10 @@ ALTER TABLE public.products ALTER COLUMN item_code DROP NOT NULL;
 -- 4. Create Client Products (고객사 제품명) table
 CREATE TABLE IF NOT EXISTS public.client_products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+    client_id UUID REFERENCES public.clients(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+    UNIQUE(client_id, name)
 );
 
 -- Enable RLS for client_products
