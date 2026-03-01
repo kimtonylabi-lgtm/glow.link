@@ -28,7 +28,14 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
-export function PlanningClient() {
+import { ActivityWithRelations } from '@/types/crm'
+import { SalesKanban } from '@/components/sales/SalesKanban'
+
+interface Props {
+    activities: ActivityWithRelations[]
+}
+
+export function PlanningClient({ activities: initialActivities }: Props) {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
@@ -337,6 +344,20 @@ export function PlanningClient() {
                         </CardContent>
                     </Card>
                 </div>
+            </div>
+
+            {/* v1.6 Highlight: Pipeline Kanban Relocation */}
+            <div className="pt-10 border-t border-border/40">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                        <LayoutTemplate className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black tracking-tight uppercase">Sales Pipeline Kanban</h2>
+                        <p className="text-xs text-muted-foreground">드래그 앤 드롭으로 딜의 진행 상태를 관리하세요.</p>
+                    </div>
+                </div>
+                <SalesKanban initialActivities={initialActivities} />
             </div>
         </div>
     )

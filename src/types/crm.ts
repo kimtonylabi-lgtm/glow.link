@@ -56,6 +56,8 @@ export interface Activity {
     title: string;
     content: string | null;
     activity_date: string;
+    next_action: string | null;
+    next_action_date: string | null;
     created_at: string;
 }
 

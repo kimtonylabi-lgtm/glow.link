@@ -51,6 +51,8 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
             title: activity?.title || '',
             content: activity?.content || '',
             activity_date: activity?.activity_date ? new Date(activity.activity_date) : new Date(),
+            next_action: activity?.next_action || '',
+            next_action_date: activity?.next_action_date ? new Date(activity.next_action_date) : null,
         },
     } as any)
 
@@ -65,6 +67,8 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                 title: activity.title || '',
                 content: activity.content || '',
                 activity_date: activity.activity_date ? new Date(activity.activity_date) : new Date(),
+                next_action: activity.next_action || '',
+                next_action_date: activity.next_action_date ? new Date(activity.next_action_date) : null,
             })
         } else {
             form.reset({
@@ -76,6 +80,8 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                 title: '',
                 content: '',
                 activity_date: new Date(),
+                next_action: '',
+                next_action_date: null,
             })
         }
     }, [activity, form])
@@ -116,6 +122,8 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                     title: '',
                     content: '',
                     activity_date: new Date(),
+                    next_action: '',
+                    next_action_date: null,
                 })
             }
             onSuccess?.()
@@ -286,6 +294,74 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                                                 }}
                                                 disabled={(date) =>
                                                     date > new Date() || date < new Date("1900-01-01")
+                                                }
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    <div className="pt-4 border-t border-border/50 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-black text-primary uppercase tracking-tighter">Next Action</span>
+                            <div className="h-[1px] flex-1 bg-border/30" />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="next_action"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>다음 액션 계획</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            value={field.value || ''}
+                                            placeholder="예: 샘플 피드백 확인 미팅"
+                                            className="bg-background/50 border-border/50 focus:border-primary/50"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="next_action_date"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>액션 예정일</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "w-full pl-3 text-left font-normal bg-background/50 border-border/50",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {field.value ? (
+                                                        format(field.value, "PPP", { locale: ko })
+                                                    ) : (
+                                                        <span>날짜 선택 (선택 사항)</span>
+                                                    )}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0 z-[110]" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value || undefined}
+                                                onSelect={field.onChange}
+                                                disabled={(date) =>
+                                                    date < new Date(new Date().setHours(0, 0, 0, 0))
                                                 }
                                                 initialFocus
                                             />

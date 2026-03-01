@@ -76,6 +76,8 @@ export async function addActivity(data: ActivityFormValues) {
             title: parsedData.data.title.trim(),
             content: parsedData.data.content,
             activity_date: parsedData.data.activity_date.toISOString(),
+            next_action: parsedData.data.next_action?.trim(),
+            next_action_date: parsedData.data.next_action_date?.toISOString(),
             user_id: user.id
         }
 
@@ -136,6 +138,8 @@ export async function updateActivity(id: string, data: ActivityFormValues) {
             title: parsedData.data.title.trim(),
             content: parsedData.data.content,
             activity_date: parsedData.data.activity_date.toISOString(),
+            next_action: parsedData.data.next_action?.trim(),
+            next_action_date: parsedData.data.next_action_date?.toISOString(),
         }
 
         const { error: updateError } = await supabase
