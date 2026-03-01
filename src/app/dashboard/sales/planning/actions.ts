@@ -15,16 +15,16 @@ export async function getSalesPlanning(targetMonth: string, type: 'all' | 'perso
     const [year, month] = targetMonth.split('-').map(Number)
 
     // 2. Get target amount base on type
-    const query = supabase
+    let query = supabase
         .from('monthly_sales_goals' as any)
         .select('target_amount')
         .eq('target_year', year)
         .eq('target_month', month)
 
     if (type === 'personal') {
-        query.eq('sales_person_id', user.id)
+        query = query.eq('sales_person_id', user.id)
     } else {
-        query.is('sales_person_id', null)
+        query = query.is('sales_person_id', null)
     }
 
     const { data: goalData } = await (query.single() as any)
@@ -41,7 +41,7 @@ export async function getSalesPlanning(targetMonth: string, type: 'all' | 'perso
     endOfMonthKST.setHours(endOfMonthKST.getHours() - 9) // Adjust to UTC
     const endDate = endOfMonthKST.toISOString()
 
-    const ordersQuery = supabase
+    let ordersQuery = supabase
         .from('orders')
         .select('total_amount')
         .in('status', ['confirmed', 'production', 'shipped'])
@@ -50,7 +50,7 @@ export async function getSalesPlanning(targetMonth: string, type: 'all' | 'perso
         .lte('order_date', endDate)
 
     if (type === 'personal') {
-        ordersQuery.eq('sales_person_id', user.id)
+        ordersQuery = ordersQuery.eq('sales_person_id', user.id)
     }
 
     const { data: ordersData, error: ordersError } = await ordersQuery
@@ -111,18 +111,18 @@ export async function getYearlyGoals(year: number, type: 'all' | 'personal' = 'p
         throw new Error('Unauthorized')
     }
 
-    const query = supabase
+    let query = supabase
         .from('monthly_sales_goals' as any)
         .select('target_month, target_amount')
         .eq('target_year', year)
 
     if (type === 'personal') {
-        query.eq('sales_person_id', user.id)
+        query = query.eq('sales_person_id', user.id)
     } else {
-        query.is('sales_person_id', null)
+        query = query.is('sales_person_id', null)
     }
 
-    const { data: goals, error } = await (query.order('target_month', { ascending: true }) as any)
+    const { data: goals, error } = await (query.order('target_month', { ascending: true }) as any) // Broadway 로고 등 디자인 컨셉 유지하며 query 재할당 적용
 
     if (error) {
         console.error('Failed to fetch yearly goals:', error)

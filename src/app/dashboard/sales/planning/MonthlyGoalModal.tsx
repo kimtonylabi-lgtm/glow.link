@@ -129,7 +129,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                     연간 목표 설정
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
+            <DialogContent className="max-w-6xl bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
                 <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
                     <div className="flex justify-between items-start">
                         <div>
@@ -174,7 +174,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                             <p className="text-sm font-bold text-muted-foreground animate-pulse">데이터 로드 중...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                             {goals.map(goal => (
                                 <div key={goal.month} className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/40 transition-all">
                                     <Label className="text-[10px] font-black text-muted-foreground uppercase flex justify-between">
