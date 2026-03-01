@@ -32,10 +32,11 @@ interface ActivityFormProps {
     products: Product[]
     clientProducts: ClientProduct[]
     activity?: ActivityWithRelations | null
+    followUpBase?: ActivityWithRelations | null
     onSuccess?: () => void
 }
 
-export function ActivityForm({ clients, products, clientProducts, activity, onSuccess }: ActivityFormProps) {
+export function ActivityForm({ clients, products, clientProducts, activity, followUpBase, onSuccess }: ActivityFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
     const [isNextDatePopoverOpen, setIsNextDatePopoverOpen] = useState(false)
@@ -44,11 +45,11 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
     const form = useForm<ActivityFormValues>({
         resolver: zodResolver(activitySchema),
         defaultValues: {
-            client_name: activity?.clients?.company_name || '',
+            client_name: activity?.clients?.company_name || followUpBase?.clients?.company_name || '',
             type: (activity?.type as any) || 'meeting',
-            pipeline_status: (activity?.pipeline_status as any) || 'lead',
-            title: activity?.title || '',
-            content: activity?.content || '',
+            pipeline_status: (activity?.pipeline_status as any) || (followUpBase?.pipeline_status as any) || 'lead',
+            title: activity?.title || (followUpBase ? `[팔로우업] ${followUpBase.next_action || followUpBase.title}` : ''),
+            content: activity?.content || (followUpBase ? `이전 액션: ${followUpBase.next_action || '없음'}\n------------------\n` : ''),
             activity_date: activity?.activity_date ? new Date(activity.activity_date) : new Date(),
             next_action: activity?.next_action || '',
             next_action_date: activity?.next_action_date ? new Date(activity.next_action_date) : null,
@@ -67,6 +68,17 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                 next_action: activity.next_action || '',
                 next_action_date: activity.next_action_date ? new Date(activity.next_action_date) : null,
             })
+        } else if (followUpBase) {
+            form.reset({
+                client_name: followUpBase.clients?.company_name || '',
+                type: 'meeting',
+                pipeline_status: (followUpBase.pipeline_status as any) || 'lead',
+                title: `[팔로우업] ${followUpBase.next_action || followUpBase.title}`,
+                content: `이전 액션: ${followUpBase.next_action || '없음'}\n------------------\n`,
+                activity_date: new Date(),
+                next_action: '',
+                next_action_date: null,
+            })
         } else {
             form.reset({
                 client_name: '',
@@ -79,7 +91,7 @@ export function ActivityForm({ clients, products, clientProducts, activity, onSu
                 next_action_date: null,
             })
         }
-    }, [activity, form])
+    }, [activity, followUpBase, form])
 
     async function onSubmit(data: ActivityFormValues) {
         setIsLoading(true)

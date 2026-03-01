@@ -42,6 +42,19 @@ async function upsertMasterItem(supabase: any, table: string, name: string, name
     return { id: inserted.id, isNew: true, name: normalizedName }
 }
 
+async function syncClientPipelineStatus(supabase: any, clientId: string, status?: string) {
+    if (!clientId || !status) return
+
+    const { error } = await supabase
+        .from('clients')
+        .update({ pipeline_status: status })
+        .eq('id', clientId)
+
+    if (error) {
+        console.error('Failed to sync pipeline status to client:', error.message)
+    }
+}
+
 export async function addActivity(data: ActivityFormValues) {
     try {
         const supabase = await createClient()
@@ -89,6 +102,11 @@ export async function addActivity(data: ActivityFormValues) {
             return { error: insertError.message }
         }
 
+        // 3. Auto-Sync Pipeline Status to Client
+        if (clientResult?.id && parsedData.data.pipeline_status) {
+            await syncClientPipelineStatus(supabase, clientResult.id, parsedData.data.pipeline_status)
+        }
+
         // Identify newly created master items for toast feedback
         const newMasterItems = []
         if (clientResult?.isNew) newMasterItems.push('고객사')
@@ -96,6 +114,7 @@ export async function addActivity(data: ActivityFormValues) {
         if (clientProductResult?.isNew) newMasterItems.push('고객사 제품명')
 
         revalidatePath('/dashboard/sales/activity')
+        revalidatePath('/dashboard/sales/planning') // For Kanban sync
         return { success: true, newMasterItems }
     } catch (err: unknown) {
         if (err instanceof Error) {
@@ -151,12 +170,18 @@ export async function updateActivity(id: string, data: ActivityFormValues) {
             return { error: updateError.message }
         }
 
+        // 2. Auto-Sync Pipeline Status to Client
+        if (clientResult?.id && parsedData.data.pipeline_status) {
+            await syncClientPipelineStatus(supabase, clientResult.id, parsedData.data.pipeline_status)
+        }
+
         const newMasterItems = []
         if (clientResult?.isNew) newMasterItems.push('고객사명')
         if (productResult?.isNew) newMasterItems.push('제품명')
         if (clientProductResult?.isNew) newMasterItems.push('고객사 제품명')
 
         revalidatePath('/dashboard/sales/activity')
+        revalidatePath('/dashboard/sales/planning') // For Kanban sync
         return { success: true, newMasterItems }
     } catch (err: unknown) {
         if (err instanceof Error) {

@@ -35,6 +35,7 @@ interface TimelineProps {
     activities: ActivityWithRelations[]
     clients: Client[]
     onEdit: (activity: ActivityWithRelations) => void
+    onFollowUp: (activity: ActivityWithRelations) => void
 }
 
 const getIcon = (type: string) => {
@@ -92,7 +93,7 @@ const getTypeText = (type: string) => {
     }
 }
 
-export function Timeline({ activities, clients, onEdit }: TimelineProps) {
+export function Timeline({ activities, clients, onEdit, onFollowUp }: TimelineProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const selectedClientId = searchParams.get('client') || 'all'
@@ -127,6 +128,9 @@ export function Timeline({ activities, clients, onEdit }: TimelineProps) {
     }
 
     const filteredActivities = activities.filter(a => {
+        const matchesClient = selectedClientId === 'all' || a.client_id === selectedClientId
+        if (!matchesClient) return false
+
         if (selectedDate) {
             return format(new Date(a.activity_date), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
         }
@@ -210,22 +214,32 @@ export function Timeline({ activities, clients, onEdit }: TimelineProps) {
                                             </div>
                                         </div>
 
-                                        {/* Action Menu */}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/50">
-                                                <DropdownMenuItem onClick={() => onEdit(activity)} className="cursor-pointer">
-                                                    <Pencil className="mr-2 h-4 w-4" /> 수정
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setDeleteId(activity.id)} className="cursor-pointer text-red-400 focus:text-red-300">
-                                                    <Trash2 className="mr-2 h-4 w-4" /> 삭제
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => onFollowUp(activity)}
+                                                className="h-8 text-[11px] font-black text-primary hover:bg-primary/10 transition-all flex items-center gap-1.5"
+                                            >
+                                                <RefreshCw className="h-3 w-3" /> 팔로우업 기록
+                                            </Button>
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/50">
+                                                    <DropdownMenuItem onClick={() => onEdit(activity)} className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" /> 수정
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setDeleteId(activity.id)} className="cursor-pointer text-red-400 focus:text-red-300">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </div>
 
                                     {activity.content && (
