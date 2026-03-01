@@ -122,7 +122,7 @@ export async function getYearlyGoals(year: number, type: 'all' | 'personal' = 'p
         query = query.is('sales_person_id', null)
     }
 
-    const { data: goals, error } = await (query.order('target_month', { ascending: true }) as any) // Broadway 로고 등 디자인 컨셉 유지하며 query 재할당 적용
+    const { data: goals, error } = await (query.order('target_month', { ascending: true }) as any)
 
     if (error) {
         console.error('Failed to fetch yearly goals:', error)

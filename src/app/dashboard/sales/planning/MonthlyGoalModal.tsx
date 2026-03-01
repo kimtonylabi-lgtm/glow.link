@@ -129,7 +129,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                     연간 목표 설정
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
+            <DialogContent className="max-w-[1300px] w-[95vw] bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
                 <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
                     <div className="flex justify-between items-start">
                         <div>
@@ -174,21 +174,20 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                             <p className="text-sm font-bold text-muted-foreground animate-pulse">데이터 로드 중...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                             {goals.map(goal => (
-                                <div key={goal.month} className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/40 transition-all">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase flex justify-between">
-                                        <span>{goal.month}월</span>
-                                        <span className="text-primary/50">Target KRW</span>
+                                <div key={goal.month} className="space-y-1 p-3 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/50 focus-within:bg-primary/5 transition-all">
+                                    <Label className="text-xs font-black text-muted-foreground">
+                                        {goal.month}월
                                     </Label>
-                                    <div className="relative">
+                                    <div className="relative flex items-center">
                                         <Input
                                             value={formatNumber(goal.target_amount || '')}
                                             onChange={(e) => handleChange(goal.month, e.target.value)}
                                             placeholder="0"
-                                            className="h-10 font-mono text-sm border-none bg-transparent p-0 focus-visible:ring-0"
+                                            className="h-9 font-mono text-sm border-none bg-transparent pl-0 pr-6 focus-visible:ring-0"
                                         />
-                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-30 pointer-events-none">원</div>
+                                        <span className="absolute right-1 text-[10px] text-muted-foreground/40 font-bold pointer-events-none">원</span>
                                     </div>
                                 </div>
                             ))}

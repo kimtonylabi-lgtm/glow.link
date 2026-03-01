@@ -93,7 +93,7 @@ export function PlanningClient({ activities: initialActivities }: Props) {
     useEffect(() => {
         fetchData(targetType)
     }, [monthStr, targetType])
-    // Broadway 로고 컨셉 유지하며 useEffect 의존성 추가
+
     const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
 
