@@ -158,6 +158,7 @@ export async function addOrder(data: OrderFormValues) {
 
         revalidatePath('/dashboard/sales/order')
         revalidatePath('/dashboard/sales/activity')
+        revalidatePath('/dashboard/sales/planning')
         return {
             success: true,
             newMasterItems: newMasterItems.length > 0 ? newMasterItems : undefined
