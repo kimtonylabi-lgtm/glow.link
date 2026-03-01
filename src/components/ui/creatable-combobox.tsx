@@ -87,52 +87,61 @@ export function CreatableCombobox({
                         }}
                     />
                     <CommandList className="max-h-[300px]">
-                        <CommandEmpty className="p-0">
-                            {showCreatable ? (
-                                <div
-                                    className="flex items-center gap-2 px-4 py-3 cursor-pointer text-primary font-bold hover:bg-primary/10 transition-colors border-b border-border/40"
-                                    onClick={() => handleSelect(search)}
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>"{search.trim()}" 추가하기</span>
-                                </div>
-                            ) : (
-                                <div className="py-6 text-center text-sm text-muted-foreground">
-                                    {emptyMessage}
-                                </div>
-                            )}
-                        </CommandEmpty>
+                        {search.trim() !== "" ? (
+                            <>
+                                <CommandEmpty className="p-0">
+                                    {showCreatable ? (
+                                        <div
+                                            className="flex items-center gap-2 px-4 py-3 cursor-pointer text-primary font-bold hover:bg-primary/10 transition-colors border-b border-border/40"
+                                            onClick={() => handleSelect(search)}
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            <span>"{search.trim()}" 추가하기</span>
+                                        </div>
+                                    ) : (
+                                        <div className="py-6 text-center text-sm text-muted-foreground">
+                                            {emptyMessage}
+                                        </div>
+                                    )}
+                                </CommandEmpty>
 
-                        <CommandGroup>
-                            {options.map((option, idx) => (
-                                <CommandItem
-                                    key={option.id || `${option.name}-${idx}`}
-                                    value={option.name}
-                                    onSelect={(currentValue) => handleSelect(currentValue)}
-                                    className="cursor-pointer"
-                                >
-                                    <Check
-                                        className={cn(
-                                            "mr-2 h-4 w-4",
-                                            value === option.name ? "opacity-100 text-primary" : "opacity-0"
-                                        )}
-                                    />
-                                    {option.name}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
+                                <CommandGroup>
+                                    {options.map((option, idx) => (
+                                        <CommandItem
+                                            key={option.id || `${option.name}-${idx}`}
+                                            value={option.name}
+                                            onSelect={(currentValue) => handleSelect(currentValue)}
+                                            className="cursor-pointer"
+                                        >
+                                            <Check
+                                                className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    value === option.name ? "opacity-100 text-primary" : "opacity-0"
+                                                )}
+                                            />
+                                            {option.name}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
 
-                        {showCreatable && options.length > 0 && (
-                            <CommandGroup className="border-t border-border/40 mt-1 pt-1">
-                                <CommandItem
-                                    value={search.trim()}
-                                    onSelect={(val) => handleSelect(val)}
-                                    className="text-primary font-bold cursor-pointer"
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    <span>"{search.trim()}" 추가하기</span>
-                                </CommandItem>
-                            </CommandGroup>
+                                {showCreatable && options.length > 0 && (
+                                    <CommandGroup className="border-t border-border/40 mt-1 pt-1">
+                                        <CommandItem
+                                            value={search.trim()}
+                                            onSelect={(val) => handleSelect(val)}
+                                            className="text-primary font-bold cursor-pointer"
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            <span>"{search.trim()}" 추가하기</span>
+                                        </CommandItem>
+                                    </CommandGroup>
+                                )}
+                            </>
+                        ) : (
+                            <div className="py-12 text-center text-sm text-muted-foreground animate-in fade-in zoom-in duration-300">
+                                <p>검색어를 입력하여 항목을 찾거나</p>
+                                <p className="mt-1">새로운 항목을 추가하세요.</p>
+                            </div>
                         )}
                     </CommandList>
                 </Command>
