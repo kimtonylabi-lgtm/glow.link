@@ -121,7 +121,7 @@ export async function updateActivity(id: string, data: ActivityFormValues) {
         // 1. Upsert Master Data
         const clientResult = await upsertMasterItem(supabase, 'clients', parsedData.data.client_name, 'company_name')
         const productResult = parsedData.data.product_name
-            ? await upsertMasterItem(supabase, 'products', parsedData.data.product_name)
+            ? await upsertMasterItem(supabase, 'products', parsedData.data.product_name, 'name', { category: 'bottle', price: 0 })
             : null
         const clientProductResult = (parsedData.data.client_product_name && clientResult?.id)
             ? await upsertMasterItem(supabase, 'client_products', parsedData.data.client_product_name, 'name', { client_id: clientResult.id })
