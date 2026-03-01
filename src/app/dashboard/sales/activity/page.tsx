@@ -32,8 +32,8 @@ export default async function ActivityPage({ searchParams }: Props) {
     const products = (productsData || []) as Product[]
 
     // Fetch Client Products
-    const { data: clientProductsData } = await supabase
-        .from('client_products' as any)
+    const { data: clientProductsData } = await (supabase
+        .from('client_products' as any) as any)
         .select('*')
         .order('name', { ascending: true })
 
