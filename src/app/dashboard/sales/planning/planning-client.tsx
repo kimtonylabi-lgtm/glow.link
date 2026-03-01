@@ -21,7 +21,9 @@ import {
     ArrowRight,
     FileText,
     Users,
-    Zap
+    Zap,
+    PieChart,
+    LayoutDashboard
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -117,7 +119,7 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                             <h1 className="text-3xl font-black tracking-tighter bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
                                 영업기획 대시보드
                             </h1>
-                            <Badge variant="outline" className="text-[10px] py-0.5 px-2 border-primary/30 text-primary font-black uppercase tracking-widest animate-pulse bg-primary/5">v2.2 PRO</Badge>
+                            <Badge variant="outline" className="text-[10px] py-0.5 px-2 border-primary/30 text-primary font-black uppercase tracking-widest animate-pulse bg-primary/5">v2.3 HOTFIX</Badge>
                         </div>
                         <p className="text-sm font-medium text-muted-foreground mt-1 tracking-tight">KST 실시간 수주 실적 및 목표 달성률을 분석합니다.</p>
                     </div>
@@ -167,209 +169,160 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-3 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Target Summary Card */}
-                        <Card className="bg-card/30 backdrop-blur-3xl border border-border/40 rounded-[2.5rem] shadow-xl overflow-hidden group hover:border-primary/30 transition-all">
-                            <CardHeader className="p-8 pb-4">
-                                <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
-                                    <Target className="w-4 h-4 text-primary" /> Monthly Sales Target
+            {/* Main Dashboard Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* 1. Gauge Chart Section (Achievement) */}
+                <Card className="lg:col-span-12 xl:col-span-5 bg-card/40 backdrop-blur-3xl border border-border/40 rounded-[2.5rem] shadow-2xl ring-1 ring-white/5 overflow-hidden group">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-xl font-black flex items-center gap-2">
+                                    <TrendingUp className="w-5 h-5 text-primary" />
+                                    Real-time Achievement
                                 </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-8 pt-0">
-                                {isLoading ? (
-                                    <div className="h-32 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary/20" /></div>
-                                ) : targetAmount > 0 ? (
-                                    <div className="space-y-6">
-                                        <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">Target for {monthStr}</div>
-                                            <div className="text-4xl font-mono font-black tracking-tighter flex items-baseline gap-2">
-                                                <span>₩</span>
-                                                <span className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">{targetAmount.toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                        <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
-                                            <div className="flex justify-between text-[10px] font-black uppercase text-primary/70">
-                                                <span>Live Progress</span>
-                                                <span>{percentage}%</span>
-                                            </div>
-                                            <Progress value={Math.min(percentage, 100)} className="h-2.5 bg-background shadow-inner" indicatorClassName="bg-gradient-to-r from-primary to-purple-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]" />
-                                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed italic">
-                                                *목표 설정 모달에서 월별 목표를 언제든 수정할 수 있습니다.
-                                            </p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-10 gap-5 text-center px-4">
-                                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                            <Info className="w-6 h-6" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <h4 className="font-black text-lg">목표가 설정되지 않았습니다.</h4>
-                                            <p className="text-xs text-muted-foreground font-medium leading-relaxed">이번 달 매출 목표를 먼저 등록해야<br />달성률 분석을 시작할 수 있습니다.</p>
-                                        </div>
-                                        <MonthlyGoalModal onSuccess={fetchData} />
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Gauge Chart Achievement Card */}
-                        <Card className={cn(
-                            "bg-card/40 backdrop-blur-3xl border border-border/40 rounded-[2.5rem] shadow-2xl transition-all duration-1000 overflow-hidden relative",
-                            isOverAchieved ? "ring-2 ring-emerald-500/50 shadow-emerald-500/20" : "ring-1 ring-white/5"
-                        )}>
-                            {isOverAchieved && (
-                                <div className="absolute top-0 right-0 p-3 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-tighter rounded-bl-2xl animate-pulse z-20">
-                                    Target Smashed! ✨
-                                </div>
-                            )}
-                            <CardHeader className="p-8 pb-0">
-                                <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
-                                    <TrendingUp className={cn("w-4 h-4", isOverAchieved ? "text-emerald-500" : "text-blue-500")} /> Real-time Achievement
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-4 flex flex-col items-center relative h-64">
-                                {isLoading ? (
-                                    <div className="h-full flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary/20" /></div>
-                                ) : targetAmount > 0 ? (
-                                    <>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <RadialBarChart
-                                                innerRadius="80%"
-                                                outerRadius="110%"
-                                                data={chartData}
-                                                startAngle={210}
-                                                endAngle={-30}
-                                            >
-                                                <defs>
-                                                    <linearGradient id="activeGradient" x1="0" y1="0" x2="1" y2="0">
-                                                        <stop offset="0%" stopColor="#8b5cf6" />
-                                                        <stop offset="100%" stopColor="#3b82f6" />
-                                                    </linearGradient>
-                                                    <linearGradient id="successGradient" x1="0" y1="0" x2="1" y2="0">
-                                                        <stop offset="0%" stopColor="#10b981" />
-                                                        <stop offset="100%" stopColor="#d4af37" />
-                                                    </linearGradient>
-                                                </defs>
-                                                <PolarAngleAxis
-                                                    type="number"
-                                                    domain={[0, 100]}
-                                                    angleAxisId={0}
-                                                    tick={false}
-                                                />
-                                                <RadialBar
-                                                    background={{ fill: 'rgba(255,255,255,0.05)' }}
-                                                    dataKey="value"
-                                                    cornerRadius={30}
-                                                />
-                                            </RadialBarChart>
-                                        </ResponsiveContainer>
-
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pt-10">
-                                            <span className={cn(
-                                                "text-6xl font-mono font-black tracking-tighter",
-                                                isOverAchieved ? "text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]" : "text-primary"
-                                            )}>
-                                                {percentage}%
-                                            </span>
-                                            <div className="mt-2 text-center">
-                                                <div className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-widest leading-none">Actual Results</div>
-                                                <div className="text-lg font-mono font-black tracking-tight mt-1">₩ {actualAmount.toLocaleString()}</div>
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-4">
-                                        <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground/40 animate-pulse">
-                                            <AlertCircle className="w-8 h-8" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">No Active Target</p>
-                                            <p className="text-[10px] font-medium text-muted-foreground/40">달성률을 분석하려면 이번 달 목표를 먼저 설정하세요.</p>
-                                        </div>
-                                        <MonthlyGoalModal onSuccess={fetchData} />
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* v2.2 Dashboard Feature: Repositioned Pipeline Kanban */}
-                    <div className="pt-4 border-t border-border/40">
-                        <div className="flex items-center justify-between mb-8 px-2">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shadow-lg shadow-purple-500/10">
-                                    <LayoutTemplate className="w-6 h-6 text-purple-400" />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black tracking-tighter uppercase italic">Sales Pipeline Kanban</h2>
-                                    <p className="text-xs font-semibold text-muted-foreground mt-1">실시간 영업 활동 데이터가 반영된 파이프라인 정적 뷰입니다.</p>
-                                </div>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">당월 수주 달성률</p>
                             </div>
-                            <div className="flex items-center gap-3">
-                                {Object.entries(pipelineStats).slice(0, 3).map(([key, count]) => (
-                                    <div key={key} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border/40 shadow-sm text-[10px] font-black uppercase">
-                                        <span className="text-muted-foreground">{key}</span>
-                                        <span className="text-primary">{count}</span>
-                                    </div>
-                                ))}
+                            <div className="text-right">
+                                <span className={cn(
+                                    "text-3xl font-black font-mono tracking-tighter",
+                                    isOverAchieved ? "text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]" : "text-primary"
+                                )}>
+                                    {percentage}%
+                                </span>
                             </div>
                         </div>
-                        <SalesKanban initialActivities={initialActivities} />
+                    </CardHeader>
+                    <CardContent className="h-[300px] flex items-center justify-center relative">
+                        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
+                        {isLoading ? (
+                            <Loader2 className="w-10 h-10 animate-spin text-primary/20" />
+                        ) : targetAmount > 0 ? (
+                            <>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RadialBarChart
+                                        cx="50%"
+                                        cy="80%"
+                                        innerRadius="100%"
+                                        outerRadius="140%"
+                                        startAngle={180}
+                                        endAngle={0}
+                                        barSize={20}
+                                        data={chartData}
+                                    >
+                                        <defs>
+                                            <linearGradient id="activeGradient" x1="0" y1="0" x2="1" y2="0">
+                                                <stop offset="0%" stopColor="#8b5cf6" />
+                                                <stop offset="100%" stopColor="#3b82f6" />
+                                            </linearGradient>
+                                            <linearGradient id="successGradient" x1="0" y1="0" x2="1" y2="0">
+                                                <stop offset="0%" stopColor="#10b981" />
+                                                <stop offset="100%" stopColor="#34d399" />
+                                            </linearGradient>
+                                        </defs>
+                                        <RadialBar
+                                            background={{ fill: 'rgba(255,255,255,0.05)' }}
+                                            dataKey="value"
+                                            cornerRadius={15}
+                                            animationBegin={0}
+                                            animationDuration={1500}
+                                            animationEasing="ease-out"
+                                        />
+                                    </RadialBarChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center mt-20">
+                                    <p className="text-xs font-bold text-muted-foreground uppercase opacity-50 mb-1">Target Amount</p>
+                                    <p className="text-lg font-black font-mono tracking-tighter">
+                                        ₩ {targetAmount.toLocaleString()}
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-4">
+                                <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground/40 animate-pulse">
+                                    <AlertCircle className="w-8 h-8" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">No Active Target</p>
+                                    <p className="text-[10px] font-medium text-muted-foreground/40">달성률을 분석하려면 이번 달 목표를 먼저 설정하세요.</p>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* 2. Monthly Target & Management Row Merge */}
+                <div className="lg:col-span-12 xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    {/* Target Amount Component (Monthly) */}
+                    <Card className="bg-card/40 backdrop-blur-3xl border border-border/40 rounded-[2.5rem] shadow-2xl ring-1 ring-white/5 overflow-hidden group h-full">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-black flex items-center gap-2">
+                                <LayoutDashboard className="w-5 h-5 text-primary" />
+                                Monthly Sales Target
+                            </CardTitle>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">목표 매출액 관리</p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col gap-4">
+                                <div className="p-6 rounded-[2rem] bg-muted/20 border border-border/20 group-hover:border-primary/30 transition-all">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 block">Current Month Goal</Label>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-3xl font-black font-mono tracking-tighter">₩ {targetAmount.toLocaleString()}</span>
+                                        <span className="text-xs font-bold text-muted-foreground mb-1.5 uppercase opacity-30 tracking-widest">KRW</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                                    <div className="w-1.5 h-10 bg-primary/40 rounded-full" />
+                                    <p className="text-[11px] text-muted-foreground font-medium leading-relaxed opacity-80">
+                                        매월 영업 전략에 맞춰 설정된 매출 목표입니다. <br />
+                                        실시간 수주 데이터를 기반으로 집계됩니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Management Tools (Compressed) */}
+                    <div className="bg-gradient-to-br from-primary via-primary/80 to-blue-600 rounded-[2.5rem] p-8 text-primary-foreground shadow-2xl shadow-primary/20 group h-full relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black tracking-tighter">Management Tools</h3>
+                            <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">영업 기획 핵심 도구</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 mt-6">
+                            <Button variant="secondary" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs gap-2 group" asChild>
+                                <Link href="/dashboard/sales/crm">
+                                    <Users className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                    CRM 분석실
+                                </Link>
+                            </Button>
+                            <Button variant="secondary" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs gap-2 group" asChild>
+                                <Link href="/dashboard/sales/reports">
+                                    <FileText className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                    실적 리포트
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Sidebar Column */}
-                <div className="space-y-8">
-                    <Card className="bg-primary/5 border-primary/30 border-2 rounded-[2rem] overflow-hidden relative shadow-2xl shadow-primary/5">
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-[80px]" />
-                        <CardHeader className="p-6 pb-2 relative z-10">
-                            <CardTitle className="text-xs font-black uppercase tracking-[0.3em] flex items-center gap-2 text-primary">
-                                <Zap className="w-3.5 h-3.5 fill-primary" /> Strategy Insight
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 pt-2 space-y-5 relative z-10">
-                            <div className="text-sm leading-relaxed font-bold tracking-tight">
-                                {targetAmount === 0 ? (
-                                    <p className="text-muted-foreground/50">목표가 설정되지 않았습니다.</p>
-                                ) : percentage < 50 ? (
-                                    <p>현재 페이스가 다소 느립니다. <span className="text-amber-500 font-extrabold underline decoration-amber-500/30">견적({pipelineStats.quote || 0}건)</span> 단계의 발주 전환에 집중하세요.</p>
-                                ) : percentage < 100 ? (
-                                    <p>승기를 잡았습니다! <span className="text-emerald-500 font-extrabold">네고({pipelineStats.negotiation || 0}건)</span> 중인 대형 딜 클로징으로 이번 달 실적을 확정하세요.</p>
-                                ) : (
-                                    <p className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-amber-500 font-black text-lg">Goal Achieved! ✨ 전사적 성과 보상 및 익월 리드 확보에 전념하세요.</p>
-                                )}
-                            </div>
-                            <div className="p-4 bg-black/40 rounded-2xl border border-primary/20 shadow-inner">
-                                <div className="text-[10px] font-black text-primary uppercase mb-2 tracking-widest opacity-60">AI Recommendation</div>
-                                <div className="text-xs leading-snug font-medium text-foreground/90">
-                                    최근 <span className="text-emerald-400 font-bold">샘플 요약 분석</span> 결과, 샘플 발송 후 7일 이내 후속 미팅 시 성사율이 <span className="underline decoration-emerald-400 font-bold italic">2.4배</span> 상승합니다.
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* 3. Full Width Kanban Section */}
+                <div className="lg:col-span-12 pt-4">
+                    <div className="flex items-center justify-between mb-8 px-4">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-black tracking-tighter uppercase italic flex items-center gap-3">
+                                <div className="w-2 h-8 bg-primary rounded-full" />
+                                Sales Pipeline Kanban
+                            </h2>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">영업 활동 기반의 파이프라인 단계별 현황</p>
+                        </div>
+                        <div className="text-[10px] font-black px-4 py-2 bg-primary/10 border border-primary/20 text-primary rounded-full uppercase tracking-widest animate-pulse">
+                            View Only Mode
+                        </div>
+                    </div>
 
-                    <Card className="bg-card/40 border-border/40 rounded-[2rem] shadow-xl overflow-hidden">
-                        <CardHeader className="p-6 pb-2">
-                            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em]">Management Tools</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 flex flex-col gap-3">
-                            <Button variant="outline" size="lg" asChild className="justify-start text-xs font-black border-border/50 hover:border-primary/50 transition-all h-14 rounded-2xl bg-background/30 hover:bg-primary/5 group">
-                                <Link href="/dashboard/sales/crm">
-                                    <Users className="mr-3 h-5 w-5 text-blue-400 group-hover:scale-110 transition-transform" />
-                                    <span>고객사 등급 상세분석 <ArrowRight className="ml-auto w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" /></span>
-                                </Link>
-                            </Button>
-                            <Button variant="outline" size="lg" asChild className="justify-start text-xs font-black border-border/50 hover:border-primary/50 transition-all h-14 rounded-2xl bg-background/30 hover:bg-primary/5 group">
-                                <Link href="/dashboard/sales/reports">
-                                    <FileText className="mr-3 h-5 w-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                                    <span>영업 실적 분석실 <ArrowRight className="ml-auto w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" /></span>
-                                </Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <div className="bg-card/20 backdrop-blur-3xl rounded-[3rem] border border-border/40 p-1 shadow-2xl overflow-hidden min-h-[600px]">
+                        <SalesKanban initialActivities={initialActivities} />
+                    </div>
                 </div>
             </div>
         </div>

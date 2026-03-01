@@ -36,8 +36,10 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
     const kstYear = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getFullYear()
     const [selectedYear, setSelectedYear] = useState(kstYear.toString())
 
-    // Goals state: { month: amount_string }
-    const [goals, setGoals] = useState<Record<number, string>>({})
+    // Goals state: Array<{ month: number, target_amount: string }>
+    const [goals, setGoals] = useState<{ month: number, target_amount: string }[]>(
+        Array.from({ length: 12 }, (_, i) => ({ month: i + 1, target_amount: '' }))
+    )
 
     const years = Array.from({ length: 5 }, (_, i) => (kstYear - 1 + i).toString())
 
@@ -45,9 +47,13 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
         setIsLoading(true)
         try {
             const data = await getYearlyGoals(parseInt(year))
-            const newGoals: Record<number, string> = {}
-            data.forEach((g: any) => {
-                newGoals[g.month] = g.target_amount.toString()
+            const newGoals = Array.from({ length: 12 }, (_, i) => {
+                const month = i + 1
+                const match = data.find((g: any) => g.month === month)
+                return {
+                    month,
+                    target_amount: match ? match.target_amount.toString() : ''
+                }
             })
             setGoals(newGoals)
         } catch (error) {
@@ -65,40 +71,49 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
     }, [open, selectedYear])
 
     const formatNumber = (val: string) => {
-        const num = val.replace(/,/g, '')
+        const num = val.toString().replace(/,/g, '')
         if (!num || isNaN(Number(num))) return ''
-        return Number(num).toLocaleString()
+        return Number(num).toLocaleString('ko-KR')
     }
 
     const handleChange = (month: number, value: string) => {
         const rawValue = value.replace(/,/g, '')
         if (/^\d*$/.test(rawValue)) {
-            setGoals(prev => ({ ...prev, [month]: rawValue }))
+            setGoals(prev => prev.map(g =>
+                g.month === month ? { ...g, target_amount: rawValue } : g
+            ))
         }
     }
 
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            const goalsArray = Array.from({ length: 12 }, (_, i) => ({
-                month: i + 1,
-                target_amount: parseInt(goals[i + 1] || '0')
+            // 콤마 제거 후 숫자 타입으로 변환 (NaN 방지)
+            const parsedGoals = goals.map(goal => ({
+                month: goal.month,
+                target_amount: Number(goal.target_amount.replace(/,/g, '')) || 0
             }))
 
-            const result = await upsertMonthlyGoals(parseInt(selectedYear), goalsArray)
+            const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals)
             if (result.success) {
-                toast.success(`${selectedYear}년도 연간 목표가 저장되었습니다.`)
-                setOpen(false)
+                toast.success(`${selectedYear}년 목표가 저장되었습니다.`)
                 if (onSuccess) onSuccess()
+                setOpen(false)
             } else {
-                toast.error(result.error)
+                toast.error(result.error || '오류가 발생했습니다.')
             }
         } catch (error) {
-            toast.error('저장 중 오류가 발생했습니다.')
+            toast.error('오류가 발생했습니다.')
         } finally {
             setIsSaving(false)
         }
     }
+
+    // 연간 총 목표액 계산 (콤마 제거 후 숫자 합산)
+    const totalYearlyGoal = goals.reduce((sum, goal) => {
+        const val = Number(goal.target_amount.replace(/,/g, ''))
+        return sum + (isNaN(val) ? 0 : val)
+    }, 0)
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -145,16 +160,16 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                                <div key={month} className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/40 transition-all">
+                            {goals.map(goal => (
+                                <div key={goal.month} className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/40 transition-all">
                                     <Label className="text-[10px] font-black text-muted-foreground uppercase flex justify-between">
-                                        <span>{month}월</span>
+                                        <span>{goal.month}월</span>
                                         <span className="text-primary/50">Target KRW</span>
                                     </Label>
                                     <div className="relative">
                                         <Input
-                                            value={formatNumber(goals[month] || '')}
-                                            onChange={(e) => handleChange(month, e.target.value)}
+                                            value={formatNumber(goal.target_amount || '')}
+                                            onChange={(e) => handleChange(goal.month, e.target.value)}
                                             placeholder="0"
                                             className="h-10 font-mono text-sm border-none bg-transparent p-0 focus-visible:ring-0"
                                         />
@@ -165,16 +180,24 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-border/40">
-                        <Button variant="ghost" onClick={() => setOpen(false)} className="rounded-xl font-bold">취소</Button>
-                        <Button
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-32 h-11 rounded-xl font-black shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                        >
-                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            전체 저장
-                        </Button>
+                    <div className="flex items-center justify-between border-t border-border/40 pt-4 mt-2">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Annual Total Target</span>
+                            <span className="text-xl font-black text-primary font-mono">
+                                ₩ {totalYearlyGoal.toLocaleString('ko-KR')}
+                            </span>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="ghost" onClick={() => setOpen(false)} className="rounded-xl font-bold">취소</Button>
+                            <Button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-32 h-11 rounded-xl font-black shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                            >
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                전체 저장
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </DialogContent>
