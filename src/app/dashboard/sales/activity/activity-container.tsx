@@ -24,15 +24,27 @@ interface ActivityContainerProps {
     clientProducts: ClientProduct[]
 }
 
+import { useRouter, useSearchParams } from 'next/navigation'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
+import { Calendar } from '@/components/ui/calendar'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Calendar as CalendarIcon, RefreshCw } from 'lucide-react'
+
 export function ActivityContainer({
     initialActivities,
     clients,
     products,
     clientProducts
 }: ActivityContainerProps) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedActivity, setSelectedActivity] = useState<ActivityWithRelations | null>(null)
     const [followUpActivity, setFollowUpActivity] = useState<ActivityWithRelations | null>(null)
+
+    const selectedDateStr = searchParams.get('date')
+    const selectedDate = selectedDateStr ? new Date(selectedDateStr) : null
 
     const handleEdit = (activity: ActivityWithRelations) => {
         setSelectedActivity(activity)
@@ -56,6 +68,16 @@ export function ActivityContainer({
         setIsModalOpen(false)
         setSelectedActivity(null)
         setFollowUpActivity(null)
+    }
+
+    const handleDateSelect = (date: Date | undefined) => {
+        const params = new URLSearchParams(searchParams)
+        if (date) {
+            params.set('date', format(date, 'yyyy-MM-dd'))
+        } else {
+            params.delete('date')
+        }
+        router.push(`?${params.toString()}`)
     }
 
     return (
@@ -101,8 +123,8 @@ export function ActivityContainer({
                 </Dialog>
             </div>
 
-            <div className="flex flex-col xl:flex-row gap-8">
-                <div className="flex-1">
+            <div className="grid grid-cols-1 xl:grid-cols-10 gap-8 items-start">
+                <div className="xl:col-span-7">
                     <Timeline
                         activities={initialActivities}
                         clients={clients}
@@ -111,15 +133,37 @@ export function ActivityContainer({
                     />
                 </div>
 
-                <div className="xl:w-80 space-y-6">
+                <div className="xl:col-span-3 space-y-6 sticky top-8">
                     <ToDoWidget
                         activities={initialActivities}
                         onItemClick={handleFollowUp}
                     />
-                    {/* The Calendar Filter is now inside Timeline by default, but we could move it or keep it there. 
-                        The user asked to add To-Do widget above/below calendar. 
-                        In current timeline.tsx, the calendar is on the right side in a flex-row.
-                    */}
+
+                    <Card className="bg-card/40 backdrop-blur-xl border border-border/40 overflow-hidden shadow-2xl ring-1 ring-white/5">
+                        <CardHeader className="p-4 pb-0">
+                            <CardTitle className="text-sm font-black flex items-center gap-2 uppercase tracking-tighter text-primary/80">
+                                <CalendarIcon className="h-4 w-4" /> 날짜별 필터
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-2">
+                            <Calendar
+                                mode="single"
+                                selected={selectedDate || undefined}
+                                onSelect={handleDateSelect}
+                                className="rounded-md border-none w-full"
+                                locale={ko}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 via-purple-500/5 to-transparent border border-primary/20">
+                        <h4 className="text-xs font-black uppercase text-primary/70 mb-3 tracking-widest flex items-center gap-2">
+                            <RefreshCw className="h-3 w-3" /> Quick Insight
+                        </h4>
+                        <p className="text-xs leading-relaxed font-medium">
+                            타임라인에서 고객과의 상세 소통 이력을 관리하세요. 날짜 필터를 통해 특정 시점의 업무를 빠르게 조회할 수 있습니다.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
