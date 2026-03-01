@@ -26,12 +26,28 @@ export interface ClientWithProfile extends Client {
     conversion_rate?: number;
 }
 
+export interface Product {
+    id: string;
+    name: string;
+    item_code: string | null;
+    base_price: number;
+    created_at: string;
+}
+
+export interface ClientProduct {
+    id: string;
+    name: string;
+    created_at: string;
+}
+
 export type ActivityType = 'meeting' | 'call' | 'email' | 'meal' | 'other';
 export type PipelineStatus = 'lead' | 'sample_sent' | 'quote_submitted' | 'negotiating' | 'confirmed' | 'dropped';
 
 export interface Activity {
     id: string;
     client_id: string;
+    product_id: string | null;
+    client_product_id: string | null;
     user_id: string;
     type: ActivityType;
     pipeline_status: PipelineStatus | null;
@@ -44,6 +60,12 @@ export interface Activity {
 export interface ActivityWithRelations extends Activity {
     clients?: {
         company_name: string;
+    };
+    products?: {
+        name: string;
+    };
+    client_products?: {
+        name: string;
     };
     profiles?: {
         full_name: string | null;

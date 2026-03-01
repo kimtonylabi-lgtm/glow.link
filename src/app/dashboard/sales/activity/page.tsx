@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { Client } from '@/types/crm'
+import { Client, Product, ClientProduct } from '@/types/crm'
 import { ActivityWithRelations } from '@/types/crm'
 import { ActivityContainer } from './activity-container'
 
@@ -23,6 +23,22 @@ export default async function ActivityPage({ searchParams }: Props) {
 
     const clients = (clientsData || []) as Client[]
 
+    // Fetch Products
+    const { data: productsData } = await supabase
+        .from('products')
+        .select('*')
+        .order('name', { ascending: true })
+
+    const products = (productsData || []) as Product[]
+
+    // Fetch Client Products
+    const { data: clientProductsData } = await supabase
+        .from('client_products' as any)
+        .select('*')
+        .order('name', { ascending: true })
+
+    const clientProducts = (clientProductsData || []) as ClientProduct[]
+
     // Fetch Activities
     // Fetch up to 50 activities safely. Inner join clients and profiles to get names.
     let query = supabase
@@ -30,10 +46,12 @@ export default async function ActivityPage({ searchParams }: Props) {
         .select(`
       *,
       clients:client_id (company_name),
+      products:product_id (name),
+      client_products:client_product_id (name),
       profiles:user_id (full_name)
     `)
         .order('activity_date', { ascending: false })
-        .limit(50)
+        .limit(50) as any
 
     if (clientIdFilter && clientIdFilter !== 'all') {
         query = query.eq('client_id', clientIdFilter)
@@ -53,7 +71,12 @@ export default async function ActivityPage({ searchParams }: Props) {
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl -z-10 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-            <ActivityContainer clients={clients} initialActivities={activities} />
+            <ActivityContainer
+                clients={clients}
+                products={products}
+                clientProducts={clientProducts}
+                initialActivities={activities}
+            />
         </div>
     )
 }

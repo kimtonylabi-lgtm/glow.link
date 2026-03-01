@@ -7,8 +7,7 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { activitySchema, type ActivityFormValues } from '@/lib/validations/activity'
 import { addActivity, updateActivity } from './actions'
-import { Client } from '@/types/crm'
-import { ActivityWithRelations } from '@/types/crm'
+import { Client, Product, ClientProduct, ActivityWithRelations } from '@/types/crm'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -25,54 +24,53 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form'
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from '@/components/ui/command'
-import { Loader2, CalendarIcon, Check, ChevronsUpDown } from 'lucide-react'
+import { Loader2, CalendarIcon } from 'lucide-react'
+import { CreatableCombobox } from '@/components/ui/creatable-combobox'
 
 interface ActivityFormProps {
     clients: Client[]
+    products: Product[]
+    clientProducts: ClientProduct[]
     activity?: ActivityWithRelations | null
     onSuccess?: () => void
 }
 
-export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps) {
+export function ActivityForm({ clients, products, clientProducts, activity, onSuccess }: ActivityFormProps) {
     const [isLoading, setIsLoading] = useState(false)
-    const [isClientPopoverOpen, setIsClientPopoverOpen] = useState(false)
     const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
     const isEditing = !!activity
 
-    const form = useForm({
+    const form = useForm<ActivityFormValues>({
         resolver: zodResolver(activitySchema),
         defaultValues: {
-            client_id: activity?.client_id || '',
-            type: activity?.type || 'meeting',
-            pipeline_status: activity?.pipeline_status || 'lead',
+            client_name: activity?.clients?.company_name || '',
+            product_name: activity?.products?.name || '',
+            client_product_name: activity?.client_products?.name || '',
+            type: (activity?.type as any) || 'meeting',
+            pipeline_status: (activity?.pipeline_status as any) || 'lead',
             title: activity?.title || '',
             content: activity?.content || '',
             activity_date: activity?.activity_date ? new Date(activity.activity_date) : new Date(),
         },
-    })
+    } as any)
 
-    // Update form values when editing activity changes (Fix for bug #2)
     useEffect(() => {
         if (activity) {
             form.reset({
-                client_id: activity.client_id || '',
-                type: activity.type || 'meeting',
-                pipeline_status: activity.pipeline_status || 'lead',
+                client_name: activity.clients?.company_name || '',
+                product_name: activity.products?.name || '',
+                client_product_name: activity.client_products?.name || '',
+                type: (activity.type as any) || 'meeting',
+                pipeline_status: (activity.pipeline_status as any) || 'lead',
                 title: activity.title || '',
                 content: activity.content || '',
                 activity_date: activity.activity_date ? new Date(activity.activity_date) : new Date(),
             })
         } else {
             form.reset({
-                client_id: '',
+                client_name: '',
+                product_name: '',
+                client_product_name: '',
                 type: 'meeting',
                 pipeline_status: 'lead',
                 title: '',
@@ -82,12 +80,12 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
         }
     }, [activity, form])
 
-    async function onSubmit(data: any /* ActivityFormValues inferred */) {
+    async function onSubmit(data: ActivityFormValues) {
         setIsLoading(true)
 
         let result
-        if (isEditing && activity.id) {
-            result = await updateActivity(activity.id, data)
+        if (isEditing && activity?.id) {
+            result = await updateActivity(activity.id, data as any)
         } else {
             result = await addActivity(data)
         }
@@ -100,9 +98,20 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
             toast.success(isEditing ? '수정 완료' : '등록 완료', {
                 description: '영업 활동 내역이 저장되었습니다.',
             })
+
+            // 신규 마스터 데이터 등록 알림
+            if (result.newMasterItems && result.newMasterItems.length > 0) {
+                toast.info('마스터 데이터 등록', {
+                    description: `새로운 ${result.newMasterItems.join(', ')}이 마스터 데이터에 자동 등록되었습니다.`,
+                    duration: 5000,
+                })
+            }
+
             if (!isEditing) {
                 form.reset({
-                    client_id: '',
+                    client_name: '',
+                    product_name: '',
+                    client_product_name: '',
                     type: 'meeting',
                     title: '',
                     content: '',
@@ -115,6 +124,11 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
         setIsLoading(false)
     }
 
+    // Transform options for combobox
+    const clientOptions = clients.map(c => ({ id: c.id, name: c.company_name }))
+    const productOptions = products.map(p => ({ id: p.id, name: p.name }))
+    const clientProductOptions = clientProducts.map(cp => ({ id: cp.id, name: cp.name }))
+
     return (
         <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-6 text-foreground">
@@ -123,69 +137,69 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                    {/* Client Selection (Combobox) */}
+                    {/* Client Selection */}
                     <FormField
                         control={form.control}
-                        name="client_id"
+                        name="client_name"
                         render={({ field }) => (
                             <FormItem className="flex flex-col">
-                                <FormLabel>고객사</FormLabel>
-                                <Popover open={isClientPopoverOpen} onOpenChange={setIsClientPopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                className={cn(
-                                                    "w-full justify-between bg-background/50 border-border/50",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                            >
-                                                {field.value
-                                                    ? clients.find((client) => client.id === field.value)?.company_name
-                                                    : "고객사 검색 및 선택"}
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-card/95 backdrop-blur-md border border-border/50">
-                                        <Command>
-                                            <CommandInput placeholder="고객사 이름 검색..." />
-                                            <CommandList>
-                                                <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {clients.map((client) => (
-                                                        <CommandItem
-                                                            value={client.company_name}
-                                                            key={client.id}
-                                                            onSelect={() => {
-                                                                form.setValue("client_id", client.id)
-                                                                setIsClientPopoverOpen(false) // Auto-close UX improvement (Bug #6)
-                                                            }}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    client.id === field.value
-                                                                        ? "opacity-100 text-primary"
-                                                                        : "opacity-0"
-                                                                )}
-                                                            />
-                                                            {client.company_name}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
+                                <FormLabel>고객사 *</FormLabel>
+                                <FormControl>
+                                    <CreatableCombobox
+                                        options={clientOptions}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="고객사 선택 또는 직접 입력"
+                                    />
+                                </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Product Selection */}
+                        <FormField
+                            control={form.control}
+                            name="product_name"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>제품명 (마스터)</FormLabel>
+                                    <FormControl>
+                                        <CreatableCombobox
+                                            options={productOptions}
+                                            value={field.value || ''}
+                                            onChange={field.onChange}
+                                            placeholder="제품명 선택 또는 입력"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Client Product Selection */}
+                        <FormField
+                            control={form.control}
+                            name="client_product_name"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>고객사 제품명</FormLabel>
+                                    <FormControl>
+                                        <CreatableCombobox
+                                            options={clientProductOptions}
+                                            value={field.value || ''}
+                                            onChange={field.onChange}
+                                            placeholder="고객사 전용 코드/품명"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
                     <div className="flex flex-col gap-4">
-                        {/* Activity Type Selection */}
                         <FormField
                             control={form.control}
                             name="type"
@@ -211,7 +225,6 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                             )}
                         />
 
-                        {/* Pipeline Status Selection */}
                         <FormField
                             control={form.control}
                             name="pipeline_status"
@@ -238,7 +251,6 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                             )}
                         />
 
-                        {/* Date Picker */}
                         <FormField
                             control={form.control}
                             name="activity_date"
@@ -285,7 +297,6 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                         />
                     </div>
 
-                    {/* Title Input */}
                     <FormField
                         control={form.control}
                         name="title"
@@ -300,7 +311,6 @@ export function ActivityForm({ clients, activity, onSuccess }: ActivityFormProps
                         )}
                     />
 
-                    {/* Content Textarea */}
                     <FormField
                         control={form.control}
                         name="content"

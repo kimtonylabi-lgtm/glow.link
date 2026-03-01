@@ -29,6 +29,7 @@ export interface ReportData {
         clientName: string
         userName: string
         date: string
+        content?: string
     }[]
 }
 
@@ -142,7 +143,8 @@ export async function getReportData(
             title: a.title,
             clientName: (a.clients as any)?.company_name || '알 수 없음',
             userName: (a.profiles as any)?.full_name || '알 수 없음',
-            date: a.activity_date
+            date: a.activity_date,
+            content: a.content || undefined
         }))
     }
 }

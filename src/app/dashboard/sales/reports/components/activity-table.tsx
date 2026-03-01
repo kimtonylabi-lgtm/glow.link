@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
+import React from "react"
 
 interface ActivityTimelineProps {
     activities: {
@@ -13,6 +14,7 @@ interface ActivityTimelineProps {
         clientName: string
         userName: string
         date: string
+        content?: string
     }[]
 }
 
@@ -48,25 +50,37 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
                             </TableRow>
                         ) : (
                             activities.map((item) => (
-                                <TableRow key={item.id} className="border-b border-slate-50 print:break-inside-avoid">
-                                    <TableCell className="text-xs font-mono text-slate-500">
-                                        {format(new Date(item.date), 'MM/dd HH:mm', { locale: ko })}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={`text-[10px] font-bold border-none ${typeMap[item.type]?.color || 'bg-slate-50'}`}>
-                                            {typeMap[item.type]?.label || item.type}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-sm font-bold text-slate-800">
-                                        {item.clientName}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-slate-600 truncate max-w-[200px]">
-                                        {item.title}
-                                    </TableCell>
-                                    <TableCell className="text-right text-sm font-medium text-slate-500">
-                                        {item.userName}
-                                    </TableCell>
-                                </TableRow>
+                                <React.Fragment key={item.id}>
+                                    {/* 첫 번째 줄: 요약 정보 (하단 테두리 제거) */}
+                                    <TableRow className="border-none hover:bg-transparent print:break-inside-avoid">
+                                        <TableCell className="text-[10px] font-mono text-slate-500 align-top pt-4">
+                                            {format(new Date(item.date), 'MM/dd HH:mm', { locale: ko })}
+                                        </TableCell>
+                                        <TableCell className="align-top pt-3.5">
+                                            <Badge variant="outline" className={`text-[10px] font-bold border-none ${typeMap[item.type]?.color || 'bg-slate-50'}`}>
+                                                {typeMap[item.type]?.label || item.type}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-sm font-bold text-slate-800 align-top pt-4">
+                                            {item.clientName}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-slate-700 font-medium align-top pt-4">
+                                            {item.title}
+                                        </TableCell>
+                                        <TableCell className="text-right text-sm font-medium text-slate-500 align-top pt-4">
+                                            {item.userName}
+                                        </TableCell>
+                                    </TableRow>
+
+                                    {/* 두 번째 줄: 상세 내용 (배경색, 작은 폰트, 하단 테두리 추가) */}
+                                    <TableRow className="bg-slate-50/50 border-b border-slate-100 hover:bg-slate-50/50 print:break-inside-avoid">
+                                        <TableCell colSpan={5} className="py-3 px-4">
+                                            <div className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
+                                                {item.content || <span className="italic opacity-50">(상세 내용 없음)</span>}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                </React.Fragment>
                             ))
                         )}
                     </TableBody>

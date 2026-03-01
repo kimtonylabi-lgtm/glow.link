@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityWithRelations, Client } from '@/types/crm'
+import { ActivityWithRelations, Client, Product, ClientProduct } from '@/types/crm'
 import { ActivityForm } from './activity-form'
 import { Timeline } from './timeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -10,10 +10,12 @@ import { LayoutDashboard, ListTodo } from 'lucide-react'
 
 interface Props {
     clients: Client[]
+    products: Product[]
+    clientProducts: ClientProduct[]
     initialActivities: ActivityWithRelations[]
 }
 
-export function ActivityContainer({ clients, initialActivities }: Props) {
+export function ActivityContainer({ clients, products, clientProducts, initialActivities }: Props) {
     const [editingActivity, setEditingActivity] = useState<ActivityWithRelations | null>(null)
 
     const handleEdit = (activity: ActivityWithRelations) => {
@@ -34,6 +36,8 @@ export function ActivityContainer({ clients, initialActivities }: Props) {
                     <div className="sticky top-6">
                         <ActivityForm
                             clients={clients}
+                            products={products}
+                            clientProducts={clientProducts}
                             activity={editingActivity}
                             onSuccess={handleFormSuccess}
                         />

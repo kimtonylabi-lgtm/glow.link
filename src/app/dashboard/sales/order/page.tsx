@@ -40,20 +40,23 @@ export default async function OrderPage() {
         .select('id, company_name')
         .eq('status', 'active')
         .order('company_name', { ascending: true })
-        .limit(1000)
 
     // 3. Fetch Products for dropdown
     const { data: productsData } = await supabase
         .from('products')
-        .select('id, name, item_code, price')
+        .select('*')
+        .order('name', { ascending: true })
+
+    // 4. Fetch Client Products for dropdown
+    const { data: clientProductsData } = await (supabase
+        .from('client_products' as any) as any)
+        .select('*')
         .order('name', { ascending: true })
 
     const orders = ordersData || []
     const clients = clientsData || []
-    const products = (productsData || []).map(p => ({
-        ...p,
-        base_price: p.price
-    }))
+    const products = productsData || []
+    const clientProducts = clientProductsData || []
 
     return (
         <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh] space-y-6">
@@ -67,7 +70,11 @@ export default async function OrderPage() {
                     <p className="text-muted-foreground text-sm">고객사별 수주와 품목 상세 내역을 등록하고 납기 일정을 관리합니다.</p>
                 </div>
                 <div className="flex-shrink-0 z-20">
-                    <OrderForm clients={clients} products={products} />
+                    <OrderForm
+                        clients={clients as any}
+                        products={products as any}
+                        clientProducts={clientProducts as any}
+                    />
                 </div>
             </div>
 
