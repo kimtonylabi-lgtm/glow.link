@@ -1,6 +1,5 @@
 -- 1. Clean Slate: TRUNCATE existing tables to start fresh
--- TRUNCATE activities CASCADE will also clear related tables if needed, but we list them explicitly for clarity.
-TRUNCATE public.activities, public.orders, public.order_items, public.sample_requests, public.products, public.clients CASCADE;
+TRUNCATE TABLE public.clients, public.products, public.client_products, public.activities, public.orders, public.order_items, public.sample_requests, public.sales_plans, public.shipping_orders, public.monthly_closings CASCADE;
 
 -- 2. Update Clients table
 -- Add UNIQUE constraint to company_name

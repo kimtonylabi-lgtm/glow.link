@@ -40,7 +40,6 @@ const navItems: NavItem[] = [
     { title: '영업기획', href: '/dashboard/sales/planning', icon: Target, roles: ['admin', 'head', 'sales'] },
     { title: '영업활동', href: '/dashboard/sales/activity', icon: Briefcase, roles: ['admin', 'head', 'sales'] },
     { title: '고객관리 (CRM)', href: '/dashboard/sales/crm', icon: Users, roles: ['admin', 'head', 'sales'] },
-    { title: '제품관리 (Product)', href: '/dashboard/sales/product', icon: PackageSearch, roles: ['admin', 'head', 'sales'] },
     { title: '수주/납기', href: '/dashboard/sales/order', icon: ShoppingCart, roles: ['admin', 'head', 'sales'] },
     { title: '샘플요청', href: '/dashboard/sales/sample', icon: FlaskConical, roles: ['admin', 'head', 'sales'] },
     { title: '업무보고 (Reports)', href: '/dashboard/sales/reports', icon: FileText, roles: ['admin', 'head', 'sales'] },
