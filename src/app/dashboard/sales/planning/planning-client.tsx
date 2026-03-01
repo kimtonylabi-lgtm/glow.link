@@ -349,7 +349,7 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                     </div>
                     <div>
                         <h2 className="text-xl font-black tracking-tight uppercase">Sales Pipeline Kanban</h2>
-                        <p className="text-xs text-muted-foreground">드래그 앤 드롭으로 딜의 진행 상태를 관리하세요.</p>
+                        <p className="text-xs text-muted-foreground">영업 활동 기록을 기반으로 최신 파이프라인 진행 상태를 보여줍니다.</p>
                     </div>
                 </div>
                 <SalesKanban initialActivities={initialActivities} />
