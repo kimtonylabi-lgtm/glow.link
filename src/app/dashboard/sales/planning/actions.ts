@@ -115,35 +115,47 @@ export async function getYearlyGoals(year: number) {
     return goals || []
 }
 
-export async function upsertMonthlyGoals(year: number, goals: { month: number, target_amount: number }[]) {
+export async function upsertMonthlyGoals(year: number, goals: { month: number, target_amount: any }[]) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        return { success: false, error: 'Unauthorized' }
+        return { success: false, error: '인증되지 않은 사용자입니다.' }
     }
 
-    const dataToUpsert = goals.map(g => ({
-        sales_person_id: user.id,
-        year: year,
-        month: g.month,
-        target_amount: g.target_amount,
-        updated_at: new Date().toISOString()
-    }))
+    try {
+        const dataToUpsert = goals.map(g => ({
+            sales_person_id: user.id,
+            year: year,
+            month: g.month,
+            // 무적의 숫자 파싱: 문자열로 변환 후 콤마 제거하고 숫자로 변환
+            target_amount: Number(String(g.target_amount || '0').replace(/,/g, '')),
+            updated_at: new Date().toISOString()
+        }))
 
-    const { error } = await (supabase
-        .from('monthly_sales_goals' as any)
-        .upsert(dataToUpsert as any, {
-            onConflict: 'sales_person_id,year,month'
-        }) as any)
+        const { error } = await (supabase
+            .from('monthly_sales_goals' as any)
+            .upsert(dataToUpsert as any, {
+                onConflict: 'sales_person_id,year,month'
+            }) as any)
 
-    if (error) {
-        console.error('Failed to upsert monthly goals:', error)
-        return { success: false, error: '목표 금액을 저장하는데 실패했습니다.' }
+        if (error) {
+            console.error('[DB Error] Failed to upsert monthly goals:', error)
+            return {
+                success: false,
+                error: `DB 저장 실패: ${error.message} (${error.code || 'UNKNOWN_CODE'})`
+            }
+        }
+
+        revalidatePath('/dashboard/sales/planning')
+        return { success: true }
+    } catch (err: any) {
+        console.error('[Server Error] Exception in upsertMonthlyGoals:', err)
+        return {
+            success: false,
+            error: `서버 내부 오류: ${err.message || '알 수 없는 오류'}`
+        }
     }
-
-    revalidatePath('/dashboard/sales/planning')
-    return { success: true }
 }
 
 export async function upsertTargetAmount(targetMonth: string, amount: number) {
