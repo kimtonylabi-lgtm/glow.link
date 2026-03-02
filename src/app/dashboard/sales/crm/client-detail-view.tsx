@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { CustomBadge } from '@/components/ui/custom-badge'
 import { Button } from '@/components/ui/button'
 import {
     Building2,
@@ -155,20 +156,8 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                     {client.company_name}
                                 </h1>
                                 <div className="flex items-center gap-2">
-                                    <Badge className={cn(
-                                        "font-black text-[9px] h-4.5 px-2 rounded-full ring-2 ring-background shadow-md",
-                                        client.tier === 'S' ? "bg-amber-500" :
-                                            client.tier === 'A' ? "bg-purple-500" :
-                                                "bg-blue-500"
-                                    )}>
-                                        Tier {client.tier}
-                                    </Badge>
-                                    <Badge variant="outline" className={cn(
-                                        "font-black text-[9px] h-4.5 px-2 rounded-full bg-background/50 border-border/40 font-mono",
-                                        client.status === 'active' ? "text-green-500 border-green-500/20" : "text-muted-foreground"
-                                    )}>
-                                        {client.status === 'active' ? 'ACTIVE' : 'INACTIVE'}
-                                    </Badge>
+                                    <CustomBadge variant={client.tier} />
+                                    <CustomBadge variant={client.status === 'active' ? 'active' : 'inactive'} />
                                 </div>
                             </div>
                             <p className="text-[11px] text-muted-foreground font-bold flex items-center gap-2">
@@ -206,14 +195,36 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                     <div className="grid grid-cols-1 gap-6">
                         <Card className="bg-card/40 border-border/40 rounded-2xl overflow-hidden shadow-sm">
                             <CardContent className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-y-6 gap-x-12">
-                                    <InfoItem label="고객사 담당자" value={primaryContact ? `${primaryContact.name}${primaryContact.position ? ` (${primaryContact.position})` : ''}` : '미등록'} icon={<User className="h-4 w-4" />} />
-                                    <InfoItem label="사업자번호" value={client.business_number} icon={<FileText className="h-4 w-4" />} />
-                                    <InfoItem label="이메일" value={client.email} icon={<Mail className="h-4 w-4" />} />
-                                    <InfoItem label="등록일" value={format(new Date(client.created_at), 'yyyy-MM-dd')} icon={<Clock className="h-4 w-4" />} />
-
-                                    <InfoItem label="연락처" value={client.phone} icon={<Phone className="h-4 w-4" />} span2 />
-                                    <InfoItem label="주소" value={client.address} icon={<MapPin className="h-4 w-4" />} span2 />
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-y-6 gap-x-8">
+                                    <InfoItem
+                                        label="고객사 담당자"
+                                        value={primaryContact ? `${primaryContact.name}${primaryContact.position ? ` (${primaryContact.position})` : ''}` : '미등록'}
+                                        icon={<User className="h-4 w-4" />}
+                                        span2
+                                    />
+                                    <InfoItem
+                                        label="연락처"
+                                        value={primaryContact?.phone || '미등록'}
+                                        icon={<Phone className="h-4 w-4" />}
+                                        span2
+                                    />
+                                    <InfoItem
+                                        label="이메일"
+                                        value={primaryContact?.email || '미등록'}
+                                        icon={<Mail className="h-4 w-4" />}
+                                        span2
+                                    />
+                                    <InfoItem
+                                        label="주소"
+                                        value={client.address || '미등록'}
+                                        icon={<MapPin className="h-4 w-4" />}
+                                        span2
+                                    />
+                                    <InfoItem
+                                        label="등록일"
+                                        value={client.created_at ? format(new Date(client.created_at), 'yyyy-MM-dd') : '미등록'}
+                                        icon={<Clock className="h-4 w-4" />}
+                                    />
 
                                     <div className="col-span-full border-t border-border/10 pt-6 mt-2">
                                         <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">비고 (메모)</label>
@@ -399,7 +410,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
 function InfoItem({ label, value, icon, fullWidth = false, span2 = false }: { label: string; value: string | null | undefined; icon?: React.ReactNode; fullWidth?: boolean; span2?: boolean }) {
     return (
         <div className={cn(
-            "space-y-1 group min-w-0",
+            "space-y-1 group min-w-0 col-span-1",
             fullWidth && "col-span-full",
             span2 && "md:col-span-2"
         )}>
