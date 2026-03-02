@@ -9,6 +9,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,11 +37,11 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const router = useRouter()
 
     // KST Current Year
     const kstYear = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getFullYear()
     const [selectedYear, setSelectedYear] = useState(kstYear.toString())
-    const [targetType, setTargetType] = useState<'all' | 'personal'>('personal')
 
     // Goals state: Array<{ month: number, target_amount: string }>
     const [goals, setGoals] = useState<{ month: number, target_amount: string }[]>(
@@ -49,10 +50,10 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
 
     const years = Array.from({ length: 5 }, (_, i) => (kstYear - 1 + i).toString())
 
-    const fetchYearlyGoals = async (year: string, type: 'all' | 'personal') => {
+    const fetchYearlyGoals = async (year: string) => {
         setIsLoading(true)
         try {
-            const data = await getYearlyGoals(parseInt(year), type)
+            const data = await getYearlyGoals(parseInt(year))
             const newGoals = Array.from({ length: 12 }, (_, i) => {
                 const month = i + 1
                 const match = data.find((g: any) => g.month === month)
@@ -72,9 +73,9 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
 
     useEffect(() => {
         if (open) {
-            fetchYearlyGoals(selectedYear, targetType)
+            fetchYearlyGoals(selectedYear)
         }
-    }, [open, selectedYear, targetType])
+    }, [open, selectedYear])
 
     const formatNumber = (val: string) => {
         const num = val.toString().replace(/,/g, '')
@@ -100,9 +101,10 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                 target_amount: Number(goal.target_amount.replace(/,/g, '')) || 0
             }))
 
-            const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals, targetType)
+            const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals)
             if (result.success) {
                 toast.success(`${selectedYear}년 목표가 저장되었습니다.`)
+                router.refresh()
                 if (onSuccess) onSuccess()
                 setOpen(false)
             } else {
@@ -129,7 +131,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                     연간 목표 설정
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[1300px] w-[95vw] bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
+            <DialogContent className="max-w-7xl w-[95vw] bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
                 <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
                     <div className="flex justify-between items-start">
                         <div>
@@ -143,12 +145,6 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Tabs value={targetType} onValueChange={(v: any) => setTargetType(v)} className="w-[180px]">
-                                <TabsList className="grid w-full grid-cols-2 h-9 bg-background/50 border border-border/40 p-1 rounded-xl">
-                                    <TabsTrigger value="all" className="text-[10px] font-black uppercase rounded-lg">전사</TabsTrigger>
-                                    <TabsTrigger value="personal" className="text-[10px] font-black uppercase rounded-lg">개인</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
 
                             <div className="flex items-center gap-2 bg-background/50 p-1 rounded-xl border border-border/40">
                                 <Label className="text-[10px] font-black uppercase text-muted-foreground mr-2 ml-2">기준 연도</Label>
@@ -174,10 +170,10 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                             <p className="text-sm font-bold text-muted-foreground animate-pulse">데이터 로드 중...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                             {goals.map(goal => (
-                                <div key={goal.month} className="space-y-1 p-3 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/50 focus-within:bg-primary/5 transition-all">
-                                    <Label className="text-xs font-black text-muted-foreground">
+                                <div key={goal.month} className="group/item space-y-2 p-4 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/50 focus-within:bg-primary/5 transition-all">
+                                    <Label className="text-sm font-black text-foreground/80">
                                         {goal.month}월
                                     </Label>
                                     <div className="relative flex items-center">
@@ -185,9 +181,9 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                                             value={formatNumber(goal.target_amount || '')}
                                             onChange={(e) => handleChange(goal.month, e.target.value)}
                                             placeholder="0"
-                                            className="h-9 font-mono text-sm border-none bg-transparent pl-0 pr-6 focus-visible:ring-0"
+                                            className="h-10 font-mono text-base font-bold border-none bg-transparent pl-0 pr-8 focus-visible:ring-0"
                                         />
-                                        <span className="absolute right-1 text-[10px] text-muted-foreground/40 font-bold pointer-events-none">원</span>
+                                        <span className="absolute right-0 text-xs text-muted-foreground/60 font-black pointer-events-none group-focus-within/item:text-primary transition-colors">원</span>
                                     </div>
                                 </div>
                             ))}

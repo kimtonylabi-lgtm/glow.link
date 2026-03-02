@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function getSalesPlanning(targetMonth: string, type: 'all' | 'personal' = 'personal') {
+export async function getSalesPlanning(targetMonth: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -14,25 +14,18 @@ export async function getSalesPlanning(targetMonth: string, type: 'all' | 'perso
     // 1. Parse targetMonth (yyyy-MM) to Year and Month
     const [year, month] = targetMonth.split('-').map(Number)
 
-    // 2. Get target amount base on type
-    let query = supabase
+    // 2. Get target amount (Personal only)
+    const { data: goalData } = await (supabase
         .from('monthly_sales_goals' as any)
         .select('target_amount')
         .eq('target_year', year)
         .eq('target_month', month)
-
-    if (type === 'personal') {
-        query = query.eq('sales_person_id', user.id)
-    } else {
-        query = query.is('sales_person_id', null)
-    }
-
-    const { data: goalData } = await (query.single() as any)
+        .eq('sales_person_id', user.id)
+        .single() as any)
 
     const target = goalData?.target_amount || 0
 
     // 3. Calculate actual revenue (KST Standard)
-    // KST 00:00:00 is UTC -9 hours
     const startOfMonthKST = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0))
     startOfMonthKST.setHours(startOfMonthKST.getHours() - 9) // Adjust to UTC
     const startDate = startOfMonthKST.toISOString()
@@ -41,19 +34,14 @@ export async function getSalesPlanning(targetMonth: string, type: 'all' | 'perso
     endOfMonthKST.setHours(endOfMonthKST.getHours() - 9) // Adjust to UTC
     const endDate = endOfMonthKST.toISOString()
 
-    let ordersQuery = supabase
+    const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('total_amount')
         .in('status', ['confirmed', 'production', 'shipped'])
-        .not('status', 'eq', 'canceled') // Double-guard against canceled
+        .not('status', 'eq', 'canceled')
         .gte('order_date', startDate)
         .lte('order_date', endDate)
-
-    if (type === 'personal') {
-        ordersQuery = ordersQuery.eq('sales_person_id', user.id)
-    }
-
-    const { data: ordersData, error: ordersError } = await ordersQuery
+        .eq('sales_person_id', user.id)
 
     if (ordersError) {
         console.error('Error fetching orders for planning:', ordersError)
@@ -103,7 +91,7 @@ export async function getSalesPlanning(targetMonth: string, type: 'all' | 'perso
     }
 }
 
-export async function getYearlyGoals(year: number, type: 'all' | 'personal' = 'personal') {
+export async function getYearlyGoals(year: number) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -111,25 +99,18 @@ export async function getYearlyGoals(year: number, type: 'all' | 'personal' = 'p
         throw new Error('Unauthorized')
     }
 
-    let query = supabase
+    const { data: goals, error } = await (supabase
         .from('monthly_sales_goals' as any)
         .select('target_month, target_amount')
         .eq('target_year', year)
-
-    if (type === 'personal') {
-        query = query.eq('sales_person_id', user.id)
-    } else {
-        query = query.is('sales_person_id', null)
-    }
-
-    const { data: goals, error } = await (query.order('target_month', { ascending: true }) as any)
+        .eq('sales_person_id', user.id)
+        .order('target_month', { ascending: true }) as any)
 
     if (error) {
         console.error('Failed to fetch yearly goals:', error)
         return []
     }
 
-    // Map DB columns to frontend expected format { month, target_amount }
     return (goals || []).map((g: any) => ({
         month: g.target_month,
         target_amount: g.target_amount
@@ -138,8 +119,7 @@ export async function getYearlyGoals(year: number, type: 'all' | 'personal' = 'p
 
 export async function upsertMonthlyGoals(
     year: number,
-    goals: { month: number, target_amount: any }[],
-    type: 'all' | 'personal' = 'personal'
+    goals: { month: number, target_amount: any }[]
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -150,10 +130,9 @@ export async function upsertMonthlyGoals(
 
     try {
         const dataToUpsert = goals.map(g => ({
-            sales_person_id: type === 'personal' ? user.id : null,
+            sales_person_id: user.id,
             target_year: year,
             target_month: g.month,
-            // 무적의 숫자 파싱: 문자열로 변환 후 콤마 제거하고 숫자로 변환
             target_amount: Number(String(g.target_amount || '0').replace(/,/g, '')),
             updated_at: new Date().toISOString()
         }))
@@ -184,7 +163,6 @@ export async function upsertMonthlyGoals(
 }
 
 export async function upsertTargetAmount(targetMonth: string, amount: number) {
-    // This is legacy but let's update it to bridge to the new table for compatibility
     const [year, month] = targetMonth.split('-').map(Number)
     return await upsertMonthlyGoals(year, [{ month, target_amount: amount }])
 }

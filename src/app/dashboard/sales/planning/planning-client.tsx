@@ -63,7 +63,6 @@ export function PlanningClient({ activities: initialActivities }: Props) {
     const [currentMonth, setCurrentMonth] = useState<Date>(kstNow)
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
-    const [targetType, setTargetType] = useState<'all' | 'personal'>('personal')
     // Data states
     const [targetAmount, setTargetAmount] = useState<number>(0)
     const [actualAmount, setActualAmount] = useState<number>(0)
@@ -73,10 +72,10 @@ export function PlanningClient({ activities: initialActivities }: Props) {
 
     const monthStr = format(currentMonth, 'yyyy-MM')
 
-    const fetchData = async (type: 'all' | 'personal') => {
+    const fetchData = async () => {
         setIsLoading(true)
         try {
-            const result = await getSalesPlanning(monthStr, type)
+            const result = await getSalesPlanning(monthStr)
             setTargetAmount(result.target)
             setActualAmount(result.actual)
             setPercentage(result.percentage)
@@ -91,8 +90,8 @@ export function PlanningClient({ activities: initialActivities }: Props) {
     }
 
     useEffect(() => {
-        fetchData(targetType)
-    }, [monthStr, targetType])
+        fetchData()
+    }, [monthStr])
 
     const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
@@ -131,16 +130,6 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-5 relative z-10">
-                    <Tabs value={targetType} onValueChange={(v: any) => setTargetType(v)} className="w-[200px]">
-                        <TabsList className="grid w-full grid-cols-2 h-11 bg-background/50 border border-border/40 p-1.5 rounded-2xl shadow-inner">
-                            <TabsTrigger value="all" className="text-[10px] font-black uppercase rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                                🏢 전사 목표
-                            </TabsTrigger>
-                            <TabsTrigger value="personal" className="text-[10px] font-black uppercase rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                                👤 내 개인
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
 
                     <div className="flex items-center gap-2 bg-background/50 p-2 rounded-2xl border border-border/40 shadow-inner">
                         <Button variant="ghost" size="icon" onClick={prevMonth} className="hover:bg-primary/10 rounded-xl h-10 w-10">
@@ -154,7 +143,7 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                         </Button>
                     </div>
 
-                    <MonthlyGoalModal onSuccess={() => fetchData(targetType)} />
+                    <MonthlyGoalModal onSuccess={() => fetchData()} />
                 </div>
             </div>
 
@@ -273,10 +262,10 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                         <CardHeader>
                             <CardTitle className="text-xl font-black flex items-center gap-2">
                                 <LayoutDashboard className="w-5 h-5 text-primary" />
-                                {targetType === 'all' ? 'Company Sales Target' : 'Personal Sales Target'}
+                                Sales Target
                             </CardTitle>
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                {targetType === 'all' ? '전사 목표 매출액' : '개인 목표 매출액'}
+                                목표 매출액 (개인)
                             </p>
                         </CardHeader>
                         <CardContent>
