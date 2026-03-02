@@ -204,11 +204,17 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-1">내부 전담 매니저</label>
-                                            <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border border-border/30 w-fit">
-                                                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                                                    <User className="h-3 w-3 text-primary" />
+                                            <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-xl border border-border/30 w-fit">
+                                                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20 ring-4 ring-primary/5 transition-all group-hover:ring-primary/10">
+                                                    {client.managed_by_profile?.full_name ? (
+                                                        <span className="text-[10px] font-black text-primary uppercase">
+                                                            {client.managed_by_profile.full_name.charAt(0)}
+                                                        </span>
+                                                    ) : (
+                                                        <User className="h-3.5 w-3.5 text-primary/60" />
+                                                    )}
                                                 </div>
-                                                <span className="text-xs font-bold">{client.managed_by_profile?.full_name || '미배정'}</span>
+                                                <span className="text-xs font-bold pr-2">{client.managed_by_profile?.full_name || '미배정'}</span>
                                             </div>
                                         </div>
                                     </div>

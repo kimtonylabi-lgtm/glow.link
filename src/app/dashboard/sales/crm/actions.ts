@@ -135,7 +135,7 @@ export async function getClientDetail(id: string) {
             .from('clients')
             .select(`
                 *,
-                managed_by_profile:profiles(full_name, avatar_url)
+                managed_by_profile:profiles(full_name)
             `)
             .eq('id', id)
             .single()
@@ -264,7 +264,7 @@ export async function getClientHistory(clientId: string) {
             .from('customer_history_logs' as any)
             .select(`
                 *,
-                performer:profiles(full_name, avatar_url)
+                performer:profiles(full_name)
             `)
             .eq('client_id', clientId)
             .order('created_at', { ascending: false })
