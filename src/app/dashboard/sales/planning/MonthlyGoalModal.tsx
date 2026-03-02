@@ -137,7 +137,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                     연간 목표 설정
                 </Button>
             </DialogTrigger>
-            <DialogContent className="!max-w-7xl sm:!max-w-7xl w-[95vw] bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
+            <DialogContent className="!max-w-7xl sm:!max-w-7xl w-[95vw] !max-h-[85vh] overflow-y-auto bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl p-0">
                 <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
                     <div className="flex justify-between items-start">
                         <div>

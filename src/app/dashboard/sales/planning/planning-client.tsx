@@ -153,13 +153,13 @@ export function PlanningClient({ activities: initialActivities }: Props) {
 
             {/* AI Demand Prediction Banner */}
             {predictions.length > 0 && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-[2rem] p-5 backdrop-blur-xl relative overflow-hidden group shadow-lg shadow-amber-500/5 transition-all hover:shadow-amber-500/10 h-24">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-[2rem] p-6 backdrop-blur-xl relative overflow-hidden group shadow-lg shadow-amber-500/5 transition-all hover:shadow-amber-500/10 min-h-[6rem] h-auto">
                     <div className="absolute -top-4 -right-4 opacity-5 group-hover:scale-125 transition-transform duration-1000">
                         <Zap className="w-32 h-32 text-amber-500" />
                     </div>
-                    <div className="flex items-center justify-between h-full relative z-10">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30 shrink-0">
                                 <AlertCircle className="w-6 h-6 text-amber-500" />
                             </div>
                             <div>
@@ -171,7 +171,7 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                                 </p>
                             </div>
                         </div>
-                        <Button size="sm" variant="outline" className="border-amber-500/50 text-amber-500 hover:bg-amber-500/20 h-10 px-5 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-lg shadow-amber-500/10" asChild>
+                        <Button size="sm" variant="outline" className="w-full md:w-auto border-amber-500/50 text-amber-500 hover:bg-amber-500/20 h-10 px-5 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-lg shadow-amber-500/10" asChild>
                             <Link href="/dashboard/sales/crm">CRM 분석 도구 열기</Link>
                         </Button>
                     </div>
