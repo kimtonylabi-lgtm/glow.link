@@ -10,6 +10,7 @@ export const clientSchema = z.object({
     memo: z.string().optional().nullable(),
     tier: z.enum(['S', 'A', 'B', 'C']).default('C'),
     status: z.enum(['active', 'inactive']).default('active'),
+    managed_by: z.string().optional().nullable(),
 });
 
 export type ClientFormValues = z.infer<typeof clientSchema>;

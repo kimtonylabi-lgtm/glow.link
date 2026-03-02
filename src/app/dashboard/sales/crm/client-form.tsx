@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { clientSchema, type ClientFormValues } from '@/lib/validations/client'
-import { addClient, updateClient } from './actions'
+import { addClient, updateClient, getSalesReps } from './actions'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,7 @@ interface ClientFormProps {
 
 export function ClientForm({ client, onSuccess }: ClientFormProps) {
     const [isLoading, setIsLoading] = useState(false)
+    const [salesReps, setSalesReps] = useState<any[]>([])
     const isEditing = !!client
 
     const form = useForm({
@@ -42,8 +43,17 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
             memo: client?.memo || '',
             tier: client?.tier || 'C',
             status: client?.status || 'active',
+            managed_by: client?.managed_by || '',
         },
     })
+
+    useEffect(() => {
+        async function fetchReps() {
+            const res = await getSalesReps()
+            if (res.success) setSalesReps(res.data)
+        }
+        fetchReps()
+    }, [])
 
     async function onSubmit(data: ClientFormValues) {
         setIsLoading(true)
@@ -146,14 +156,19 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
                     />
                 </div>
 
-                {/* 배송지 입력 칸 삭제 (요청사항에 따라 숨김 처리) */}
-                {/* 
                 <FormField
                     control={form.control}
                     name="address"
-                    render={({ field }) => ( ... )}
-                /> 
-                */}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>고객사 주소</FormLabel>
+                            <FormControl>
+                                <Input placeholder="서울특별시 강남구..." {...field} value={field.value || ''} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -202,6 +217,31 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
                         )}
                     />
                 </div>
+
+                <FormField
+                    control={form.control}
+                    name="managed_by"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>내부 전담 매니저 (Sales Rep)</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="사원 선택" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent className="bg-card backdrop-blur-md">
+                                    {salesReps.map((rep) => (
+                                        <SelectItem key={rep.id} value={rep.id}>
+                                            {rep.full_name} ({rep.role})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <FormField
                     control={form.control}

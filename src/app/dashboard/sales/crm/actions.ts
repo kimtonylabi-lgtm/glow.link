@@ -24,7 +24,7 @@ export async function addClient(data: ClientFormValues) {
         // Insert into DB
         const insertPayload = {
             ...parsedData.data,
-            managed_by: user.id
+            managed_by: parsedData.data.managed_by || user.id
         }
 
         const { data: newClient, error: insertError } = await supabase
@@ -70,9 +70,14 @@ export async function updateClient(id: string, data: ClientFormValues) {
             return { error: '입력값이 올바르지 않습니다.' }
         }
 
+        const updatePayload = {
+            ...parsedData.data,
+            managed_by: parsedData.data.managed_by || null
+        }
+
         const { error: updateError } = await supabase
             .from('clients')
-            .update(parsedData.data as any)
+            .update(updatePayload as any)
             .eq('id', id)
 
         if (updateError) {
@@ -269,10 +274,29 @@ export async function getClientHistory(clientId: string) {
             .eq('client_id', clientId)
             .order('created_at', { ascending: false })
 
-        if (error) return { error: error.message }
+        if (error) {
+            console.error('[CRM] History fetch error:', error)
+            return { error: error.message }
+        }
         return { success: true, data: logs }
     } catch (err: any) {
         console.error('[CRM] History fetch error:', err)
         return { error: err.message || '서버 오류' }
+    }
+}
+
+export async function getSalesReps() {
+    try {
+        const supabase = await createClient()
+        const { data: profiles, error } = await supabase
+            .from('profiles')
+            .select('id, full_name, role')
+            .in('role', ['sales', 'head', 'admin'])
+            .order('full_name', { ascending: true })
+
+        if (error) return { error: error.message }
+        return { success: true, data: profiles }
+    } catch (err: any) {
+        return { error: err.message }
     }
 }

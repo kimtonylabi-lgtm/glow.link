@@ -188,42 +188,50 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                     <TabsContent value="info" className="mt-0 space-y-6">
                         <div className="grid grid-cols-1 gap-6">
                             <Card className="bg-card/40 border-border/40 rounded-2xl overflow-hidden shadow-sm">
-                                <CardHeader className="pb-3 text-primary">
-                                    <CardTitle className="text-sm font-black flex items-center gap-2">
-                                        <Building2 className="h-4 w-4" /> 상세 프로필
+                                <CardHeader className="pb-3 border-b border-border/10 bg-muted/20">
+                                    <CardTitle className="text-sm font-black flex items-center gap-2 text-primary">
+                                        <Building2 className="h-4 w-4" /> 기본 정보 (Master Data)
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
+                                <CardContent className="p-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-12">
+                                        <InfoItem label="회사명" value={client.company_name} icon={<Building2 className="h-4 w-4" />} />
+                                        <InfoItem label="외부 담당자" value={client.contact_person} icon={<User className="h-4 w-4" />} />
+                                        <InfoItem label="사업자번호" value={client.business_number} icon={<FileText className="h-4 w-4" />} />
+
+                                        <InfoItem label="이메일" value={client.email} icon={<Mail className="h-4 w-4" />} />
+                                        <InfoItem label="연락처" value={client.phone} icon={<Phone className="h-4 w-4" />} />
+                                        <InfoItem label="주소" value={client.address} icon={<MapPin className="h-4 w-4" />} fullWidth />
+
+                                        <InfoItem label="등급" value={`Tier ${client.tier}`} icon={<Badge className="h-3 w-3 bg-primary" />} />
+                                        <InfoItem label="상태" value={client.status === 'active' ? '거래중' : '휴면'} icon={<div className={cn("w-2 h-2 rounded-full", client.status === 'active' ? "bg-green-500" : "bg-muted-foreground")} />} />
+
                                         <div>
-                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-1">본사 주소</label>
-                                            <p className="text-sm font-medium leading-relaxed flex items-start gap-2">
-                                                <MapPin className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
-                                                {client.address || '주소 정보가 없습니다.'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-1">내부 전담 매니저</label>
-                                            <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-xl border border-border/30 w-fit">
-                                                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20 ring-4 ring-primary/5 transition-all group-hover:ring-primary/10">
+                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">내부 전담 매니저</label>
+                                            <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 p-2.5 rounded-xl w-fit">
+                                                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 ring-4 ring-primary/5">
                                                     {client.managed_by_profile?.full_name ? (
-                                                        <span className="text-[10px] font-black text-primary uppercase">
+                                                        <span className="text-xs font-black text-primary uppercase">
                                                             {client.managed_by_profile.full_name.charAt(0)}
                                                         </span>
                                                     ) : (
-                                                        <User className="h-3.5 w-3.5 text-primary/60" />
+                                                        <User className="h-4 w-4 text-primary/60" />
                                                     )}
                                                 </div>
-                                                <span className="text-xs font-bold pr-2">{client.managed_by_profile?.full_name || '미배정'}</span>
+                                                <div className="pr-3">
+                                                    <div className="text-xs font-black text-foreground leading-tight">
+                                                        {client.managed_by_profile?.full_name || '미배정'}
+                                                    </div>
+                                                    <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">Internal Sales Rep</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-1">비고 / 참고사항</label>
-                                            <div className="bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl min-h-[80px]">
-                                                <p className="text-xs text-muted-foreground italic leading-relaxed">
-                                                    {client.memo || '특이사항이 기록되지 않았습니다.'}
+
+                                        <div className="col-span-full">
+                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">비고 (메모)</label>
+                                            <div className="bg-muted/10 border border-border/20 p-4 rounded-2xl min-h-[100px] shadow-inner">
+                                                <p className="text-sm text-foreground/80 leading-relaxed">
+                                                    {client.memo || '기록된 특이사항이 없습니다.'}
                                                 </p>
                                             </div>
                                         </div>
@@ -231,32 +239,40 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-none rounded-2xl overflow-hidden text-slate-100 shadow-lg">
-                                <CardHeader className="pb-3 text-emerald-400">
-                                    <CardTitle className="text-sm font-black flex items-center gap-2">
-                                        <Users className="h-4 w-4" /> 외부 파트너 담당자
+                            <Card className="bg-slate-900 border-none rounded-2xl overflow-hidden text-slate-100 shadow-xl">
+                                <CardHeader className="pb-3 border-b border-white/5 bg-white/5">
+                                    <CardTitle className="text-sm font-black flex items-center gap-2 text-emerald-400">
+                                        <Users className="h-4 w-4" /> 추가 연락처 (External Contacts)
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {client.contacts && client.contacts.length > 0 ? (
                                         client.contacts.map((contact: any) => (
-                                            <div key={contact.id} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2 group hover:bg-white/10 transition-all">
+                                            <div key={contact.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3 group hover:bg-white/10 transition-all shadow-sm">
                                                 <div className="flex justify-between items-start">
-                                                    <div className="font-bold text-xs">{contact.name} <span className="text-[10px] text-slate-400 font-normal ml-1">{contact.position}</span></div>
-                                                    {contact.is_primary && <Badge className="bg-emerald-500 text-white text-[8px] px-1 h-3.5">PRIMARY</Badge>}
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                                                        <Phone className="h-2.5 w-2.5" /> {contact.phone}
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-black text-sm text-white flex items-center gap-2">
+                                                            {contact.name}
+                                                            {contact.is_primary && <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[8px] h-4 font-black">PRIMARY</Badge>}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{contact.position || 'Position unknown'}</div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                                                        <Mail className="h-2.5 w-2.5" /> {contact.email}
+                                                </div>
+                                                <div className="space-y-1.5 pt-1">
+                                                    <div className="flex items-center gap-2 text-[11px] text-slate-300 font-medium">
+                                                        <Phone className="h-3 w-3 text-slate-500" /> {contact.phone || '-'}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-[11px] text-slate-300 font-medium">
+                                                        <Mail className="h-3 w-3 text-slate-500" /> {contact.email || '-'}
                                                     </div>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="col-span-2 text-center py-6 opacity-40 italic text-[10px]">등록된 담당자가 없습니다.</div>
+                                        <div className="col-span-2 text-center py-10 opacity-30 italic text-xs flex flex-col items-center gap-2">
+                                            <Users className="h-6 w-6" />
+                                            등록된 추가 담당자가 없습니다.
+                                        </div>
                                     )}
                                 </CardContent>
                             </Card>
@@ -351,7 +367,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                             <div className="p-3 rounded-xl bg-muted/20 border border-border/30">
                                                 <p className="text-xs font-medium leading-relaxed">{log.content}</p>
                                                 <p className="text-[9px] text-muted-foreground/40 mt-2 font-bold uppercase">
-                                                    Managed by: {log.performer?.full_name || 'System'}
+                                                    Action by: {log.performer?.full_name || 'System'}
                                                 </p>
                                             </div>
                                         </div>
@@ -366,6 +382,22 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                         )}
                     </TabsContent>
                 </Tabs>
+            </div>
+        </div>
+    )
+}
+
+function InfoItem({ label, value, icon, fullWidth = false }: { label: string; value: string | null | undefined; icon?: React.ReactNode; fullWidth?: boolean }) {
+    return (
+        <div className={cn("space-y-1.5 group", fullWidth && "col-span-full")}>
+            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block">
+                {label}
+            </label>
+            <div className="flex items-center gap-3">
+                {icon && <div className="p-1.5 rounded-lg bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">{icon}</div>}
+                <p className="text-sm font-bold text-foreground/90 transition-colors group-hover:text-primary">
+                    {value || '-'}
+                </p>
             </div>
         </div>
     )
