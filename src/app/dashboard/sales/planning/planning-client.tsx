@@ -135,19 +135,21 @@ export function PlanningClient({ activities: initialActivities }: Props) {
 
                 <div className="flex flex-wrap items-center gap-5 relative z-10">
 
-                    <div className="flex items-center gap-2 bg-background/50 p-2 rounded-2xl border border-border/40 shadow-inner">
-                        <Button variant="ghost" size="icon" onClick={prevMonth} className="hover:bg-primary/10 rounded-xl h-10 w-10">
+                    <div className="flex items-center gap-2 bg-background/50 p-2 rounded-2xl border border-border/40 shadow-inner w-full sm:w-auto justify-center">
+                        <Button variant="ghost" size="icon" onClick={prevMonth} className="hover:bg-primary/10 rounded-xl h-10 w-10 shrink-0">
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
-                        <div className="w-32 text-center font-mono font-black text-xl tracking-tighter">
+                        <div className="flex-1 sm:w-32 text-center font-mono font-black text-xl tracking-tighter">
                             {format(currentMonth, 'yyyy. MM')}
                         </div>
-                        <Button variant="ghost" size="icon" onClick={nextMonth} className="hover:bg-primary/10 rounded-xl h-10 w-10">
+                        <Button variant="ghost" size="icon" onClick={nextMonth} className="hover:bg-primary/10 rounded-xl h-10 w-10 shrink-0">
                             <ChevronRight className="h-5 w-5" />
                         </Button>
                     </div>
 
-                    <MonthlyGoalModal onSuccess={() => fetchData()} />
+                    <div className="w-full sm:w-auto">
+                        <MonthlyGoalModal onSuccess={() => fetchData()} />
+                    </div>
                 </div>
             </div>
 
@@ -183,15 +185,15 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                 {/* 1. Gauge Chart Section (Achievement) */}
                 <Card className="lg:col-span-12 xl:col-span-5 bg-card/40 backdrop-blur-3xl border border-border/40 rounded-[2.5rem] shadow-2xl ring-1 ring-white/5 overflow-hidden group">
                     <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-xl font-black flex items-center gap-2">
+                        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+                            <div className="text-center md:text-left">
+                                <CardTitle className="text-xl font-black flex items-center justify-center md:justify-start gap-2">
                                     <TrendingUp className="w-5 h-5 text-primary" />
                                     Real-time Achievement
                                 </CardTitle>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">당월 수주 달성률</p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-center md:text-right">
                                 <span className={cn(
                                     "text-3xl font-black font-mono tracking-tighter",
                                     isOverAchieved ? "text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]" : "text-primary"
@@ -274,9 +276,9 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col gap-4">
-                                <div className="p-6 rounded-[2rem] bg-muted/20 border border-border/20 group-hover:border-primary/30 transition-all">
+                                <div className="p-6 rounded-[2rem] bg-muted/20 border border-border/20 group-hover:border-primary/30 transition-all flex flex-col items-center sm:items-start text-center sm:text-left">
                                     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 block">Current Month Goal</Label>
-                                    <div className="flex items-end gap-2">
+                                    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-1 sm:gap-2">
                                         <span className="text-3xl font-black font-mono tracking-tighter">₩ {targetAmount.toLocaleString()}</span>
                                         <span className="text-xs font-bold text-muted-foreground mb-1.5 uppercase opacity-30 tracking-widest">KRW</span>
                                     </div>
@@ -293,23 +295,23 @@ export function PlanningClient({ activities: initialActivities }: Props) {
                     </Card>
 
                     {/* Management Tools (Compressed) */}
-                    <div className="bg-gradient-to-br from-primary via-primary/80 to-blue-600 rounded-[2.5rem] p-8 text-primary-foreground shadow-2xl shadow-primary/20 group h-full relative overflow-hidden flex flex-col justify-between">
+                    <div className="bg-gradient-to-br from-primary via-primary/80 to-blue-600 rounded-[2.5rem] p-8 text-primary-foreground shadow-2xl shadow-primary/20 group h-full relative overflow-hidden flex flex-col justify-between items-center sm:items-start text-center sm:text-left">
                         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full">
                             <h3 className="text-xl font-black tracking-tighter">Management Tools</h3>
                             <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">영업 기획 핵심 도구</p>
                         </div>
-                        <div className="grid grid-cols-1 gap-3 mt-6">
-                            <Button variant="secondary" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs gap-2 group" asChild>
+                        <div className="grid grid-cols-1 gap-3 mt-6 w-full">
+                            <Button variant="secondary" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-[10px] sm:text-xs gap-2 group whitespace-nowrap overflow-hidden" asChild>
                                 <Link href="/dashboard/sales/crm">
-                                    <Users className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                                    CRM 분석실
+                                    <Users className="w-3.5 h-3.5 group-hover:scale-110 transition-transform shrink-0" />
+                                    <span className="truncate">CRM 분석실</span>
                                 </Link>
                             </Button>
-                            <Button variant="secondary" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs gap-2 group" asChild>
+                            <Button variant="secondary" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-[10px] sm:text-xs gap-2 group whitespace-nowrap overflow-hidden" asChild>
                                 <Link href="/dashboard/sales/reports">
-                                    <FileText className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                                    실적 리포트
+                                    <FileText className="w-3.5 h-3.5 group-hover:scale-110 transition-transform shrink-0" />
+                                    <span className="truncate">실적 리포트</span>
                                 </Link>
                             </Button>
                         </div>
