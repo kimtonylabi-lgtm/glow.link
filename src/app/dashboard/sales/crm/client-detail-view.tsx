@@ -136,6 +136,8 @@ export function ClientDetailView({ clientId, onBack }: Props) {
 
     if (!client) return null
 
+    const primaryContact = client.contacts?.find((c: any) => c.is_primary) || client.contacts?.[0]
+
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden bg-card/10 backdrop-blur-md">
             {/* Compact Page Header with Tabs Integrated */}
@@ -169,11 +171,10 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                     </Badge>
                                 </div>
                             </div>
-                            <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-2">
-                                {client.business_number || 'Business No. unregistered'}
+                            <p className="text-[11px] text-muted-foreground font-bold flex items-center gap-2">
+                                <span className="text-foreground/60">{client.business_number || 'Business No.'}</span>
                                 <span className="w-1 h-1 rounded-full bg-border" />
-                                <span className="font-bold text-foreground/70">{client.sales_person?.full_name || 'Unassigned'}</span>
-                                <span className="text-[9px] opacity-40 uppercase tracking-tighter">Internal Rep</span>
+                                <span className="text-foreground/80">담당: {client.sales_person?.full_name || '미지정'}</span>
                             </p>
                         </div>
                     </div>
@@ -204,20 +205,19 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                 <TabsContent value="info" className="mt-0 space-y-6">
                     <div className="grid grid-cols-1 gap-6">
                         <Card className="bg-card/40 border-border/40 rounded-2xl overflow-hidden shadow-sm">
-                            <CardContent className="p-10">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-y-12 gap-x-12">
-                                    <InfoItem label="외부 담당자" value={client.contact_person} icon={<User className="h-4 w-4" />} />
+                            <CardContent className="p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-y-6 gap-x-12">
+                                    <InfoItem label="고객사 담당자" value={primaryContact ? `${primaryContact.name}${primaryContact.position ? ` (${primaryContact.position})` : ''}` : '미등록'} icon={<User className="h-4 w-4" />} />
                                     <InfoItem label="사업자번호" value={client.business_number} icon={<FileText className="h-4 w-4" />} />
                                     <InfoItem label="이메일" value={client.email} icon={<Mail className="h-4 w-4" />} />
-
-                                    <div className="hidden md:block" /> {/* Spacer for alignment */}
+                                    <InfoItem label="등록일" value={format(new Date(client.created_at), 'yyyy-MM-dd')} icon={<Clock className="h-4 w-4" />} />
 
                                     <InfoItem label="연락처" value={client.phone} icon={<Phone className="h-4 w-4" />} span2 />
-                                    <InfoItem label="주소" value={client.address} icon={<MapPin className="h-4 w-4" />} fullWidth />
+                                    <InfoItem label="주소" value={client.address} icon={<MapPin className="h-4 w-4" />} span2 />
 
-                                    <div className="col-span-full border-t border-border/10 pt-10 mt-2">
-                                        <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-4">비고 (메모)</label>
-                                        <div className="bg-muted/10 border border-border/20 p-8 rounded-2xl min-h-[140px] shadow-inner text-pretty">
+                                    <div className="col-span-full border-t border-border/10 pt-6 mt-2">
+                                        <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">비고 (메모)</label>
+                                        <div className="bg-muted/10 border border-border/20 p-6 rounded-2xl min-h-[80px] shadow-inner text-pretty">
                                             <p className="text-[13px] text-foreground/80 leading-relaxed font-medium">
                                                 {client.memo || '기록된 특이사항이 없습니다.'}
                                             </p>
@@ -399,16 +399,16 @@ export function ClientDetailView({ clientId, onBack }: Props) {
 function InfoItem({ label, value, icon, fullWidth = false, span2 = false }: { label: string; value: string | null | undefined; icon?: React.ReactNode; fullWidth?: boolean; span2?: boolean }) {
     return (
         <div className={cn(
-            "space-y-2 group",
+            "space-y-1 group min-w-0",
             fullWidth && "col-span-full",
             span2 && "md:col-span-2"
         )}>
-            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block">
+            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block truncate">
                 {label}
             </label>
-            <div className="flex items-center gap-3">
-                {icon && <div className="p-2 rounded-xl bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300 ring-1 ring-border/5 group-hover:ring-primary/20">{icon}</div>}
-                <p className="text-[15px] font-black tracking-tight text-foreground/90 transition-colors group-hover:text-primary">
+            <div className="flex items-center gap-2 min-w-0">
+                {icon && <div className="p-1.5 rounded-lg bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300 ring-1 ring-border/5 group-hover:ring-primary/20 shrink-0">{icon}</div>}
+                <p className="text-[14px] font-black tracking-tight text-foreground/90 transition-colors group-hover:text-primary truncate whitespace-nowrap">
                     {value || '미등록'}
                 </p>
             </div>
