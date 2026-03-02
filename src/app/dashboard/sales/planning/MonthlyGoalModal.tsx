@@ -63,9 +63,9 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                 }
             })
             setGoals(newGoals)
-        } catch (error) {
-            console.error(error)
-            toast.error('연간 목표를 불러오는데 실패했습니다.')
+        } catch (error: any) {
+            console.error('Fetch Yearly Goals Error:', error)
+            toast.error(`연간 목표를 불러오지 못했습니다: ${error.message || '알 수 없는 오류'}`)
         } finally {
             setIsLoading(false)
         }
@@ -104,14 +104,16 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
             const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals)
             if (result.success) {
                 toast.success(`${selectedYear}년 목표가 저장되었습니다.`)
+                // Next.js 라우터 캐시 강제 갱신
                 router.refresh()
                 if (onSuccess) onSuccess()
                 setOpen(false)
             } else {
-                toast.error(result.error || '오류가 발생했습니다.')
+                toast.error(result.error || '저장 중 오류가 발생했습니다.')
             }
-        } catch (error) {
-            toast.error('오류가 발생했습니다.')
+        } catch (error: any) {
+            console.error('Save Goals Error:', error)
+            toast.error(`오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`)
         } finally {
             setIsSaving(false)
         }
@@ -170,20 +172,22 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                             <p className="text-sm font-bold text-muted-foreground animate-pulse">데이터 로드 중...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
                             {goals.map(goal => (
-                                <div key={goal.month} className="group/item space-y-2 p-4 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/50 focus-within:bg-primary/5 transition-all">
-                                    <Label className="text-sm font-black text-foreground/80">
+                                <div key={goal.month} className="group/item flex flex-col space-y-2 p-4 rounded-2xl bg-muted/20 border border-border/20 focus-within:border-primary/50 focus-within:bg-primary/5 transition-all shadow-sm">
+                                    <Label className="text-sm font-black text-foreground/80 ml-1">
                                         {goal.month}월
                                     </Label>
-                                    <div className="relative flex items-center">
+                                    <div className="relative flex items-center w-full">
                                         <Input
                                             value={formatNumber(goal.target_amount || '')}
                                             onChange={(e) => handleChange(goal.month, e.target.value)}
                                             placeholder="0"
-                                            className="h-10 font-mono text-base font-bold border-none bg-transparent pl-0 pr-8 focus-visible:ring-0"
+                                            className="h-11 w-full font-mono text-base font-bold bg-background/50 border-border/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-3 pr-10 rounded-xl transition-all"
                                         />
-                                        <span className="absolute right-0 text-xs text-muted-foreground/60 font-black pointer-events-none group-focus-within/item:text-primary transition-colors">원</span>
+                                        <span className="absolute right-3 text-sm text-primary/60 font-black pointer-events-none group-focus-within/item:text-primary transition-colors">
+                                            원
+                                        </span>
                                     </div>
                                 </div>
                             ))}

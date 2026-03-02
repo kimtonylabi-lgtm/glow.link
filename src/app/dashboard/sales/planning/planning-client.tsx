@@ -81,9 +81,9 @@ export function PlanningClient({ activities: initialActivities }: Props) {
             setPercentage(result.percentage)
             setPipelineStats(result.pipelineStats)
             setPredictions(result.predictions)
-        } catch (error) {
-            console.error(error)
-            toast.error('영업 데이터를 불러오지 못했습니다.')
+        } catch (error: any) {
+            console.error('Fetch Error:', error)
+            toast.error(`영업 데이터를 불러오지 못했습니다: ${error.message || '알 수 없는 오류'}`)
         } finally {
             setIsLoading(false)
         }

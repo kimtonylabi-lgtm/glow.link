@@ -45,7 +45,7 @@ export async function getSalesPlanning(targetMonth: string) {
 
     if (ordersError) {
         console.error('Error fetching orders for planning:', ordersError)
-        throw new Error('Failed to fetch actual sales.')
+        throw new Error(`실적 데이터를 불러오는데 실패했습니다: ${ordersError.message}`)
     }
 
     const actual = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0)
@@ -108,7 +108,7 @@ export async function getYearlyGoals(year: number) {
 
     if (error) {
         console.error('Failed to fetch yearly goals:', error)
-        return []
+        throw new Error(`연간 목표 로드 실패: ${error.message}`)
     }
 
     return (goals || []).map((g: any) => ({
