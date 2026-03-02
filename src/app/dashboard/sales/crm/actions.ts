@@ -88,7 +88,6 @@ export async function updateClient(id: string, data: ClientFormValues) {
         })
 
         revalidatePath('/dashboard/sales/crm')
-        revalidatePath(`/dashboard/sales/crm/${id}`)
         return { success: true }
     } catch (err: unknown) {
         if (err instanceof Error) {
@@ -131,28 +130,98 @@ export async function getClientDetail(id: string) {
     try {
         const supabase = await createClient()
 
-        // Debug log
-        console.log(`[CRM] Fetching detail for ID: ${id}`)
-
+        // 1. Fetch basic client info and managed_by profile
         const { data: client, error: clientError } = await supabase
             .from('clients')
             .select(`
                 *,
-                managed_by_profile:profiles(full_name, avatar_url),
-                contacts:customer_contacts(*)
+                managed_by_profile:profiles(full_name, avatar_url)
             `)
             .eq('id', id)
             .single()
 
         if (clientError) {
-            console.error('[CRM] Fetch error:', clientError)
+            console.error('[CRM] Client fetch error:', clientError)
             return { error: clientError.message }
         }
 
-        return { success: true, data: client }
+        // 2. Fetch contacts separately to avoid "relationship not found" schema cache issues
+        const { data: contacts, error: contactsError } = await supabase
+            .from('customer_contacts' as any)
+            .select('*')
+            .eq('client_id', id)
+            .order('is_primary', { ascending: false })
+
+        if (contactsError) {
+            console.error('[CRM] Contacts fetch error:', contactsError)
+            return { error: contactsError.message }
+        }
+
+        return {
+            success: true,
+            data: {
+                ...client,
+                contacts: contacts || []
+            }
+        }
     } catch (err: any) {
         console.error('[CRM] Server error:', err)
         return { error: err.message || '서버 오류' }
+    }
+}
+
+export async function addCustomerContact(clientId: string, data: any) {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: '인증 필요' }
+
+        const { error } = await supabase
+            .from('customer_contacts' as any)
+            .insert({ ...data, client_id: clientId })
+
+        if (error) return { error: error.message }
+
+        // Log
+        await supabase.from('customer_history_logs' as any).insert({
+            client_id: clientId,
+            log_type: 'contact_added',
+            content: `새 담당자(${data.name})가 추가되었습니다.`,
+            performer_id: user.id
+        })
+
+        revalidatePath('/dashboard/sales/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { error: err.message }
+    }
+}
+
+export async function deleteCustomerContact(clientId: string, contactId: string, contactName: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: '인증 필요' }
+
+        const { error } = await supabase
+            .from('customer_contacts' as any)
+            .delete()
+            .eq('id', contactId)
+
+        if (error) return { error: error.message }
+
+        // Log
+        await supabase.from('customer_history_logs' as any).insert({
+            client_id: clientId,
+            log_type: 'contact_removed',
+            content: `담당자(${contactName})가 삭제되었습니다.`,
+            performer_id: user.id
+        })
+
+        revalidatePath('/dashboard/sales/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { error: err.message }
     }
 }
 
@@ -203,6 +272,7 @@ export async function getClientHistory(clientId: string) {
         if (error) return { error: error.message }
         return { success: true, data: logs }
     } catch (err: any) {
+        console.error('[CRM] History fetch error:', err)
         return { error: err.message || '서버 오류' }
     }
 }
