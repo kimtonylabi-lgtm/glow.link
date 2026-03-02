@@ -27,13 +27,23 @@ export async function addClient(data: ClientFormValues) {
             managed_by: user.id
         }
 
-        const { error: insertError } = await supabase
+        const { data: newClient, error: insertError } = await supabase
             .from('clients')
             .insert(insertPayload as any)
+            .select()
+            .single()
 
         if (insertError) {
             return { error: insertError.message }
         }
+
+        // Log: Initial registration
+        await supabase.from('customer_history_logs' as any).insert({
+            client_id: newClient.id,
+            log_type: 'client_created',
+            content: '고객사가 신규 등록되었습니다.',
+            performer_id: user.id
+        })
 
         revalidatePath('/dashboard/sales/crm')
         return { success: true }
@@ -69,7 +79,16 @@ export async function updateClient(id: string, data: ClientFormValues) {
             return { error: updateError.message }
         }
 
+        // Log: Information update
+        await supabase.from('customer_history_logs' as any).insert({
+            client_id: id,
+            log_type: 'info_updated',
+            content: '고객사 기본 정보가 수정되었습니다.',
+            performer_id: user.id
+        })
+
         revalidatePath('/dashboard/sales/crm')
+        revalidatePath(`/dashboard/sales/crm/${id}`)
         return { success: true }
     } catch (err: unknown) {
         if (err instanceof Error) {
@@ -105,5 +124,77 @@ export async function deleteClient(id: string) {
             return { error: err.message }
         }
         return { error: 'Unknown API error' }
+    }
+}
+
+export async function getClientDetail(id: string) {
+    try {
+        const supabase = await createClient()
+
+        const { data: client, error: clientError } = await supabase
+            .from('clients' as any)
+            .select(`
+                *,
+                managed_by_profile:profiles!managed_by(full_name, avatar_url),
+                contacts:customer_contacts(*)
+            `)
+            .eq('id', id)
+            .single()
+
+        if (clientError) return { error: clientError.message }
+        return { success: true, data: client }
+    } catch (err: any) {
+        return { error: err.message || '서버 오류' }
+    }
+}
+
+export async function getClientOrders(clientId: string) {
+    try {
+        const supabase = await createClient()
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('client_id', clientId)
+            .order('order_date', { ascending: false })
+
+        if (error) return { error: error.message }
+        return { success: true, data: orders }
+    } catch (err: any) {
+        return { error: err.message || '서버 오류' }
+    }
+}
+
+export async function getClientSamples(clientId: string) {
+    try {
+        const supabase = await createClient()
+        const { data: samples, error } = await supabase
+            .from('sample_requests')
+            .select('*')
+            .eq('client_id', clientId)
+            .order('request_date', { ascending: false })
+
+        if (error) return { error: error.message }
+        return { success: true, data: samples }
+    } catch (err: any) {
+        return { error: err.message || '서버 오류' }
+    }
+}
+
+export async function getClientHistory(clientId: string) {
+    try {
+        const supabase = await createClient()
+        const { data: logs, error } = await supabase
+            .from('customer_history_logs' as any)
+            .select(`
+                *,
+                performer:profiles(full_name, avatar_url)
+            `)
+            .eq('client_id', clientId)
+            .order('created_at', { ascending: false })
+
+        if (error) return { error: error.message }
+        return { success: true, data: logs }
+    } catch (err: any) {
+        return { error: err.message || '서버 오류' }
     }
 }

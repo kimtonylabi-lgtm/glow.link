@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ClientWithProfile } from '@/types/crm'
 import { deleteClient } from './actions'
 import { ClientForm } from './client-form'
@@ -43,7 +44,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CustomBadge } from '@/components/ui/custom-badge'
-import { MoreHorizontal, Plus, Search, Pencil, Trash2, Building2 } from 'lucide-react'
+import { MoreHorizontal, Plus, Search, Pencil, Trash2, Building2, Eye } from 'lucide-react'
 
 interface CrmClientProps {
     initialData: ClientWithProfile[]
@@ -180,12 +181,15 @@ export function CrmClient({ initialData }: CrmClientProps) {
                                     className="group hover:bg-primary/5 border-border/30 transition-colors backdrop-blur-sm"
                                 >
                                     <TableCell className="font-medium">
-                                        <div className="flex flex-col">
-                                            <span className="text-foreground">{client.company_name}</span>
+                                        <Link
+                                            href={`/dashboard/sales/crm/${client.id}`}
+                                            className="flex flex-col group/link"
+                                        >
+                                            <span className="text-foreground group-hover/link:text-primary transition-colors">{client.company_name}</span>
                                             {client.business_number && (
                                                 <span className="text-xs text-muted-foreground">{client.business_number}</span>
                                             )}
-                                        </div>
+                                        </Link>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex gap-2">
@@ -234,6 +238,11 @@ export function CrmClient({ initialData }: CrmClientProps) {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-md border-border/50">
                                                 <DropdownMenuLabel>액션</DropdownMenuLabel>
+                                                <DropdownMenuItem asChild className="cursor-pointer">
+                                                    <Link href={`/dashboard/sales/crm/${client.id}`} className="flex items-center w-full">
+                                                        <Eye className="mr-2 h-4 w-4 text-primary" /> 360도 상세 보기
+                                                    </Link>
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
                                                     <Pencil className="mr-2 h-4 w-4 text-blue-400" /> 정보 수정
                                                 </DropdownMenuItem>
