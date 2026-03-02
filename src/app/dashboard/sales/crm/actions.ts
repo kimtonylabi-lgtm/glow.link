@@ -21,7 +21,7 @@ export async function addClient(data: ClientFormValues) {
             return { error: '입력값이 올바르지 않습니다.' }
         }
 
-        // Insert into DB
+        // STEP 1: Insert client - get back the new client id
         const insertPayload = {
             ...parsedData.data,
             sales_person_id: parsedData.data.sales_person_id || user.id
@@ -33,8 +33,42 @@ export async function addClient(data: ClientFormValues) {
             .select()
             .single()
 
-        if (insertError) {
-            return { error: insertError.message }
+        if (insertError || !newClient) {
+            return { error: insertError?.message || '고객사 등록에 실패했습니다.' }
+        }
+
+        const clientId = newClient.id
+        const contactName = parsedData.data.contact_person
+        const contactPhone = parsedData.data.phone
+        const contactEmail = parsedData.data.email
+
+        // STEP 2: If contact info exists, insert primary contact into customer_contacts
+        if (contactName) {
+            const { error: contactError } = await supabase
+                .from('customer_contacts' as any)
+                .insert({
+                    client_id: clientId,
+                    name: contactName,
+                    phone: contactPhone || null,
+                    email: contactEmail || null,
+                    is_primary: true,
+                    created_by: user.id,
+                })
+
+            if (contactError) {
+                console.error('[CRM] customer_contacts insert error:', contactError)
+                // Non-fatal — client is already created, just log warning
+            }
+
+            // STEP 3: Log creation history
+            await supabase
+                .from('customer_history_logs' as any)
+                .insert({
+                    client_id: clientId,
+                    log_type: 'contact_added',
+                    content: `신규 고객사가 등록되고 ${contactName}이(가) 주 담당자로 지정되었습니다.`,
+                    created_by: user.id,
+                })
         }
 
         revalidatePath('/dashboard/sales/crm')
