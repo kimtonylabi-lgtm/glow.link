@@ -76,11 +76,15 @@ export function PlanningClient({ activities: initialActivities }: Props) {
         setIsLoading(true)
         try {
             const result = await getSalesPlanning(monthStr)
-            setTargetAmount(result.target)
-            setActualAmount(result.actual)
-            setPercentage(result.percentage)
-            setPipelineStats(result.pipelineStats)
-            setPredictions(result.predictions)
+            if (result.success) {
+                setTargetAmount(result.target || 0)
+                setActualAmount(result.actual || 0)
+                setPercentage(result.percentage || 0)
+                setPipelineStats(result.pipelineStats || {})
+                setPredictions(result.predictions || [])
+            } else {
+                toast.error(`영업 데이터를 불러오지 못했습니다: ${result.error}`)
+            }
         } catch (error: any) {
             console.error('Fetch Error:', error)
             toast.error(`영업 데이터를 불러오지 못했습니다: ${error.message || '알 수 없는 오류'}`)

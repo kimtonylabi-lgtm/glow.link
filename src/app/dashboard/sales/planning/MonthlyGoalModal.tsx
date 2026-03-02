@@ -53,16 +53,20 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
     const fetchYearlyGoals = async (year: string) => {
         setIsLoading(true)
         try {
-            const data = await getYearlyGoals(parseInt(year))
-            const newGoals = Array.from({ length: 12 }, (_, i) => {
-                const month = i + 1
-                const match = data.find((g: any) => g.month === month)
-                return {
-                    month,
-                    target_amount: match ? match.target_amount.toString() : ''
-                }
-            })
-            setGoals(newGoals)
+            const result = await getYearlyGoals(parseInt(year))
+            if (result.success && result.data) {
+                const newGoals = Array.from({ length: 12 }, (_, i) => {
+                    const month = i + 1
+                    const match = result.data.find((g: any) => g.month === month)
+                    return {
+                        month,
+                        target_amount: match ? match.target_amount.toString() : ''
+                    }
+                })
+                setGoals(newGoals)
+            } else {
+                toast.error(`연간 목표 로드 실패: ${result.error}`)
+            }
         } catch (error: any) {
             console.error('Fetch Yearly Goals Error:', error)
             toast.error(`연간 목표를 불러오지 못했습니다: ${error.message || '알 수 없는 오류'}`)
@@ -104,7 +108,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
             const result = await upsertMonthlyGoals(parseInt(selectedYear), parsedGoals)
             if (result.success) {
                 toast.success(`${selectedYear}년 목표가 저장되었습니다.`)
-                // Next.js 라우터 캐시 강제 갱신
+                // Next.js 라우터 캐시 강제 갱신 (서버/클라이언트 이중 락)
                 router.refresh()
                 if (onSuccess) onSuccess()
                 setOpen(false)
@@ -133,7 +137,7 @@ export function MonthlyGoalModal({ onSuccess }: MonthlyGoalModalProps) {
                     연간 목표 설정
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-7xl w-[95vw] bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
+            <DialogContent className="!max-w-7xl sm:!max-w-7xl w-[95vw] bg-card/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-3xl overflow-hidden p-0">
                 <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
                     <div className="flex justify-between items-start">
                         <div>

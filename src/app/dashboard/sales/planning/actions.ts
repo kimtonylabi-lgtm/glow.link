@@ -4,117 +4,132 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function getSalesPlanning(targetMonth: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-        throw new Error('Unauthorized')
-    }
+        if (!user) {
+            return { success: false, error: '인증되지 않은 사용자입니다.' }
+        }
 
-    // 1. Parse targetMonth (yyyy-MM) to Year and Month
-    const [year, month] = targetMonth.split('-').map(Number)
+        console.log('Fetching goals for:', user.id)
 
-    // 2. Get target amount (Personal only)
-    const { data: goalData } = await (supabase
-        .from('monthly_sales_goals' as any)
-        .select('target_amount')
-        .eq('target_year', year)
-        .eq('target_month', month)
-        .eq('sales_person_id', user.id)
-        .single() as any)
+        // 1. Parse targetMonth (yyyy-MM) to Year and Month
+        const [year, month] = targetMonth.split('-').map(Number)
 
-    const target = goalData?.target_amount || 0
+        // 2. Get target amount (Personal only)
+        const { data: goalData, error: goalError } = await (supabase
+            .from('monthly_sales_goals' as any)
+            .select('target_amount')
+            .eq('target_year', year)
+            .eq('target_month', month)
+            .eq('sales_person_id', user.id)
+            .single() as any)
 
-    // 3. Calculate actual revenue (KST Standard)
-    const startOfMonthKST = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0))
-    startOfMonthKST.setHours(startOfMonthKST.getHours() - 9) // Adjust to UTC
-    const startDate = startOfMonthKST.toISOString()
+        if (goalError && goalError.code !== 'PGRST116') { // PGRST116 is 'no rows returned'
+            console.error('[DB Error] Failed to fetch goal:', goalError)
+            return { success: false, error: `목표 조회 실패: ${goalError.message}` }
+        }
 
-    const endOfMonthKST = new Date(Date.UTC(year, month, 0, 23, 59, 59))
-    endOfMonthKST.setHours(endOfMonthKST.getHours() - 9) // Adjust to UTC
-    const endDate = endOfMonthKST.toISOString()
+        const target = goalData?.target_amount || 0
 
-    const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('total_amount')
-        .in('status', ['confirmed', 'production', 'shipped'])
-        .not('status', 'eq', 'canceled')
-        .gte('order_date', startDate)
-        .lte('order_date', endDate)
-        .eq('sales_person_id', user.id)
+        // 3. Calculate actual revenue (KST Standard)
+        const startOfMonthKST = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0))
+        startOfMonthKST.setHours(startOfMonthKST.getHours() - 9) // Adjust to UTC
+        const startDate = startOfMonthKST.toISOString()
 
-    if (ordersError) {
-        console.error('Error fetching orders for planning:', ordersError)
-        throw new Error(`실적 데이터를 불러오는데 실패했습니다: ${ordersError.message}`)
-    }
+        const endOfMonthKST = new Date(Date.UTC(year, month, 0, 23, 59, 59))
+        endOfMonthKST.setHours(endOfMonthKST.getHours() - 9) // Adjust to UTC
+        const endDate = endOfMonthKST.toISOString()
 
-    const actual = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0)
+        const { data: ordersData, error: ordersError } = await supabase
+            .from('orders')
+            .select('total_amount')
+            .in('status', ['confirmed', 'production', 'shipped'])
+            .not('status', 'eq', 'canceled')
+            .gte('order_date', startDate)
+            .lte('order_date', endDate)
+            .eq('sales_person_id', user.id)
 
-    // Calculate percentage (Protect against Divide by Zero)
-    const percentage = target > 0 ? Math.round((actual / target) * 100) : 0
+        if (ordersError) {
+            console.error('[DB Error] Error fetching orders:', ordersError)
+            return { success: false, error: `실적 조회 실패: ${ordersError.message}` }
+        }
 
-    // 4. Get Pipeline statistics
-    const statsResult = await supabase
-        .from('activities' as any)
-        .select('pipeline_status')
-        .eq('created_by', user.id) as any
+        const actual = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0)
+        const percentage = target > 0 ? Math.round((actual / target) * 100) : 0
 
-    const activityStats = statsResult.data
-    const pipelineStats: Record<string, number> = {
-        lead: 0,
-        quote: 0,
-        negotiation: 0,
-        deal_closed: 0,
-        dropped: 0,
-        sample_sent: 0
-    }
+        // 4. Get Pipeline statistics
+        const statsResult = await supabase
+            .from('activities' as any)
+            .select('pipeline_status')
+            .eq('created_by', user.id) as any
 
-    if (activityStats) {
-        activityStats.forEach((a: any) => {
-            const status = a.pipeline_status || 'lead'
-            pipelineStats[status] = (pipelineStats[status] || 0) + 1
-        })
-    }
+        const activityStats = statsResult.data
+        const pipelineStats: Record<string, number> = {
+            lead: 0, quote: 0, negotiation: 0, deal_closed: 0, dropped: 0, sample_sent: 0
+        }
 
-    // 5. Get Demand Prediction highlights
-    const { data: predictions } = await supabase
-        .from('v_sales_analysis' as any)
-        .select('*')
-        .limit(5)
+        if (activityStats) {
+            activityStats.forEach((a: any) => {
+                const status = a.pipeline_status || 'lead'
+                pipelineStats[status] = (pipelineStats[status] || 0) + 1
+            })
+        }
 
-    return {
-        target,
-        actual,
-        percentage,
-        pipelineStats,
-        predictions: predictions || []
+        const { data: predictions } = await supabase
+            .from('v_sales_analysis' as any)
+            .select('*')
+            .limit(5)
+
+        return {
+            success: true,
+            target,
+            actual,
+            percentage,
+            pipelineStats,
+            predictions: predictions || []
+        }
+    } catch (err: any) {
+        console.error('[Server Error] Exception in getSalesPlanning:', err)
+        return { success: false, error: `서버 오류: ${err.message}` }
     }
 }
 
 export async function getYearlyGoals(year: number) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-        throw new Error('Unauthorized')
+        if (!user) {
+            return { success: false, error: '인증되지 않은 사용자입니다.' }
+        }
+
+        console.log('Fetching yearly goals for:', user.id)
+
+        const { data: goals, error } = await (supabase
+            .from('monthly_sales_goals' as any)
+            .select('target_month, target_amount')
+            .eq('target_year', year)
+            .eq('sales_person_id', user.id)
+            .order('target_month', { ascending: true }) as any)
+
+        if (error) {
+            console.error('[DB Error] Failed to fetch yearly goals:', error)
+            return { success: false, error: `연간 목표 로드 실패: ${error.message}` }
+        }
+
+        return {
+            success: true,
+            data: (goals || []).map((g: any) => ({
+                month: g.target_month,
+                target_amount: g.target_amount
+            }))
+        }
+    } catch (err: any) {
+        console.error('[Server Error] Exception in getYearlyGoals:', err)
+        return { success: false, error: `서버 오류: ${err.message}` }
     }
-
-    const { data: goals, error } = await (supabase
-        .from('monthly_sales_goals' as any)
-        .select('target_month, target_amount')
-        .eq('target_year', year)
-        .eq('sales_person_id', user.id)
-        .order('target_month', { ascending: true }) as any)
-
-    if (error) {
-        console.error('Failed to fetch yearly goals:', error)
-        throw new Error(`연간 목표 로드 실패: ${error.message}`)
-    }
-
-    return (goals || []).map((g: any) => ({
-        month: g.target_month,
-        target_amount: g.target_amount
-    }))
 }
 
 export async function upsertMonthlyGoals(
@@ -129,6 +144,7 @@ export async function upsertMonthlyGoals(
     }
 
     try {
+        console.log('[DEBUG] Upserting monthly goals for user:', user.id, 'Year:', year)
         const dataToUpsert = goals.map(g => ({
             sales_person_id: user.id,
             target_year: year,
@@ -151,6 +167,7 @@ export async function upsertMonthlyGoals(
             }
         }
 
+        console.log('[DEBUG] Upsert successful. Invalidating path...')
         revalidatePath('/dashboard/sales/planning')
         return { success: true }
     } catch (err: any) {
@@ -164,5 +181,6 @@ export async function upsertMonthlyGoals(
 
 export async function upsertTargetAmount(targetMonth: string, amount: number) {
     const [year, month] = targetMonth.split('-').map(Number)
-    return await upsertMonthlyGoals(year, [{ month, target_amount: amount }])
+    const result = await upsertMonthlyGoals(year, [{ month, target_amount: amount }])
+    return result
 }
