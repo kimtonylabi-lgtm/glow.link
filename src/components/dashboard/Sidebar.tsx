@@ -59,27 +59,27 @@ const navItems: NavItem[] = [
     { title: '내 정보 및 설정', href: '/dashboard/settings', icon: Settings, roles: ['admin', 'head', 'sales', 'sample_team', 'support'] },
 ]
 
-// Custom Streamlined Neon Wing Toggle Icon
-const CustomToggleIcon = ({ className }: { className?: string }) => (
+// Custom Streamlined Neon Wing Toggle Icon (Exported for Header use)
+export const CustomToggleIcon = ({ className, isOpen }: { className?: string, isOpen?: boolean }) => (
     <svg
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={cn("transition-all duration-300", className)}
+        className={cn("transition-all duration-500 ease-in-out", className, isOpen ? "rotate-180" : "")}
     >
-        {/* Streamlined sharp wing shape */}
+        {/* Streamlined sharp wing shape (Pointing RIGHT by default) */}
         <path
-            d="M16 4C10 8 10 16 16 20"
+            d="M8 4C14 8 14 16 8 20"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="opacity-40"
         />
         <path
-            d="M10 4C4 8 4 16 10 20"
+            d="M14 4C20 8 20 16 14 20"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
         />
@@ -88,7 +88,7 @@ const CustomToggleIcon = ({ className }: { className?: string }) => (
 
 export function Sidebar({ userRole }: { userRole: UserRole }) {
     const pathname = usePathname()
-    const { isCollapsed, toggleSidebar } = useSidebar()
+    const { isCollapsed, toggleSidebar, isMobileOpen, toggleMobileSidebar } = useSidebar()
 
     // Filter nav items based on user role
     const filteredNavItems = navItems.filter(item => item.roles.includes(userRole))
@@ -96,33 +96,47 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
     return (
         <TooltipProvider delayDuration={0}>
             <div className={cn(
-                "h-full flex flex-col bg-card/40 backdrop-blur-xl border-r border-border/40 transition-all duration-300 ease-in-out",
-                isCollapsed ? "w-20" : "w-64"
+                "h-full flex flex-col bg-card/40 backdrop-blur-3xl border-r border-border/40 transition-all duration-500 ease-in-out",
+                // Mobile layout: Fixed overlay
+                "fixed inset-y-0 left-0 z-50 w-64 lg:relative lg:translate-x-0 print:hidden",
+                isMobileOpen ? "translate-x-0 shadow-[20px_0_50px_rgba(0,0,0,0.5)]" : "-translate-x-full",
+                // Desktop layout: Collapsible
+                isCollapsed ? "lg:w-20" : "lg:w-64"
             )}>
                 {/* Brand area */}
-                <div className="h-16 flex items-center px-4 border-b border-border/40 shrink-0 justify-between">
-                    {!isCollapsed && (
-                        <Link href="/dashboard" className="flex items-center gap-2 group overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300">
-                            <div className="w-8 h-8 rounded-lg bg-card border border-primary/40 flex items-center justify-center shadow-[0_0_10px_theme(colors.primary.DEFAULT)/30] group-hover:shadow-[0_0_15px_theme(colors.primary.DEFAULT)/50] transition-shadow">
-                                <span className="font-bold text-primary text-sm">GL</span>
-                            </div>
-                            <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors hover:text-shadow-[0_0_10px_theme(colors.primary.DEFAULT)/50] whitespace-nowrap">
-                                GlowLink
-                            </span>
-                        </Link>
-                    )}
+                <div className="h-16 flex items-center px-4 border-b border-border/40 shrink-0 justify-between gap-2 overflow-hidden">
+                    <Link href="/dashboard" className={cn(
+                        "flex items-center gap-2 group transition-opacity duration-300",
+                        isCollapsed ? "lg:opacity-0 lg:pointer-events-none" : "opacity-100"
+                    )}>
+                        <div className="w-8 h-8 rounded-lg bg-card border border-primary/40 flex items-center justify-center shadow-[0_0_10px_theme(colors.primary.DEFAULT)/30] group-hover:shadow-[0_0_15px_theme(colors.primary.DEFAULT)/50] transition-shadow shrink-0">
+                            <span className="font-bold text-primary text-sm">GL</span>
+                        </div>
+                        <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors hover:text-shadow-[0_0_10px_theme(colors.primary.DEFAULT)/50] whitespace-nowrap overflow-hidden">
+                            GlowLink
+                        </span>
+                    </Link>
 
+                    {/* Desktop Toggle Button (Internal) - Hidden on Mobile */}
                     <button
                         onClick={toggleSidebar}
                         className={cn(
-                            "p-2 rounded-xl transition-all active:scale-90 group/toggle",
+                            "hidden lg:flex p-2 rounded-xl transition-all active:scale-90 group/toggle shrink-0",
                             "text-primary/70 hover:text-blue-400 hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]",
                             "bg-primary/5 hover:bg-blue-500/10 border border-primary/20 hover:border-blue-400/50",
                             isCollapsed ? "mx-auto" : ""
                         )}
                         title={isCollapsed ? "펼치기" : "접기"}
                     >
-                        <CustomToggleIcon className={cn("w-6 h-6", isCollapsed ? "rotate-180" : "")} />
+                        <CustomToggleIcon className="w-6 h-6" isOpen={!isCollapsed} />
+                    </button>
+
+                    {/* Mobile Close Button (Internal - Wing Style) - Only visible when open on mobile */}
+                    <button
+                        onClick={toggleMobileSidebar}
+                        className="lg:hidden p-2 rounded-xl text-primary/70 border border-primary/20 bg-primary/5"
+                    >
+                        <CustomToggleIcon className="w-6 h-6" isOpen={true} />
                     </button>
                 </div>
 

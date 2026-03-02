@@ -4,10 +4,9 @@ import { Sidebar } from '@/components/dashboard/Sidebar'
 import { Header } from '@/components/dashboard/Header'
 import { Profile } from '@/types/auth'
 import { RealtimeListener } from '@/components/dashboard/realtime-listener'
-import { MobileSidebar } from '@/components/dashboard/mobile-sidebar'
 import { DashboardMain } from '@/components/dashboard/dashboard-main'
 import { SidebarProvider } from '@/components/dashboard/SidebarContext'
-import { SidebarWrapper } from '@/components/dashboard/sidebar-wrapper'
+import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,38 +41,34 @@ export default async function DashboardLayout({
 
     return (
         <SidebarProvider>
-            <div className="flex h-screen overflow-hidden bg-background text-foreground relative selection:bg-primary/30 print:h-auto print:overflow-visible print:bg-white print:text-black">
-                <RealtimeListener />
+            <DashboardLayoutClient>
+                <div className="flex h-screen overflow-hidden bg-background text-foreground relative selection:bg-primary/30 print:h-auto print:overflow-visible print:bg-white print:text-black">
+                    <RealtimeListener />
 
-                {/* Background ambient lighting */}
-                <div className="absolute top-[-20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10 print:hidden" />
-                <div className="absolute bottom-[-20%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-accent/5 blur-[120px] pointer-events-none -z-10 print:hidden" />
+                    {/* Background ambient lighting */}
+                    <div className="absolute top-[-20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10 print:hidden" />
+                    <div className="absolute bottom-[-20%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-accent/5 blur-[120px] pointer-events-none -z-10 print:hidden" />
 
-                {/* Desktop Sidebar (Responds to Context) */}
-                <SidebarWrapper>
+                    {/* Unified Sidebar (Fixed on Mobile, Relative on Desktop) */}
                     <Sidebar userRole={currentProfile.role} />
-                </SidebarWrapper>
 
-                {/* Main Content Area */}
-                <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden z-10 print:h-auto print:overflow-visible print:block">
+                    {/* Main Content Area */}
+                    <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden z-10 print:h-auto print:overflow-visible print:block">
 
-                    {/* Mobile Sidebar & Header Wrap */}
-                    <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 md:border-none md:bg-transparent print:hidden">
-
-                        {/* Mobile Sidebar (Handles auto-close on navigation) */}
-                        <MobileSidebar userRole={currentProfile.role} />
-
-                        <div className="flex-1 md:w-full">
-                            <Header profile={currentProfile} />
+                        {/* Top Header Wrap */}
+                        <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 lg:border-none lg:bg-transparent print:hidden">
+                            <div className="flex-1 lg:w-full">
+                                <Header profile={currentProfile} />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Scrollable Children Wrapped in Client Component for path-based classes */}
-                    <DashboardMain>
-                        {children}
-                    </DashboardMain>
+                        {/* Scrollable Children Wrapped in Client Component for path-based classes */}
+                        <DashboardMain>
+                            {children}
+                        </DashboardMain>
+                    </div>
                 </div>
-            </div>
+            </DashboardLayoutClient>
         </SidebarProvider>
     )
 }

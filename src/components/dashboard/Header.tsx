@@ -14,7 +14,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { LogOut, User, Bell, Menu } from 'lucide-react'
+import { LogOut, User, Bell } from 'lucide-react'
+import { useSidebar } from './SidebarContext'
+import { CustomToggleIcon } from './Sidebar'
 
 // Mapping the role enum to a readable label
 const ROLE_LABELS: Record<string, string> = {
@@ -30,10 +32,11 @@ interface HeaderProps {
     onMenuClick?: () => void
 }
 
-export function Header({ profile, onMenuClick }: HeaderProps) {
+export function Header({ profile }: HeaderProps) {
     const pathname = usePathname()
     const router = useRouter()
     const supabase = createClient()
+    const { isMobileOpen, toggleMobileSidebar } = useSidebar()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     // 보고서 페이지에서는 헤더를 아예 렌더링하지 않음
@@ -51,14 +54,16 @@ export function Header({ profile, onMenuClick }: HeaderProps) {
     const initials = displayName.slice(0, 2).toUpperCase()
 
     return (
-        <header className="h-16 flex items-center justify-between px-4 md:px-6 bg-card/60 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 print:hidden">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-card/60 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 print:hidden">
 
-            {/* Mobile Menu Button - Hidden on Desktop */}
-            <div className="flex md:hidden items-center">
-                <Button variant="ghost" size="icon" onClick={onMenuClick} className="mr-2 text-muted-foreground hover:text-primary">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle Sidebar</span>
-                </Button>
+            {/* Neon Wing Toggle Button - Visible only on Mobile (< lg) */}
+            <div className="flex lg:hidden items-center mr-2">
+                <button
+                    onClick={toggleMobileSidebar}
+                    className="p-2 rounded-xl text-primary/70 border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all active:scale-90"
+                >
+                    <CustomToggleIcon className="w-6 h-6" isOpen={isMobileOpen} />
+                </button>
             </div>
 
             {/* Path Breadcrumb / Title Area */}
