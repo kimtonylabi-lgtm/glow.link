@@ -56,8 +56,8 @@ export default async function DashboardLayout({
                     <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden z-10 print:h-auto print:overflow-visible print:block">
 
                         {/* Top Header Wrap */}
-                        <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 lg:border-none lg:bg-transparent print:hidden">
-                            <div className="flex-1 lg:w-full">
+                        <div className="relative z-30 flex items-center bg-card/60 backdrop-blur-xl border-b border-border/40 md:border-none md:bg-transparent print:hidden">
+                            <div className="flex-1 md:w-full">
                                 <Header profile={currentProfile} />
                             </div>
                         </div>

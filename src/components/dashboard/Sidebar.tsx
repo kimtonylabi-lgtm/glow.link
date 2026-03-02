@@ -98,30 +98,30 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
             <div className={cn(
                 "h-full flex flex-col bg-card/40 backdrop-blur-3xl border-r border-border/40 transition-all duration-500 ease-in-out",
                 // Mobile layout: Fixed overlay
-                "fixed inset-y-0 left-0 z-50 w-64 lg:relative lg:translate-x-0 print:hidden",
+                "fixed inset-y-0 left-0 z-50 w-64 md:relative md:translate-x-0 print:hidden",
                 isMobileOpen ? "translate-x-0 shadow-[20px_0_50px_rgba(0,0,0,0.5)]" : "-translate-x-full",
                 // Desktop layout: Collapsible
-                isCollapsed ? "lg:w-20" : "lg:w-64"
+                isCollapsed ? "md:w-20" : "md:w-64"
             )}>
                 {/* Brand area */}
-                <div className="h-16 flex items-center px-4 border-b border-border/40 shrink-0 justify-between gap-2 overflow-hidden">
+                <div className="h-16 flex items-center px-4 border-b border-border/40 shrink-0 justify-between gap-1 overflow-hidden">
                     <Link href="/dashboard" className={cn(
-                        "flex items-center gap-2 group transition-opacity duration-300",
-                        isCollapsed ? "lg:opacity-0 lg:pointer-events-none" : "opacity-100"
+                        "flex items-center gap-2 group transition-all duration-300",
+                        isCollapsed ? "md:opacity-0 md:pointer-events-none w-0" : "opacity-100 w-auto"
                     )}>
                         <div className="w-8 h-8 rounded-lg bg-card border border-primary/40 flex items-center justify-center shadow-[0_0_10px_theme(colors.primary.DEFAULT)/30] group-hover:shadow-[0_0_15px_theme(colors.primary.DEFAULT)/50] transition-shadow shrink-0">
                             <span className="font-bold text-primary text-sm">GL</span>
                         </div>
-                        <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors hover:text-shadow-[0_0_10px_theme(colors.primary.DEFAULT)/50] whitespace-nowrap overflow-hidden">
+                        <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors hover:text-shadow-[0_0_10px_theme(colors.primary.DEFAULT)/50] whitespace-nowrap">
                             GlowLink
                         </span>
                     </Link>
 
-                    {/* Desktop Toggle Button (Internal) - Hidden on Mobile */}
+                    {/* Desktop Toggle Button (Internal) - Hidden on Mobile (< md) */}
                     <button
                         onClick={toggleSidebar}
                         className={cn(
-                            "hidden lg:flex p-2 rounded-xl transition-all active:scale-90 group/toggle shrink-0",
+                            "hidden md:flex p-2 rounded-xl transition-all active:scale-90 group/toggle shrink-0",
                             "text-primary/70 hover:text-blue-400 hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]",
                             "bg-primary/5 hover:bg-blue-500/10 border border-primary/20 hover:border-blue-400/50",
                             isCollapsed ? "mx-auto" : ""
@@ -134,7 +134,7 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
                     {/* Mobile Close Button (Internal - Wing Style) - Only visible when open on mobile */}
                     <button
                         onClick={toggleMobileSidebar}
-                        className="lg:hidden p-2 rounded-xl text-primary/70 border border-primary/20 bg-primary/5"
+                        className="md:hidden p-2 rounded-xl text-primary/70 border border-primary/20 bg-primary/5"
                     >
                         <CustomToggleIcon className="w-6 h-6" isOpen={true} />
                     </button>

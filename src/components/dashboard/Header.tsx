@@ -54,10 +54,10 @@ export function Header({ profile }: HeaderProps) {
     const initials = displayName.slice(0, 2).toUpperCase()
 
     return (
-        <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-card/60 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 print:hidden">
+        <header className="h-16 flex items-center justify-between px-4 md:px-6 bg-card/60 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 print:hidden">
 
-            {/* Neon Wing Toggle Button - Visible only on Mobile (< lg) */}
-            <div className="flex lg:hidden items-center mr-2">
+            {/* Neon Wing Toggle Button - Visible only on Mobile (< md) */}
+            <div className="flex md:hidden items-center mr-2">
                 <button
                     onClick={toggleMobileSidebar}
                     className="p-2 rounded-xl text-primary/70 border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all active:scale-90"

@@ -19,7 +19,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             {/* Backdrop for Mobile Sidebar Overlay */}
             <div
                 className={cn(
-                    "fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-500 lg:hidden",
+                    "fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-500 md:hidden",
                     isMobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                 )}
                 onClick={() => setIsMobileOpen(false)}
