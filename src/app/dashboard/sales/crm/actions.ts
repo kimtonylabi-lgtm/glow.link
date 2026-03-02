@@ -24,7 +24,7 @@ export async function addClient(data: ClientFormValues) {
         // Insert into DB
         const insertPayload = {
             ...parsedData.data,
-            managed_by: parsedData.data.managed_by || user.id
+            sales_person_id: parsedData.data.sales_person_id || user.id
         }
 
         const { data: newClient, error: insertError } = await supabase
@@ -42,7 +42,7 @@ export async function addClient(data: ClientFormValues) {
             client_id: newClient.id,
             log_type: 'client_created',
             content: '고객사가 신규 등록되었습니다.',
-            performer_id: user.id
+            performed_by: user.id
         })
 
         revalidatePath('/dashboard/sales/crm')
@@ -72,7 +72,7 @@ export async function updateClient(id: string, data: ClientFormValues) {
 
         const updatePayload = {
             ...parsedData.data,
-            managed_by: parsedData.data.managed_by || null
+            sales_person_id: parsedData.data.sales_person_id || null
         }
 
         const { error: updateError } = await supabase
@@ -89,7 +89,7 @@ export async function updateClient(id: string, data: ClientFormValues) {
             client_id: id,
             log_type: 'info_updated',
             content: '고객사 기본 정보가 수정되었습니다.',
-            performer_id: user.id
+            performed_by: user.id
         })
 
         revalidatePath('/dashboard/sales/crm')
@@ -135,12 +135,12 @@ export async function getClientDetail(id: string) {
     try {
         const supabase = await createClient()
 
-        // 1. Fetch basic client info and managed_by profile
+        // 1. Fetch basic client info and sales_person profile (explicit join)
         const { data: client, error: clientError } = await supabase
             .from('clients')
             .select(`
                 *,
-                managed_by_profile:profiles(full_name)
+                sales_person:profiles!sales_person_id(full_name)
             `)
             .eq('id', id)
             .single()
@@ -192,7 +192,7 @@ export async function addCustomerContact(clientId: string, data: any) {
             client_id: clientId,
             log_type: 'contact_added',
             content: `새 담당자(${data.name})가 추가되었습니다.`,
-            performer_id: user.id
+            performed_by: user.id
         })
 
         revalidatePath('/dashboard/sales/crm')
@@ -220,7 +220,7 @@ export async function deleteCustomerContact(clientId: string, contactId: string,
             client_id: clientId,
             log_type: 'contact_removed',
             content: `담당자(${contactName})가 삭제되었습니다.`,
-            performer_id: user.id
+            performed_by: user.id
         })
 
         revalidatePath('/dashboard/sales/crm')
@@ -269,7 +269,7 @@ export async function getClientHistory(clientId: string) {
             .from('customer_history_logs' as any)
             .select(`
                 *,
-                performer:profiles(full_name)
+                performer:profiles!performed_by(full_name)
             `)
             .eq('client_id', clientId)
             .order('created_at', { ascending: false })

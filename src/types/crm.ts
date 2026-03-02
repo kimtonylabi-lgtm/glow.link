@@ -13,15 +13,18 @@ export interface Client {
     tier: ClientTier;
     status: ClientStatus;
     managed_by: string | null;
+    sales_person_id: string | null;
     created_at: string;
 }
 
 // A combined type optionally returning the profile relation
 export interface ClientWithProfile extends Client {
-    profiles?: {
+    sales_person?: {
         full_name: string | null;
     };
-    managed_by_name?: string | null;
+    managed_by_profile?: {
+        full_name: string | null;
+    };
     total_revenue?: number;
     conversion_rate?: number;
 }

@@ -210,9 +210,9 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                             <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">내부 전담 매니저</label>
                                             <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 p-2.5 rounded-xl w-fit">
                                                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 ring-4 ring-primary/5">
-                                                    {client.managed_by_profile?.full_name ? (
+                                                    {client.sales_person?.full_name ? (
                                                         <span className="text-xs font-black text-primary uppercase">
-                                                            {client.managed_by_profile.full_name.charAt(0)}
+                                                            {client.sales_person.full_name.charAt(0)}
                                                         </span>
                                                     ) : (
                                                         <User className="h-4 w-4 text-primary/60" />
@@ -220,7 +220,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                                 </div>
                                                 <div className="pr-3">
                                                     <div className="text-xs font-black text-foreground leading-tight">
-                                                        {client.managed_by_profile?.full_name || '미배정'}
+                                                        {client.sales_person?.full_name || '미배정'}
                                                     </div>
                                                     <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">Internal Sales Rep</div>
                                                 </div>

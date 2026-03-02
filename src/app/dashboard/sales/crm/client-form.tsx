@@ -43,7 +43,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
             memo: client?.memo || '',
             tier: client?.tier || 'C',
             status: client?.status || 'active',
-            managed_by: client?.managed_by || '',
+            sales_person_id: client?.sales_person_id || '',
         },
     })
 
@@ -220,7 +220,7 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
 
                 <FormField
                     control={form.control}
-                    name="managed_by"
+                    name="sales_person_id"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>내부 전담 매니저 (Sales Rep)</FormLabel>
