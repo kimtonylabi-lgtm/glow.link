@@ -89,11 +89,11 @@ export function ClientForm({ client, onSuccess }: ClientFormProps) {
                     name="company_name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>회사명 (필수)</FormLabel>
+                            <FormLabel className="text-xs font-black text-muted-foreground uppercase tracking-wider">고객사</FormLabel>
                             <FormControl>
-                                <Input placeholder="GlowLink 제조원" {...field} className="focus:border-primary/50 focus:ring-primary/30" />
+                                <Input placeholder="정확한 사명을 입력하세요" {...field} className="bg-muted/30 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-xl h-11" />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-[10px] font-bold" />
                         </FormItem>
                     )}
                 />

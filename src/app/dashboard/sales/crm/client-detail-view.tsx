@@ -135,33 +135,51 @@ export function ClientDetailView({ clientId, onBack }: Props) {
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden bg-card/10 backdrop-blur-md">
             {/* Page Header (Internal) */}
-            <div className="p-6 border-b border-border/40 bg-card/40 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <div className="p-7 border-b border-border/40 bg-card/60 backdrop-blur-3xl sticky top-0 z-20 flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 w-full">
                     {onBack && (
-                        <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden rounded-full">
+                        <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden rounded-full mb-2">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     )}
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-black tracking-tighter break-keep">
+                    <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl font-black tracking-tighter break-keep text-foreground">
                                 {client.company_name}
                             </h1>
-                            <Badge className={cn(
-                                "font-black text-[10px] h-5",
-                                client.tier === 'S' ? "bg-amber-500" :
-                                    client.tier === 'A' ? "bg-purple-500" :
-                                        "bg-blue-500"
-                            )}>
-                                Tier {client.tier}
-                            </Badge>
+                            <div className="flex items-center gap-3">
+                                <Badge className={cn(
+                                    "font-black text-[10px] h-5 px-2 rounded-full ring-2 ring-background shadow-lg",
+                                    client.tier === 'S' ? "bg-amber-500" :
+                                        client.tier === 'A' ? "bg-purple-500" :
+                                            "bg-blue-500"
+                                )}>
+                                    Tier {client.tier}
+                                </Badge>
+                                <Badge variant="outline" className={cn(
+                                    "font-black text-[10px] h-5 px-2 rounded-full bg-background/50 backdrop-blur-sm border-border/40 font-mono",
+                                    client.status === 'active' ? "text-green-500 border-green-500/20" : "text-muted-foreground"
+                                )}>
+                                    {client.status === 'active' ? 'ACTIVE' : 'INACTIVE'}
+                                </Badge>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground font-medium">{client.business_number || 'No Business No.'}</span>
-                            <span className="w-1 h-1 rounded-full bg-border" />
-                            <span className={cn("text-[10px] font-bold uppercase tracking-widest", client.status === 'active' ? "text-green-500" : "text-muted-foreground")}>
-                                {client.status === 'active' ? 'Active' : 'Inactive'}
-                            </span>
+
+                        {/* Quick Manager View in Header */}
+                        <div className="flex items-center gap-3 bg-muted/40 p-2 pr-4 rounded-2xl border border-border/40">
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shrink-0">
+                                {client.sales_person?.full_name ? (
+                                    <span className="text-[10px] font-black text-primary">
+                                        {client.sales_person.full_name.charAt(0)}
+                                    </span>
+                                ) : (
+                                    <User className="h-4 w-4 text-primary/60" />
+                                )}
+                            </div>
+                            <div className="space-y-0.5">
+                                <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-tighter leading-none">Sales Rep</p>
+                                <p className="text-xs font-black text-foreground">{client.sales_person?.full_name || '미배정'}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -169,9 +187,12 @@ export function ClientDetailView({ clientId, onBack }: Props) {
 
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-4 h-11 p-1 bg-muted/40 border border-border/40 rounded-xl mb-6">
+                    <TabsList className="grid grid-cols-5 h-11 p-1 bg-muted/40 border border-border/40 rounded-xl mb-6">
                         <TabsTrigger value="info" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <Building2 className="h-3.5 w-3.5" /> 정보
+                        </TabsTrigger>
+                        <TabsTrigger value="contacts" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                            <Users className="h-3.5 w-3.5" /> 담당자
                         </TabsTrigger>
                         <TabsTrigger value="orders" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <ShoppingCart className="h-3.5 w-3.5" /> 수주
@@ -193,9 +214,9 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                         <Building2 className="h-4 w-4" /> 기본 정보 (Master Data)
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-12">
-                                        <InfoItem label="회사명" value={client.company_name} icon={<Building2 className="h-4 w-4" />} />
+                                <CardContent className="p-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-12">
+                                        <InfoItem label="고객사" value={client.company_name} icon={<Building2 className="h-4 w-4" />} />
                                         <InfoItem label="외부 담당자" value={client.contact_person} icon={<User className="h-4 w-4" />} />
                                         <InfoItem label="사업자번호" value={client.business_number} icon={<FileText className="h-4 w-4" />} />
 
@@ -206,31 +227,10 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                         <InfoItem label="등급" value={`Tier ${client.tier}`} icon={<Badge className="h-3 w-3 bg-primary" />} />
                                         <InfoItem label="상태" value={client.status === 'active' ? '거래중' : '휴면'} icon={<div className={cn("w-2 h-2 rounded-full", client.status === 'active' ? "bg-green-500" : "bg-muted-foreground")} />} />
 
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">내부 전담 매니저</label>
-                                            <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 p-2.5 rounded-xl w-fit">
-                                                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 ring-4 ring-primary/5">
-                                                    {client.sales_person?.full_name ? (
-                                                        <span className="text-xs font-black text-primary uppercase">
-                                                            {client.sales_person.full_name.charAt(0)}
-                                                        </span>
-                                                    ) : (
-                                                        <User className="h-4 w-4 text-primary/60" />
-                                                    )}
-                                                </div>
-                                                <div className="pr-3">
-                                                    <div className="text-xs font-black text-foreground leading-tight">
-                                                        {client.sales_person?.full_name || '미배정'}
-                                                    </div>
-                                                    <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">Internal Sales Rep</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="col-span-full">
-                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-2">비고 (메모)</label>
-                                            <div className="bg-muted/10 border border-border/20 p-4 rounded-2xl min-h-[100px] shadow-inner">
-                                                <p className="text-sm text-foreground/80 leading-relaxed">
+                                        <div className="col-span-full border-t border-border/10 pt-8 mt-4">
+                                            <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-[0.2em] block mb-3">비고 (메모)</label>
+                                            <div className="bg-muted/10 border border-border/20 p-6 rounded-2xl min-h-[120px] shadow-inner">
+                                                <p className="text-sm text-foreground/80 leading-relaxed font-medium">
                                                     {client.memo || '기록된 특이사항이 없습니다.'}
                                                 </p>
                                             </div>
@@ -239,43 +239,6 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-slate-900 border-none rounded-2xl overflow-hidden text-slate-100 shadow-xl">
-                                <CardHeader className="pb-3 border-b border-white/5 bg-white/5">
-                                    <CardTitle className="text-sm font-black flex items-center gap-2 text-emerald-400">
-                                        <Users className="h-4 w-4" /> 추가 연락처 (External Contacts)
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {client.contacts && client.contacts.length > 0 ? (
-                                        client.contacts.map((contact: any) => (
-                                            <div key={contact.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3 group hover:bg-white/10 transition-all shadow-sm">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="space-y-0.5">
-                                                        <div className="font-black text-sm text-white flex items-center gap-2">
-                                                            {contact.name}
-                                                            {contact.is_primary && <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[8px] h-4 font-black">PRIMARY</Badge>}
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{contact.position || 'Position unknown'}</div>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-1.5 pt-1">
-                                                    <div className="flex items-center gap-2 text-[11px] text-slate-300 font-medium">
-                                                        <Phone className="h-3 w-3 text-slate-500" /> {contact.phone || '-'}
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-[11px] text-slate-300 font-medium">
-                                                        <Mail className="h-3 w-3 text-slate-500" /> {contact.email || '-'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="col-span-2 text-center py-10 opacity-30 italic text-xs flex flex-col items-center gap-2">
-                                            <Users className="h-6 w-6" />
-                                            등록된 추가 담당자가 없습니다.
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
                         </div>
                     </TabsContent>
 
@@ -345,6 +308,49 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                 </div>
                             )}
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="contacts" className="mt-0 space-y-4">
+                        <Card className="bg-slate-900 border-none rounded-2xl overflow-hidden text-slate-100 shadow-xl">
+                            <CardHeader className="pb-3 border-b border-white/5 bg-white/5 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-black flex items-center gap-2 text-emerald-400">
+                                    <Users className="h-4 w-4" /> 고객사 담당자 (External Contacts)
+                                </CardTitle>
+                                <Button size="sm" variant="outline" className="h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 rounded-lg text-xs font-black">
+                                    담당자 추가
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {client.contacts && client.contacts.length > 0 ? (
+                                    client.contacts.map((contact: any) => (
+                                        <div key={contact.id} className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-4 group hover:bg-white/10 transition-all shadow-sm relative overflow-hidden">
+                                            <div className="flex justify-between items-start">
+                                                <div className="space-y-1">
+                                                    <div className="font-black text-base text-white flex items-center gap-2">
+                                                        {contact.name}
+                                                        {contact.is_primary && <Badge className="bg-emerald-500 text-slate-950 border-none text-[8px] h-4 font-black">PRIMARY</Badge>}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">{contact.position || '직책 미지정'}</div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2 pt-2 border-t border-white/5">
+                                                <div className="flex items-center gap-3 text-xs text-slate-300 font-medium">
+                                                    <Phone className="h-3.5 w-3.5 text-slate-500" /> {contact.phone || '-'}
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-slate-300 font-medium">
+                                                    <Mail className="h-3.5 w-3.5 text-slate-500" /> {contact.email || '-'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full text-center py-20 opacity-30 italic text-sm flex flex-col items-center gap-4">
+                                        <Users className="h-12 w-12" />
+                                        등록된 담당자가 없습니다. 상단의 버튼을 눌러 담당자를 추가하세요.
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     <TabsContent value="history" className="mt-0 pb-10">

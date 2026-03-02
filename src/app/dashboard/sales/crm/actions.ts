@@ -37,14 +37,6 @@ export async function addClient(data: ClientFormValues) {
             return { error: insertError.message }
         }
 
-        // Log: Initial registration
-        await supabase.from('customer_history_logs' as any).insert({
-            client_id: newClient.id,
-            log_type: 'client_created',
-            content: '고객사가 신규 등록되었습니다.',
-            performed_by: user.id
-        })
-
         revalidatePath('/dashboard/sales/crm')
         return { success: true }
     } catch (err: unknown) {
@@ -83,14 +75,6 @@ export async function updateClient(id: string, data: ClientFormValues) {
         if (updateError) {
             return { error: updateError.message }
         }
-
-        // Log: Information update
-        await supabase.from('customer_history_logs' as any).insert({
-            client_id: id,
-            log_type: 'info_updated',
-            content: '고객사 기본 정보가 수정되었습니다.',
-            performed_by: user.id
-        })
 
         revalidatePath('/dashboard/sales/crm')
         return { success: true }
@@ -187,11 +171,11 @@ export async function addCustomerContact(clientId: string, data: any) {
 
         if (error) return { error: error.message }
 
-        // Log
+        // Log: Contact added (Focused logging)
         await supabase.from('customer_history_logs' as any).insert({
             client_id: clientId,
             log_type: 'contact_added',
-            content: `새 담당자(${data.name})가 추가되었습니다.`,
+            content: `신규 담당자 [${data.name}] 등록됨 (직책: ${data.position || '미지정'})`,
             performed_by: user.id
         })
 
@@ -215,11 +199,11 @@ export async function deleteCustomerContact(clientId: string, contactId: string,
 
         if (error) return { error: error.message }
 
-        // Log
+        // Log: Contact removed (Focused logging)
         await supabase.from('customer_history_logs' as any).insert({
             client_id: clientId,
             log_type: 'contact_removed',
-            content: `담당자(${contactName})가 삭제되었습니다.`,
+            content: `담당자 [${contactName}] 삭제됨`,
             performed_by: user.id
         })
 
@@ -272,6 +256,7 @@ export async function getClientHistory(clientId: string) {
                 performer:profiles!performed_by(full_name)
             `)
             .eq('client_id', clientId)
+            .in('log_type', ['contact_added', 'contact_updated', 'contact_removed'])
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -296,6 +281,34 @@ export async function getSalesReps() {
 
         if (error) return { error: error.message }
         return { success: true, data: profiles }
+    } catch (err: any) {
+        return { error: err.message }
+    }
+}
+
+export async function updateCustomerContact(clientId: string, contactId: string, data: any) {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: '인증 필요' }
+
+        const { error } = await supabase
+            .from('customer_contacts' as any)
+            .update(data)
+            .eq('id', contactId)
+
+        if (error) return { error: error.message }
+
+        // Log: Contact updated (Focused logging)
+        await supabase.from('customer_history_logs' as any).insert({
+            client_id: clientId,
+            log_type: 'contact_updated',
+            content: `담당자 [${data.name}] 정보 수정됨`,
+            performed_by: user.id
+        })
+
+        revalidatePath('/dashboard/sales/crm')
+        return { success: true }
     } catch (err: any) {
         return { error: err.message }
     }
