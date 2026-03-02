@@ -46,7 +46,6 @@ export async function getSalesPlanning(targetMonth: string) {
             .from('orders')
             .select('total_amount')
             .in('status', ['confirmed', 'production', 'shipped'])
-            .not('status', 'eq', 'canceled')
             .gte('order_date', startDate)
             .lte('order_date', endDate)
             .eq('sales_person_id', user.id)
