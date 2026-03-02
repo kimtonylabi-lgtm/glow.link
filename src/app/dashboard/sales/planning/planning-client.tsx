@@ -115,21 +115,21 @@ export function PlanningClient({ activities: initialActivities }: Props) {
     return (
         <div className="space-y-8 max-w-7xl mx-auto pb-20 px-4 pt-4 animate-in fade-in duration-700">
             {/* Header / Month Navigation */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-6 bg-card/40 backdrop-blur-3xl border border-border/40 p-8 rounded-[2.5rem] shadow-2xl ring-1 ring-white/10 overflow-hidden relative group">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-card/40 backdrop-blur-3xl border border-border/40 p-6 md:p-8 rounded-[2.5rem] shadow-2xl ring-1 ring-white/10 overflow-hidden relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50" />
 
-                <div className="flex items-center gap-5 relative z-10">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_20px_theme(colors.primary.DEFAULT)/30]">
+                <div className="flex flex-col md:flex-row items-center gap-5 relative z-10 text-center md:text-left">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_20px_theme(colors.primary.DEFAULT)/30] shrink-0">
                         <Target className="w-7 h-7 text-primary" />
                     </div>
                     <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-black tracking-tighter bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent">
+                        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tighter bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent break-keep">
                                 영업기획 대시보드
                             </h1>
                             <Badge variant="outline" className="text-[10px] py-0.5 px-2 border-primary/30 text-primary font-black uppercase tracking-widest animate-pulse bg-primary/5">v2.3 HOTFIX</Badge>
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground mt-1 tracking-tight">KST 실시간 수주 실적 및 목표 달성률을 분석합니다.</p>
+                        <p className="text-xs md:text-sm font-medium text-muted-foreground mt-1 tracking-tight break-keep">KST 실시간 수주 실적 및 목표 달성률을 분석합니다.</p>
                     </div>
                 </div>
 

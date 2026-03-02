@@ -82,19 +82,19 @@ export function ActivityContainer({
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            <div className="flex justify-between items-center bg-card/30 backdrop-blur-md p-6 rounded-3xl border border-border/40 shadow-xl">
+            <div className="flex flex-col md:flex-row md:justify-between items-center md:items-start gap-6 bg-card/30 backdrop-blur-md p-6 rounded-3xl border border-border/40 shadow-xl text-center md:text-left">
                 <div>
-                    <h2 className="text-3xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
+                    <h2 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent break-keep leading-tight">
                         영업 활동 관리
                     </h2>
-                    <p className="text-muted-foreground font-medium mt-1">고객사와의 모든 접점을 기록하고 다음 액션을 계획하세요.</p>
+                    <p className="text-sm md:text-base text-muted-foreground font-medium mt-1 break-keep">고객사와의 모든 접점을 기록하고 다음 액션을 계획하세요.</p>
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
                         <Button
                             onClick={handleAddNew}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-6 rounded-2xl font-black shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-6 rounded-2xl font-black shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                         >
                             <Plus className="h-5 w-5" /> 새 활동 등록
                         </Button>
