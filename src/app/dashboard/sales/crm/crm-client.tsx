@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ClientWithProfile } from '@/types/crm'
 import { deleteClient } from './actions'
@@ -58,6 +58,11 @@ export function CrmClient({ initialData }: CrmClientProps) {
     const router = useRouter()
     const [data, setData] = useState<ClientWithProfile[]>(initialData)
     const [selectedId, setSelectedId] = useState<string | null>(null)
+
+    // Sync state with server data (after router.refresh)
+    useEffect(() => {
+        setData(initialData)
+    }, [initialData])
 
     // Search & Filter
     const [searchQuery, setSearchQuery] = useState('')
