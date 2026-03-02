@@ -22,7 +22,7 @@ export default async function CrmPage() {
     const initialData = (clients as any || []) as ClientWithProfile[]
 
     return (
-        <div className="p-4 md:p-6 lg:p-8">
+        <div className="h-full">
             <CrmClient initialData={initialData} />
         </div>
     )
