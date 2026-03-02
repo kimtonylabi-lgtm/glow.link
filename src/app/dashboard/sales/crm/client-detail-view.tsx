@@ -65,7 +65,9 @@ export function ClientDetailView({ clientId, onBack }: Props) {
         if (res.success) {
             setClient(res.data)
         } else {
-            toast.error('고객 정보를 불러오지 못했습니다.')
+            toast.error('고객 정보를 불러오지 못했습니다.', {
+                description: res.error
+            })
         }
         setIsDetailLoading(false)
     }
@@ -74,7 +76,11 @@ export function ClientDetailView({ clientId, onBack }: Props) {
         if (!clientId) return
         setIsLoading(true)
         const res = await getClientOrders(clientId)
-        if (res.success) setOrders(res.data)
+        if (res.success) {
+            setOrders(res.data)
+        } else {
+            toast.error('수주 이력을 불러오지 못했습니다.', { description: res.error })
+        }
         setIsLoading(false)
     }
 
@@ -82,7 +88,11 @@ export function ClientDetailView({ clientId, onBack }: Props) {
         if (!clientId) return
         setIsLoading(true)
         const res = await getClientSamples(clientId)
-        if (res.success) setSamples(res.data)
+        if (res.success) {
+            setSamples(res.data)
+        } else {
+            toast.error('샘플 이력을 불러오지 못했습니다.', { description: res.error })
+        }
         setIsLoading(false)
     }
 
@@ -90,7 +100,11 @@ export function ClientDetailView({ clientId, onBack }: Props) {
         if (!clientId) return
         setIsLoading(true)
         const res = await getClientHistory(clientId)
-        if (res.success) setHistory(res.data)
+        if (res.success) {
+            setHistory(res.data)
+        } else {
+            toast.error('히스토리를 불러오지 못했습니다.', { description: res.error })
+        }
         setIsLoading(false)
     }
 

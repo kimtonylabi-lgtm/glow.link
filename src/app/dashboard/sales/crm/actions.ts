@@ -131,19 +131,27 @@ export async function getClientDetail(id: string) {
     try {
         const supabase = await createClient()
 
+        // Debug log
+        console.log(`[CRM] Fetching detail for ID: ${id}`)
+
         const { data: client, error: clientError } = await supabase
-            .from('clients' as any)
+            .from('clients')
             .select(`
                 *,
-                managed_by_profile:profiles!managed_by(full_name, avatar_url),
+                managed_by_profile:profiles(full_name, avatar_url),
                 contacts:customer_contacts(*)
             `)
             .eq('id', id)
             .single()
 
-        if (clientError) return { error: clientError.message }
+        if (clientError) {
+            console.error('[CRM] Fetch error:', clientError)
+            return { error: clientError.message }
+        }
+
         return { success: true, data: client }
     } catch (err: any) {
+        console.error('[CRM] Server error:', err)
         return { error: err.message || '서버 오류' }
     }
 }
