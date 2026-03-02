@@ -388,3 +388,44 @@ export async function updateCustomerContact(clientId: string, contactId: string,
         return { error: err.message }
     }
 }
+
+/**
+ * 주 담당자 독점 지정: 해당 client의 모든 담당자를 is_primary=false로 초기화 후,
+ * 선택된 contactId만 is_primary=true로 업데이트 (1명만 주 담당자 보장)
+ */
+export async function setPrimaryContact(clientId: string, contactId: string, contactName: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: '인증 필요' }
+
+        // STEP 1: Reset all contacts of this client to is_primary = false
+        const { error: resetError } = await supabase
+            .from('customer_contacts' as any)
+            .update({ is_primary: false })
+            .eq('client_id', clientId)
+
+        if (resetError) return { error: resetError.message }
+
+        // STEP 2: Set the selected contact to is_primary = true
+        const { error: setError } = await supabase
+            .from('customer_contacts' as any)
+            .update({ is_primary: true })
+            .eq('id', contactId)
+
+        if (setError) return { error: setError.message }
+
+        // STEP 3: Log the change
+        await supabase.from('customer_history_logs' as any).insert({
+            client_id: clientId,
+            log_type: 'contact_updated',
+            content: `[${contactName}] 이(가) 주 담당자로 지정되었습니다.`,
+            performer_id: user.id,
+        })
+
+        revalidatePath('/dashboard/sales/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { error: err.message }
+    }
+}

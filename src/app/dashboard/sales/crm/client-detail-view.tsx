@@ -22,11 +22,12 @@ import {
     Clock,
     FileText,
     ExternalLink,
-    Loader2
+    Loader2,
+    Star
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { getClientDetail, getClientOrders, getClientSamples, getClientHistory } from './actions'
+import { getClientDetail, getClientOrders, getClientSamples, getClientHistory, setPrimaryContact } from './actions'
 import { ContactFormModal } from './contact-form-modal'
 import { toast } from 'sonner'
 
@@ -327,7 +328,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                         <CardContent className="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {client.contacts && client.contacts.length > 0 ? (
                                 client.contacts.map((contact: any) => (
-                                    <div key={contact.id} className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-4 group hover:bg-white/10 transition-all shadow-sm relative overflow-hidden">
+                                    <div key={contact.id} className="p-5 rounded-3xl bg-white/5 border border-white/5 space-y-3 group hover:bg-white/10 transition-all shadow-sm relative overflow-hidden">
                                         <div className="flex justify-between items-start">
                                             <div className="space-y-1">
                                                 <div className="font-black text-base text-white flex items-center gap-2">
@@ -336,6 +337,31 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                                                 </div>
                                                 <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">{contact.position || '직책 미지정'}</div>
                                             </div>
+                                            {/* Primary Contact Toggle Button */}
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.stopPropagation()
+                                                    if (contact.is_primary) return
+                                                    const res = await setPrimaryContact(client.id, contact.id, contact.name)
+                                                    if (res.success) {
+                                                        // Re-fetch client data to sync info tab
+                                                        const updated = await getClientDetail(client.id)
+                                                        if (updated.success && updated.data) setClient(updated.data)
+                                                        toast.success(`${contact.name} 을(를) 주 담당자로 지정했습니다.`)
+                                                    } else {
+                                                        toast.error('지정 실패', { description: res.error })
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "p-1.5 rounded-full transition-all",
+                                                    contact.is_primary
+                                                        ? "text-amber-400 cursor-default"
+                                                        : "text-slate-600 hover:text-amber-400 hover:bg-white/10"
+                                                )}
+                                                title={contact.is_primary ? '현재 주 담당자' : '주 담당자로 지정'}
+                                            >
+                                                <Star className={cn("h-4 w-4", contact.is_primary && "fill-amber-400")} />
+                                            </button>
                                         </div>
                                         <div className="space-y-2 pt-2 border-t border-white/5">
                                             <div className="flex items-center gap-3 text-xs text-slate-300 font-medium">

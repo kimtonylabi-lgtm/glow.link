@@ -180,29 +180,34 @@ export function CrmClient({ initialData }: CrmClientProps) {
                                 key={client.id}
                                 onClick={() => setSelectedId(client.id)}
                                 className={cn(
-                                    "p-4 rounded-2xl cursor-pointer transition-all border group relative overflow-hidden",
+                                    "py-2 px-3 rounded-xl cursor-pointer transition-all border group relative flex items-center justify-between gap-2",
                                     selectedId === client.id
-                                        ? "bg-primary/10 border-primary/40 shadow-md shadow-primary/5"
+                                        ? "bg-primary/10 border-primary/40 shadow-sm shadow-primary/5"
                                         : "bg-transparent border-transparent hover:bg-muted/50 hover:border-border/60"
                                 )}
                             >
-                                <div className="flex justify-between items-start mb-2 relative z-10">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className={cn(
-                                                "font-black tracking-tight text-sm",
-                                                selectedId === client.id ? "text-primary" : "text-foreground"
-                                            )}>
-                                                {client.company_name}
-                                            </h3>
-                                            <CustomBadge variant={client.tier} className="h-4 text-[9px] px-1.5" />
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground font-medium">{client.contact_person || 'No Contact'}</p>
-                                    </div>
+                                {/* Main content: company name + tier badge */}
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <h3 className={cn(
+                                        "font-black tracking-tight text-sm truncate",
+                                        selectedId === client.id ? "text-primary" : "text-foreground"
+                                    )}>
+                                        {client.company_name}
+                                    </h3>
+                                    <CustomBadge variant={client.tier} className="shrink-0 text-[9px] px-1.5 h-4" />
+                                </div>
+
+                                {/* Right side: sales person name + dropdown */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                    {client.sales_person?.full_name && (
+                                        <span className="text-[10px] text-muted-foreground/60 font-bold hidden lg:block">
+                                            {client.sales_person.full_name}
+                                        </span>
+                                    )}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <MoreHorizontal className="w-4 h-4" />
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <MoreHorizontal className="w-3.5 h-3.5" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/40">
@@ -215,24 +220,11 @@ export function CrmClient({ initialData }: CrmClientProps) {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                </div>
-                                <div className="flex items-center justify-between mt-3 relative z-10">
-                                    <div className="flex items-center gap-1.5 overflow-hidden">
-                                        <TrendingUp className="w-3 h-3 text-emerald-400 shrink-0" />
-                                        <span className="text-[10px] font-black text-emerald-500 truncate uppercase tracking-tighter">
-                                            ₩{(client.total_revenue || 0).toLocaleString()}
-                                        </span>
-                                    </div>
                                     <ChevronRight className={cn(
-                                        "w-4 h-4 transition-all",
-                                        selectedId === client.id ? "text-primary translate-x-0" : "text-muted-foreground/30 -translate-x-2"
+                                        "w-3.5 h-3.5 transition-all shrink-0",
+                                        selectedId === client.id ? "text-primary" : "text-muted-foreground/30"
                                     )} />
                                 </div>
-
-                                {/* Active Background Glow */}
-                                {selectedId === client.id && (
-                                    <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-                                )}
                             </div>
                         ))
                     )}
