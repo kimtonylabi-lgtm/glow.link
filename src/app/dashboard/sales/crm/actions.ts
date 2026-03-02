@@ -14,14 +14,12 @@ export async function addClient(data: ClientFormValues) {
             return { error: '인증되지 않은 사용자입니다.' }
         }
 
-        // Validate using Zod on the server side as well
         const parsedData = clientSchema.safeParse(data)
-
         if (!parsedData.success) {
             return { error: '입력값이 올바르지 않습니다.' }
         }
 
-        // STEP 1: Insert client - get back the new client id
+        // STEP 1: Insert into clients table and retrieve new client id
         const insertPayload = {
             ...parsedData.data,
             sales_person_id: parsedData.data.sales_person_id || user.id
@@ -30,7 +28,7 @@ export async function addClient(data: ClientFormValues) {
         const { data: newClient, error: insertError } = await supabase
             .from('clients')
             .insert(insertPayload as any)
-            .select()
+            .select('id')
             .single()
 
         if (insertError || !newClient) {
@@ -39,44 +37,41 @@ export async function addClient(data: ClientFormValues) {
 
         const clientId = newClient.id
         const contactName = parsedData.data.contact_person
-        const contactPhone = parsedData.data.phone
-        const contactEmail = parsedData.data.email
+        const contactPhone = parsedData.data.phone || null
+        const contactEmail = parsedData.data.email || null
 
-        // STEP 2: If contact info exists, insert primary contact into customer_contacts
+        // STEP 2: Insert primary contact into customer_contacts (if name provided)
         if (contactName) {
             const { error: contactError } = await supabase
                 .from('customer_contacts' as any)
                 .insert({
                     client_id: clientId,
                     name: contactName,
-                    phone: contactPhone || null,
-                    email: contactEmail || null,
+                    phone: contactPhone,
+                    email: contactEmail,
                     is_primary: true,
-                    created_by: user.id,
                 })
 
             if (contactError) {
-                console.error('[CRM] customer_contacts insert error:', contactError)
-                // Non-fatal — client is already created, just log warning
+                console.error('[CRM] customer_contacts insert error:', contactError.message)
+                // Non-fatal: client is created, but log the error for debugging
             }
 
-            // STEP 3: Log creation history
+            // STEP 3: Log creation in history
             await supabase
                 .from('customer_history_logs' as any)
                 .insert({
                     client_id: clientId,
                     log_type: 'contact_added',
                     content: `신규 고객사가 등록되고 ${contactName}이(가) 주 담당자로 지정되었습니다.`,
-                    created_by: user.id,
+                    performer_id: user.id,
                 })
         }
 
         revalidatePath('/dashboard/sales/crm')
         return { success: true }
     } catch (err: unknown) {
-        if (err instanceof Error) {
-            return { error: err.message }
-        }
+        if (err instanceof Error) return { error: err.message }
         return { error: 'Unknown API error' }
     }
 }
@@ -91,11 +86,11 @@ export async function updateClient(id: string, data: ClientFormValues) {
         }
 
         const parsedData = clientSchema.safeParse(data)
-
         if (!parsedData.success) {
             return { error: '입력값이 올바르지 않습니다.' }
         }
 
+        // STEP 1: Update clients table
         const updatePayload = {
             ...parsedData.data,
             sales_person_id: parsedData.data.sales_person_id || null
@@ -110,12 +105,58 @@ export async function updateClient(id: string, data: ClientFormValues) {
             return { error: updateError.message }
         }
 
+        const contactName = parsedData.data.contact_person
+        const contactPhone = parsedData.data.phone || null
+        const contactEmail = parsedData.data.email || null
+
+        // STEP 2: Upsert primary contact in customer_contacts
+        if (contactName) {
+            // Check if a primary contact already exists for this client
+            const { data: existingContact } = await supabase
+                .from('customer_contacts' as any)
+                .select('id')
+                .eq('client_id', id)
+                .eq('is_primary', true)
+                .maybeSingle()
+
+            if (existingContact) {
+                // UPDATE existing primary contact
+                await supabase
+                    .from('customer_contacts' as any)
+                    .update({
+                        name: contactName,
+                        phone: contactPhone,
+                        email: contactEmail,
+                    })
+                    .eq('id', (existingContact as any).id)
+            } else {
+                // INSERT new primary contact
+                await supabase
+                    .from('customer_contacts' as any)
+                    .insert({
+                        client_id: id,
+                        name: contactName,
+                        phone: contactPhone,
+                        email: contactEmail,
+                        is_primary: true,
+                    })
+            }
+
+            // STEP 3: Log info update
+            await supabase
+                .from('customer_history_logs' as any)
+                .insert({
+                    client_id: id,
+                    log_type: 'info_updated',
+                    content: `고객사 정보가 수정되었습니다. (담당자: ${contactName})`,
+                    performer_id: user.id,
+                })
+        }
+
         revalidatePath('/dashboard/sales/crm')
         return { success: true }
     } catch (err: unknown) {
-        if (err instanceof Error) {
-            return { error: err.message }
-        }
+        if (err instanceof Error) return { error: err.message }
         return { error: 'Unknown API error' }
     }
 }
