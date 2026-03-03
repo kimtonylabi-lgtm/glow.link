@@ -64,7 +64,7 @@ export default async function OrderPage() {
                                 신규 견적 작성
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className="w-full sm:max-w-[900px] overflow-y-auto bg-card/95 backdrop-blur-3xl border-l-primary/20">
+                        <SheetContent className="w-full sm:max-w-[95vw] lg:max-w-[1200px] overflow-y-auto bg-card/95 backdrop-blur-3xl border-l-primary/20">
                             <SheetHeader className="mb-8">
                                 <SheetTitle className="text-2xl font-black text-primary">신규 견적서 발행</SheetTitle>
                             </SheetHeader>

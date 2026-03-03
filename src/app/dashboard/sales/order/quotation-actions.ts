@@ -98,12 +98,23 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
                 .maybeSingle()
 
             if (!prod) {
+                // Generate a temporary item_code based on product name if needed, 
+                // but since it's nullable, we try name first.
                 const { data: newProd, error: pError } = await (supabase
                     .from('products' as any) as any)
-                    .insert({ name: item.product_name, category: 'finished' })
+                    .insert({
+                        name: item.product_name,
+                        category: 'finished', // This now matches the updated Enum
+                        item_code: `TEMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Fallback for uniqueness
+                        price: 0
+                    })
                     .select('id')
                     .single()
-                if (pError) throw new Error(`신규 제품 '${item.product_name}' 등록 중 오류가 발생했습니다.`)
+
+                if (pError) {
+                    console.error('Product registration error details:', pError)
+                    throw new Error(`신규 제품 '${item.product_name}' 등록 중 오류가 발생했습니다. (사유: ${pError.message})`)
+                }
                 productId = newProd.id
             } else {
                 productId = prod.id

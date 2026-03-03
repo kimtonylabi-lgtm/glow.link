@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Trash2 } from 'lucide-react'
 import { useForm, useFieldArray, Control, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { quotationSchema, type QuotationFormValues, type BomItemValues } from '@/lib/validations/quotation'
@@ -142,7 +142,7 @@ function BomRow({
                 />
             </td>
             <td className="p-0">
-                <div className="flex items-center">
+                <div className="flex items-center gap-1 pr-2">
                     <FormField
                         control={control}
                         name={`items.0.bom_items.${index}.base_unit_price`}
@@ -159,9 +159,10 @@ function BomRow({
                     <button
                         type="button"
                         onClick={() => remove(index)}
-                        className="p-2 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors shrink-0 rounded-md hover:bg-destructive/10"
+                        title="부품 삭제"
                     >
-                        <AlertCircle className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
             </td>
@@ -257,20 +258,20 @@ export function QuotationForm({ clients, products }: any) {
                 </div>
 
                 {/* Header Inputs */}
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4 max-w-[900px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 md:gap-y-6">
                     <FormField
                         control={form.control}
                         name="client_name"
                         render={({ field }) => (
                             <FormItem className="space-y-1.5">
-                                <FormLabel className="text-[11px] font-black text-muted-foreground uppercase">고객사</FormLabel>
+                                <FormLabel className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">고객사</FormLabel>
                                 <FormControl>
                                     <CreatableCombobox
                                         options={clients.map((c: any) => ({ name: c.company_name }))}
                                         value={field.value}
                                         onChange={field.onChange}
                                         placeholder="고객사명 선택 또는 입력"
-                                        className="h-9 bg-accent/5 focus:bg-accent/10 transition-colors border-white/10"
+                                        className="h-10 bg-accent/5 focus:bg-accent/10 transition-colors border-white/10"
                                     />
                                 </FormControl>
                             </FormItem>
@@ -282,9 +283,9 @@ export function QuotationForm({ clients, products }: any) {
                         name="items.0.product_name"
                         render={({ field }) => (
                             <FormItem className="space-y-1.5">
-                                <FormLabel className="text-[11px] font-black text-muted-foreground uppercase">제품명</FormLabel>
+                                <FormLabel className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">제품명</FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="제품명 입력" className="h-9 border-border bg-accent/5 focus:bg-accent/10" />
+                                    <Input {...field} placeholder="제품명 입력" className="h-10 border-border bg-accent/5 focus:bg-accent/10" />
                                 </FormControl>
                             </FormItem>
                         )}
@@ -295,14 +296,14 @@ export function QuotationForm({ clients, products }: any) {
                         name="items.0.quantity"
                         render={({ field }) => (
                             <FormItem className="space-y-1.5 col-span-1">
-                                <FormLabel className="text-[11px] font-black text-muted-foreground uppercase">MOQ (수량)</FormLabel>
+                                <FormLabel className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">MOQ (수량)</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="text"
                                         value={formatNumber(field.value)}
                                         onChange={(e) => field.onChange(parseNumber(e.target.value))}
                                         placeholder="예: 30,000"
-                                        className="h-9 border-border bg-accent/5 focus:bg-accent/10 font-mono"
+                                        className="h-10 border-border bg-accent/5 focus:bg-accent/10 font-mono"
                                     />
                                 </FormControl>
                             </FormItem>
@@ -329,17 +330,17 @@ export function QuotationForm({ clients, products }: any) {
                         <table className="w-full border-collapse min-w-[1000px]">
                             <thead className="bg-muted/60 text-[11px] font-black uppercase text-muted-foreground tracking-tight border-b border-border/80">
                                 <tr>
-                                    <th rowSpan={2} className="w-[15%] p-2.5 text-left border-r border-border/40">부품명</th>
-                                    <th rowSpan={2} className="w-[12%] p-2.5 text-left border-r border-border/40">재질</th>
-                                    <th rowSpan={2} className="w-[10%] p-2.5 text-left border-r border-border/40">색상</th>
-                                    <th colSpan={4} className="p-2 text-center border-r border-border/40 text-primary font-bold bg-primary/5">후가공 (Post-Processing)</th>
-                                    <th rowSpan={2} className="w-[15%] p-2.5 text-right bg-accent/5">단가 (원)</th>
+                                    <th rowSpan={2} className="w-[12%] p-2 text-left border-r border-border/40">부품명</th>
+                                    <th rowSpan={2} className="w-[8%] p-2 text-left border-r border-border/40">재질</th>
+                                    <th rowSpan={2} className="w-[8%] p-2 text-left border-r border-border/40">색상</th>
+                                    <th colSpan={4} className="p-1.5 text-center border-r border-border/40 text-primary font-bold bg-primary/5">후가공 (Post-Processing)</th>
+                                    <th rowSpan={2} className="w-[12%] p-2 text-right bg-accent/5">단가 (원)</th>
                                 </tr>
-                                <tr className="bg-muted/40">
-                                    <th className="w-[10%] p-2 font-bold border-r border-border/20 text-center">증착</th>
-                                    <th className="w-[10%] p-2 font-bold border-r border-border/20 text-center">코팅</th>
-                                    <th className="w-[10%] p-2 font-bold border-r border-border/20 text-center">인쇄</th>
-                                    <th className="w-[13%] p-2 font-bold border-r border-border/20 text-right bg-primary/5">가공 단가</th>
+                                <tr className="bg-muted/40 text-[10px]">
+                                    <th className="w-[7%] p-1.5 font-bold border-r border-border/20 text-center">증착</th>
+                                    <th className="w-[7%] p-1.5 font-bold border-r border-border/20 text-center">코팅</th>
+                                    <th className="w-[7%] p-1.5 font-bold border-r border-border/20 text-center">인쇄</th>
+                                    <th className="w-[10%] p-1.5 font-bold border-r border-border/20 text-right bg-primary/5">가공 가</th>
                                 </tr>
                             </thead>
                             <tbody>
