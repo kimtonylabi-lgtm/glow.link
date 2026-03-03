@@ -311,35 +311,35 @@ export function QuotationForm({ clients, products }: any) {
                 </div>
 
                 {/* Items Grid */}
-                <div className="space-y-2 mt-4">
+                <div className="space-y-3 mt-4">
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-[11px] font-black text-muted-foreground uppercase">BOM 내역</h3>
+                        <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">BOM 내역 (부품 및 가공 상세)</h3>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-7 text-[10px] font-bold gap-1 border-primary/30 text-primary hover:bg-primary/5"
+                            className="h-8 text-[11px] font-bold gap-1.5 border-primary/40 text-primary hover:bg-primary/5 px-4 shadow-sm"
                             onClick={() => bomAppend({ part_name: '', material: '', color: '', metalizing: '', coating: '', printing: '', post_processing_unit_price: '' as any, base_unit_price: '' as any })}
                         >
                             부품 추가
                         </Button>
                     </div>
 
-                    <div className="border border-border/60 rounded-lg overflow-hidden shadow-sm">
-                        <table className="w-full border-collapse">
-                            <thead className="bg-muted/50 text-[10px] font-black uppercase text-muted-foreground tracking-tight border-b border-border/60">
+                    <div className="border border-border/80 rounded-lg overflow-x-auto shadow-inner bg-background/50">
+                        <table className="w-full border-collapse min-w-[1000px]">
+                            <thead className="bg-muted/60 text-[11px] font-black uppercase text-muted-foreground tracking-tight border-b border-border/80">
                                 <tr>
-                                    <th rowSpan={2} className="w-[14%] p-2 text-left border-r border-border/40">부품명</th>
-                                    <th rowSpan={2} className="w-[10%] p-2 text-left border-r border-border/40">재질</th>
-                                    <th rowSpan={2} className="w-[10%] p-2 text-left border-r border-border/40">색상</th>
-                                    <th colSpan={4} className="p-1.5 text-center border-r border-border/40 text-primary/80">후가공</th>
-                                    <th rowSpan={2} className="w-[12%] p-2 text-right">단가 (원)</th>
+                                    <th rowSpan={2} className="w-[15%] p-2.5 text-left border-r border-border/40">부품명</th>
+                                    <th rowSpan={2} className="w-[12%] p-2.5 text-left border-r border-border/40">재질</th>
+                                    <th rowSpan={2} className="w-[10%] p-2.5 text-left border-r border-border/40">색상</th>
+                                    <th colSpan={4} className="p-2 text-center border-r border-border/40 text-primary font-bold bg-primary/5">후가공 (Post-Processing)</th>
+                                    <th rowSpan={2} className="w-[15%] p-2.5 text-right bg-accent/5">단가 (원)</th>
                                 </tr>
-                                <tr className="bg-muted/30">
-                                    <th className="w-[8%] p-1.5 font-medium border-r border-border/20 opacity-80">증착</th>
-                                    <th className="w-[8%] p-1.5 font-medium border-r border-border/20 opacity-80">코팅</th>
-                                    <th className="w-[8%] p-1.5 font-medium border-r border-border/20 opacity-80">인쇄</th>
-                                    <th className="w-[12%] p-1.5 font-medium border-r border-border/20 text-right opacity-80">후가공 단가</th>
+                                <tr className="bg-muted/40">
+                                    <th className="w-[10%] p-2 font-bold border-r border-border/20 text-center">증착</th>
+                                    <th className="w-[10%] p-2 font-bold border-r border-border/20 text-center">코팅</th>
+                                    <th className="w-[10%] p-2 font-bold border-r border-border/20 text-center">인쇄</th>
+                                    <th className="w-[13%] p-2 font-bold border-r border-border/20 text-right bg-primary/5">가공 단가</th>
                                 </tr>
                             </thead>
                             <tbody>

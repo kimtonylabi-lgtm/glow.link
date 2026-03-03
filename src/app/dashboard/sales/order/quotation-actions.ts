@@ -8,25 +8,26 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return { success: false, error: '인증이 필요합니다.' }
+    if (!user) return { success: false, error: '인증이 만료되었습니다. 다시 로그인해 주세요.' }
 
     const validated = quotationSchema.safeParse(data)
     if (!validated.success) {
         console.error('Validation Error:', validated.error)
-        return { success: false, error: '입력값이 올바르지 않습니다. 모든 필수 필드를 확인해 주세요.' }
+        return { success: false, error: '입력된 데이터가 올바르지 않습니다. 모든 칸을 확인해 주세요.' }
     }
 
     try {
-        // 1. Resolve Client ID (or insert if not exists for demo/simplicity, but here we require it)
-        const { data: client } = await supabase
+        // 1. 고객사 확인
+        const { data: client, error: clientFetchError } = await supabase
             .from('clients')
             .select('id')
             .eq('company_name', data.client_name)
             .maybeSingle()
 
-        if (!client) return { success: false, error: `고객사 '${data.client_name}'를 찾을 수 없습니다.` }
+        if (clientFetchError) throw new Error('고객사 정보를 불러오는 중 오류가 발생했습니다.')
+        if (!client) return { success: false, error: `'${data.client_name}'는 등록되지 않은 고객사입니다. 먼저 등록해 주세요.` }
 
-        // 2. Automatic Master Data Registration
+        // 2. 마스터 데이터 자동 동기화
         const masterEntries: { category: string, name: string }[] = []
         data.items.forEach(item => {
             item.bom_items.forEach(bom => {
@@ -38,10 +39,12 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         })
 
         if (masterEntries.length > 0) {
-            await (supabase.from('master_data' as any) as any).upsert(masterEntries, { onConflict: 'category,name' })
+            const { error: masterError } = await (supabase.from('master_data' as any) as any)
+                .upsert(masterEntries, { onConflict: 'category,name' })
+            if (masterError) console.error('Master data sync ignored error:', masterError)
         }
 
-        // 3. Calculate amounts
+        // 3. 금액 계산 (1세트 단가 기반)
         const supply_price = data.items.reduce((total, product) => {
             const qty = Number(product.quantity) || 0
             const unitCost = product.bom_items.reduce((acc, bom) => {
@@ -58,20 +61,7 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         let quotationId: string;
         let versionNo = 1;
 
-        if (id) {
-            const { data: prev } = await (supabase
-                .from('quotations' as any)
-                .select('version_no, id')
-                .eq('id', id)
-                .single() as any)
-
-            if (prev) {
-                versionNo = prev.version_no + 1
-                await (supabase.from('quotations' as any) as any).update({ is_current: false }).eq('id', id)
-            }
-        }
-
-        // 4. Insert Quotation Master
+        // 4. 견적 마스터 데이터 저장 (PGRST116 에러 방지용 체크 포함)
         const { data: quote, error: quoteError } = await (supabase
             .from('quotations' as any)
             .insert({
@@ -90,13 +80,16 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
             .select('id')
             .single() as any)
 
-        if (quoteError) throw quoteError
+        if (quoteError) {
+            console.error('Quote Error:', quoteError)
+            if (quoteError.code === 'PGRST116') throw new Error('견적 마스터 테이블(quotations)을 찾을 수 없습니다. DB 스키마를 확인해 주세요.')
+            throw new Error('견적서 정보를 저장하는 중 서버 내부 오류가 발생했습니다.')
+        }
         quotationId = quote.id
 
-        // 5. Insert Items
+        // 5. 품목 및 BOM 상세 저장
         const itemsToInsert = []
         for (const item of data.items) {
-            // Find or insert product
             let productId: string;
             const { data: prod } = await supabase
                 .from('products')
@@ -110,7 +103,7 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
                     .insert({ name: item.product_name, category: 'finished' })
                     .select('id')
                     .single()
-                if (pError) throw pError
+                if (pError) throw new Error(`신규 제품 '${item.product_name}' 등록 중 오류가 발생했습니다.`)
                 productId = newProd.id
             } else {
                 productId = prod.id
@@ -135,13 +128,16 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
             .from('quotation_items' as any) as any)
             .insert(itemsToInsert)
 
-        if (itemsError) throw itemsError
+        if (itemsError) {
+            console.error('Items Error:', itemsError)
+            throw new Error('견적 상세 부품(BOM) 내역 저장에 실패했습니다.')
+        }
 
         revalidatePath('/dashboard/sales/order')
         return { success: true, id: quotationId }
     } catch (error: any) {
         console.error('Quotation Save Error:', error)
-        return { success: false, error: error.message || '저장 중 오류가 발생했습니다.' }
+        return { success: false, error: error.message || '서버와의 통신 중 예상치 못한 오류가 발생했습니다.' }
     }
 }
 

@@ -1,0 +1,39 @@
+src/app/dashboard/sales/order/quotation-form.tsx(344,9): error TS2322: Type 'Resolver<{ client_name: string; items: { product_name: string; bom_items: { part_name: string; base_unit_price?: number | "" | undefined; post_processings?: { type: "???" | "???" | "???" | "???" | "???"; spec: string; unit_price?: number | ... 1 more ... | undefined; }[] | undefined; }[]; client_product_name?: string | u...' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<QuotationFormValues>' is not assignable to type 'ResolverOptions<{ client_name: string; items: { product_name: string; bom_items: { part_name: string; base_unit_price?: number | "" | undefined; post_processings?: { type: "???" | "???" | "???" | "???" | "???"; spec: string; unit_price?: number | ... 1 more ... | undefined; }[] | undefined; }[]; client_product_name?: str...'.
+      Type '{ product_name: string; bom_items: { part_name: string; base_unit_price?: number | "" | undefined; post_processings?: { type: "???" | "???" | "???" | "???" | "???"; spec: string; unit_price?: number | "" | undefined; }[] | undefined; }[]; client_product_name?: string | undefined; quantity?: number | ... 1 more ... | unde...' is not assignable to type 'QuotationItemValues[]'.
+        Type '{ product_name: string; bom_items: { part_name: string; base_unit_price?: number | "" | undefined; post_processings?: { type: "???" | "???" | "???" | "???" | "???"; spec: string; unit_price?: number | "" | undefined; }[] | undefined; }[]; client_product_name?: string | undefined; quantity?: number | ... 1 more ... | unde...' is not assignable to type 'QuotationItemValues'.
+          Types of property 'quantity' are incompatible.
+            Type 'number | "" | undefined' is not assignable to type 'number | ""'.
+              Type 'undefined' is not assignable to type 'number | ""'.
+src/app/dashboard/sales/order/quotation-form.tsx(399,47): error TS2345: Argument of type '(data: QuotationFormValues) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type 'QuotationFormValues'.
+      Type 'FieldValues' is missing the following properties from type 'QuotationFormValues': client_name, items, is_vat_included
+src/app/dashboard/sales/order/quotation-form.tsx(403,25): error TS2322: Type 'Control<QuotationFormValues, any, TFieldValues>' is not assignable to type 'Control<QuotationFormValues, any, QuotationFormValues>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<QuotationFormValues, any, TFieldValues> | undefined' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues> | undefined'.
+      Type 'Resolver<QuotationFormValues, any, TFieldValues>' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues>'.
+        Type 'ResolverResult<QuotationFormValues, TFieldValues> | Promise<ResolverResult<QuotationFormValues, TFieldValues>>' is not assignable to type 'ResolverResult<QuotationFormValues, QuotationFormValues> | Promise<ResolverResult<QuotationFormValues, QuotationFormValues>>'.
+          Type 'ResolverSuccess<TFieldValues>' is not assignable to type 'ResolverResult<QuotationFormValues, QuotationFormValues> | Promise<ResolverResult<QuotationFormValues, QuotationFormValues>>'.
+            Type 'ResolverSuccess<TFieldValues>' is not assignable to type 'ResolverSuccess<QuotationFormValues>'.
+              Type 'TFieldValues' is not assignable to type 'QuotationFormValues'.
+                Type 'FieldValues' is missing the following properties from type 'QuotationFormValues': client_name, items, is_vat_included
+src/app/dashboard/sales/order/quotation-form.tsx(425,29): error TS2322: Type 'Control<QuotationFormValues, any, TFieldValues>' is not assignable to type 'Control<QuotationFormValues, any, QuotationFormValues>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<QuotationFormValues, any, TFieldValues> | undefined' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues> | undefined'.
+      Type 'Resolver<QuotationFormValues, any, TFieldValues>' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues>'.
+        Type 'ResolverResult<QuotationFormValues, TFieldValues> | Promise<ResolverResult<QuotationFormValues, TFieldValues>>' is not assignable to type 'ResolverResult<QuotationFormValues, QuotationFormValues> | Promise<ResolverResult<QuotationFormValues, QuotationFormValues>>'.
+          Type 'ResolverSuccess<TFieldValues>' is not assignable to type 'ResolverResult<QuotationFormValues, QuotationFormValues> | Promise<ResolverResult<QuotationFormValues, QuotationFormValues>>'.
+            Type 'ResolverSuccess<TFieldValues>' is not assignable to type 'ResolverSuccess<QuotationFormValues>'.
+              Type 'TFieldValues' is not assignable to type 'QuotationFormValues'.
+                Type 'FieldValues' is missing the following properties from type 'QuotationFormValues': client_name, items, is_vat_included
+src/app/dashboard/sales/order/quotation-form.tsx(514,37): error TS2322: Type 'Control<QuotationFormValues, any, TFieldValues>' is not assignable to type 'Control<QuotationFormValues, any, QuotationFormValues>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<QuotationFormValues, any, TFieldValues> | undefined' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues> | undefined'.
+      Type 'Resolver<QuotationFormValues, any, TFieldValues>' is not assignable to type 'Resolver<QuotationFormValues, any, QuotationFormValues>'.
+        Type 'ResolverResult<QuotationFormValues, TFieldValues> | Promise<ResolverResult<QuotationFormValues, TFieldValues>>' is not assignable to type 'ResolverResult<QuotationFormValues, QuotationFormValues> | Promise<ResolverResult<QuotationFormValues, QuotationFormValues>>'.
+          Type 'ResolverSuccess<TFieldValues>' is not assignable to type 'ResolverResult<QuotationFormValues, QuotationFormValues> | Promise<ResolverResult<QuotationFormValues, QuotationFormValues>>'.
+            Type 'ResolverSuccess<TFieldValues>' is not assignable to type 'ResolverSuccess<QuotationFormValues>'.
+              Type 'TFieldValues' is not assignable to type 'QuotationFormValues'.
+                Type 'FieldValues' is missing the following properties from type 'QuotationFormValues': client_name, items, is_vat_included
