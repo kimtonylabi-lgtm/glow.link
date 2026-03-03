@@ -33,22 +33,22 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
 
         if (id) {
             // It's a revision - get previous version info
-            const { data: prev } = await supabase
-                .from('quotations')
+            const { data: prev } = await (supabase
+                .from('quotations' as any)
                 .select('version_no, id')
                 .eq('id', id)
-                .single()
+                .single() as any)
 
             if (prev) {
                 versionNo = prev.version_no + 1
                 // Set old as not current
-                await supabase.from('quotations').update({ is_current: false }).eq('id', id)
+                await (supabase.from('quotations' as any) as any).update({ is_current: false }).eq('id', id)
             }
         }
 
         // 2. Insert Quotation Master
-        const { data: quote, error: quoteError } = await supabase
-            .from('quotations')
+        const { data: quote, error: quoteError } = await (supabase
+            .from('quotations' as any)
             .insert({
                 client_id: client.id,
                 sales_person_id: user.id,
@@ -63,7 +63,7 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
                 is_current: true
             })
             .select('id')
-            .single()
+            .single() as any)
 
         if (quoteError) throw quoteError
         quotationId = quote.id
@@ -88,8 +88,8 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
             })
         }
 
-        const { error: itemsError } = await supabase
-            .from('quotation_items')
+        const { error: itemsError } = await (supabase
+            .from('quotation_items' as any) as any)
             .insert(itemsToInsert)
 
         if (itemsError) throw itemsError
@@ -108,7 +108,7 @@ export async function finalizeQuotation(id: string) {
     try {
         // 1. Fetch Quotation and Items
         const { data: quote, error: quoteError } = await (supabase
-            .from('quotations')
+            .from('quotations' as any)
             .select('*, quotation_items(*)')
             .eq('id', id)
             .single() as any)
@@ -143,7 +143,7 @@ export async function finalizeQuotation(id: string) {
         if (itemsError) throw itemsError
 
         // 4. Update Quotation Status
-        await supabase.from('quotations').update({ status: 'finalized' }).eq('id', id)
+        await (supabase.from('quotations' as any) as any).update({ status: 'finalized' }).eq('id', id)
 
         revalidatePath('/dashboard/sales/order')
         return { success: true }

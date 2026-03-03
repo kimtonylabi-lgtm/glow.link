@@ -20,7 +20,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
 
     // 1. Fetch current quotation and its items
     const { data: quote, error } = await (supabase
-        .from('quotations')
+        .from('quotations' as any)
         .select(`
             *,
             clients (company_name),
@@ -42,7 +42,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
     // (In a real app, you'd recursively find the root, but let's assume one level of parent for now or fetch by similarity)
 
     const { data: history } = await (supabase
-        .from('quotations')
+        .from('quotations' as any)
         .select('*, quotation_items(*, products(name))')
         .eq('client_id', quote.client_id)
         .order('version_no', { ascending: true }) as any)

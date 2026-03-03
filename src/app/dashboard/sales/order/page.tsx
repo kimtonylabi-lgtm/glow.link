@@ -14,8 +14,8 @@ export default async function OrderPage() {
     const supabase = await createClient()
 
     // 1. Fetch Quotations
-    const { data: quotationsData } = await supabase
-        .from('quotations')
+    const { data: quotationsData } = await (supabase
+        .from('quotations' as any) as any)
         .select(`
             *,
             clients (company_name)
