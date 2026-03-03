@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 
 async function QuotationDataFetcher({ id }: { id: string }) {
+    console.log('Fetching Quotation Detail for ID:', id)
     const supabase = await createClient()
 
     // 1. Fetch current quotation and its items
@@ -24,12 +25,12 @@ async function QuotationDataFetcher({ id }: { id: string }) {
         .single() as any)
 
     if (error || !quote) {
-        console.error('Fetch Quotation Detail Error:', error)
+        console.error('Fetch Quotation Detail Error:', error || 'No data found for ID: ' + id)
         notFound()
     }
 
     // 2. Fetch history (simpler approach: same client)
-    const { data: history } = await (supabase
+    const { data: history, error: historyError } = await (supabase
         .from('quotations' as any)
         .select(`
             *,
@@ -41,10 +42,15 @@ async function QuotationDataFetcher({ id }: { id: string }) {
         .eq('client_id', quote.client_id)
         .order('version_no', { ascending: true }) as any)
 
+    if (historyError) {
+        console.warn('History fetch error:', historyError)
+    }
+
     return <QuotationDetailView quote={quote} versions={history || []} />
 }
 
-export default async function QuotationDetailPage({ params }: { params: { id: string } }) {
+export default async function QuotationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
     return (
         <Suspense fallback={
             <div className="p-10 space-y-8 animate-pulse">
@@ -56,7 +62,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
                 </div>
             </div>
         }>
-            <QuotationDataFetcher id={params.id} />
+            <QuotationDataFetcher id={id} />
         </Suspense>
     )
 }

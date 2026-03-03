@@ -55,14 +55,14 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                         <span className="text-muted-foreground text-xs">{format(new Date(quote.created_at), 'PPP', { locale: ko })}</span>
                     </div>
                     <h2 className="text-4xl font-black tracking-tighter text-foreground">
-                        {quote.clients?.company_name} <span className="text-primary/40 font-light ml-2">견적서 상세</span>
+                        {quote.clients?.company_name || '고객사 정보 없음'} <span className="text-primary/40 font-light ml-2">견적서 상세</span>
                     </h2>
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Amount</p>
                     <p className="text-5xl font-black text-primary tracking-tighter">
-                        ₩{Number(quote.total_amount).toLocaleString()}
+                        ₩{(Number(quote.total_amount) || 0).toLocaleString()}
                     </p>
                 </div>
             </div>
@@ -76,7 +76,7 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                             견적 품목 상세
                         </h3>
                         <div className="grid grid-cols-1 gap-4">
-                            {quote.quotation_items?.map((item: any) => (
+                            {quote.quotation_items?.length > 0 ? quote.quotation_items.map((item: any) => (
                                 <Card key={item.id} className="bg-card/30 border-border/40 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
                                     <CardContent className="p-0">
                                         <div className="flex flex-col md:flex-row">
@@ -84,11 +84,11 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Product Name</p>
-                                                        <h4 className="text-xl font-bold group-hover:text-primary transition-colors">{item.products?.name}</h4>
+                                                        <h4 className="text-xl font-bold group-hover:text-primary transition-colors">{item.products?.name || '부품명 정보 없음'}</h4>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Unit Price</p>
-                                                        <p className="text-lg font-mono font-bold">₩{Number(item.unit_price).toLocaleString()}</p>
+                                                        <p className="text-lg font-mono font-bold">₩{(Number(item.unit_price) || 0).toLocaleString()}</p>
                                                     </div>
                                                 </div>
 
@@ -106,15 +106,17 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                                             </div>
                                             <div className="bg-muted/20 border-l border-border/40 p-6 flex flex-col justify-center items-center md:w-40 gap-1">
                                                 <p className="text-[10px] text-muted-foreground font-bold">Quantity</p>
-                                                <p className="text-xl font-black tracking-tighter">{Number(item.quantity).toLocaleString()} <span className="text-xs font-medium">PCS</span></p>
-                                                {item.quantity < 10000 && (
+                                                <p className="text-xl font-black tracking-tighter">{(Number(item.quantity) || 0).toLocaleString()} <span className="text-xs font-medium">PCS</span></p>
+                                                {Number(item.quantity) < 10000 && (
                                                     <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] h-4">MOQ 미달</Badge>
                                                 )}
                                             </div>
                                         </div>
                                     </CardContent>
                                 </Card>
-                            ))}
+                            )) : (
+                                <p className="text-muted-foreground text-sm italic py-10 text-center border border-dashed rounded-2xl">등록된 부품 내역이 없습니다.</p>
+                            )}
                         </div>
                     </section>
 
@@ -164,13 +166,13 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                                                 <div className="space-y-2">
                                                     {v.quotation_items?.map((qi: any) => {
                                                         const prevQi = prevVersion?.quotation_items?.find((p: any) => p.product_id === qi.product_id)
-                                                        const diff = prevQi ? qi.unit_price - prevQi.unit_price : 0
+                                                        const diff = prevQi ? Number(qi.unit_price) - Number(prevQi.unit_price) : 0
 
                                                         return (
                                                             <div key={qi.id} className="flex justify-between items-center bg-muted/10 p-2.5 rounded-lg border border-border/10">
-                                                                <span className="text-[10px] font-bold truncate max-w-[100px]">{qi.products?.name}</span>
+                                                                <span className="text-[10px] font-bold truncate max-w-[100px]">{qi.products?.name || '부품명 정보 없음'}</span>
                                                                 <div className="flex items-center gap-3">
-                                                                    <span className="text-[11px] font-mono font-bold">₩{Number(qi.unit_price).toLocaleString()}</span>
+                                                                    <span className="text-[11px] font-mono font-bold">₩{(Number(qi.unit_price) || 0).toLocaleString()}</span>
                                                                     {diff !== 0 && (
                                                                         <div className={cn(
                                                                             "flex items-center text-[9px] font-black italic",
@@ -188,7 +190,7 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
 
                                                 <div className="flex justify-between items-end pt-1">
                                                     <p className="text-[10px] text-muted-foreground">Total Supply</p>
-                                                    <p className="text-sm font-black text-foreground">₩{Number(v.total_amount).toLocaleString()}</p>
+                                                    <p className="text-sm font-black text-foreground">₩{(Number(v.total_amount) || 0).toLocaleString()}</p>
                                                 </div>
                                             </div>
                                         </div>
