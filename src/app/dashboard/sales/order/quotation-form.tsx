@@ -38,6 +38,7 @@ export function QuotationForm({ clients, products, clientProducts }: any) {
         defaultValues: {
             client_name: '',
             is_vat_included: true,
+            due_date: null,
             items: [
                 {
                     product_name: '',
@@ -55,11 +56,11 @@ export function QuotationForm({ clients, products, clientProducts }: any) {
         name: "items"
     })
 
-    const isVatIncluded = form.watch('is_vat_included')
+    const isVatIncluded = form.watch('is_vat_included') ?? true;
 
     const calculateSubtotal = () => {
-        const items = form.watch('items') || []
-        return items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+        const items = form.watch('items') ?? []
+        return items.reduce((sum, item) => sum + ((item?.quantity ?? 0) * (item?.unit_price ?? 0)), 0)
     }
 
     const subtotal = calculateSubtotal()
@@ -137,10 +138,9 @@ export function QuotationForm({ clients, products, clientProducts }: any) {
                         </div>
                         <Button
                             type="button"
-                            variant="glow"
                             size="sm"
                             onClick={() => append({ product_name: '', quantity: 10000, unit_price: 0, post_processings: [] })}
-                            className="h-9 font-bold px-4 bg-primary/20 hover:bg-primary/30 text-primary border-primary/50"
+                            className="h-9 font-bold px-4 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50"
                         >
                             <Plus className="w-4 h-4 mr-1" /> 품목 추가
                         </Button>
