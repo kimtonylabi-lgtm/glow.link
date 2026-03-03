@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { QuotationForm } from './quotation-form'
+import { QuotationFormSheet } from './quotation-form-sheet'
 import { QuotationList } from './quotation-list'
 import { OrderList } from './order-list'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -58,24 +58,11 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button className="h-11 px-6 font-bold shadow-[0_0_20px_theme(colors.primary.DEFAULT)/30] rounded-xl hover:shadow-[0_0_25px_theme(colors.primary.DEFAULT)/50] transition-all">
-                                <Plus className="w-5 h-5 mr-2" />
-                                신규 견적 작성
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent className="w-full sm:max-w-[95vw] lg:max-w-[1200px] overflow-y-auto bg-card/95 backdrop-blur-3xl border-l-primary/20">
-                            <SheetHeader className="mb-8">
-                                <SheetTitle className="text-2xl font-black text-primary">신규 견적서 발행</SheetTitle>
-                            </SheetHeader>
-                            <QuotationForm
-                                clients={clients || []}
-                                products={products || []}
-                                clientProducts={clientProducts || []}
-                            />
-                        </SheetContent>
-                    </Sheet>
+                    <QuotationFormSheet
+                        clients={clients || []}
+                        products={products || []}
+                        clientProducts={clientProducts || []}
+                    />
                 </div>
             </div>
 

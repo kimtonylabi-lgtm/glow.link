@@ -170,7 +170,7 @@ function BomRow({
     )
 }
 
-export function QuotationForm({ clients, products }: any) {
+export function QuotationForm({ clients, products, onSuccess }: any) {
     const [isLoading, setIsLoading] = useState(false)
     const [masterData, setMasterData] = useState<Record<string, { name: string }[]>>({})
     const router = useRouter()
@@ -227,13 +227,10 @@ export function QuotationForm({ clients, products }: any) {
     async function onSubmit(data: QuotationFormValues) {
         setIsLoading(true)
         try {
-            // Check for new master data and insert it IF it's not in the list
-            // (To simplify, we'll let CreatableCombobox handle the UI, but we need to ensure the DB has it)
-            // But per request, "마스터 데이터에 등록하게 하는 로직" is needed. 
-            // For now, let's just save the quotation. 
             const result = await saveQuotation(data)
             if (result.success) {
                 toast.success('견적 저장 완료', { description: '목록 페이지로 이동합니다.' })
+                if (onSuccess) onSuccess()
                 router.push('/dashboard/sales/order?tab=quotation')
                 router.refresh()
             } else {
