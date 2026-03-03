@@ -27,29 +27,7 @@ export const quotationSchema = z.object({
     memo: z.string().optional().default(''),
 });
 
-export type PostProcessingValues = {
-    type: '증착' | '코팅' | '인쇄' | '조립' | '기타';
-    spec: string;
-    unit_price?: number | '';
-};
-
-export type BomItemValues = {
-    part_name: string;
-    base_unit_price?: number | '';
-    post_processings: PostProcessingValues[];
-};
-
-export type QuotationItemValues = {
-    product_name: string;
-    client_product_name?: string;
-    quantity: number | '';
-    bom_items: BomItemValues[];
-};
-
-export type QuotationFormValues = {
-    client_name: string;
-    due_date?: Date | null;
-    items: QuotationItemValues[];
-    is_vat_included: boolean;
-    memo?: string;
-};
+export type PostProcessingValues = z.infer<typeof postProcessingSchema>;
+export type BomItemValues = z.infer<typeof bomItemSchema>;
+export type QuotationItemValues = z.infer<typeof quotationItemSchema>;
+export type QuotationFormValues = z.infer<typeof quotationSchema>;

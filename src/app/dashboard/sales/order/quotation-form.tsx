@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { quotationSchema, type QuotationFormValues, type BomItemValues, type PostProcessingValues } from '@/lib/validations/quotation'
 import { saveQuotation } from './quotation-actions'
 import { cn } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -314,11 +314,10 @@ function ProductGroup({ productIndex, control, remove, products }: any) {
 
 export function QuotationForm({ clients, products, clientProducts }: any) {
     const [isLoading, setIsLoading] = useState(false)
-    const { toast } = useToast()
     const router = useRouter()
 
     const form = useForm<QuotationFormValues>({
-        resolver: zodResolver(quotationSchema),
+        resolver: zodResolver(quotationSchema) as any,
         defaultValues: {
             client_name: '',
             is_vat_included: true,
@@ -364,14 +363,14 @@ export function QuotationForm({ clients, products, clientProducts }: any) {
         try {
             const result = await saveQuotation(data)
             if (result.success) {
-                toast({ title: '견적 저장 완료', description: '견적서가 성공적으로 저장되었습니다.' })
+                toast.success('견적 저장 완료', { description: '견적서가 성공적으로 저장되었습니다.' })
                 router.refresh()
             } else {
-                toast({ title: '저장 실패', description: result.error, variant: 'destructive' })
+                toast.error('저장 실패', { description: result.error })
             }
         } catch (e) {
             console.error(e)
-            toast({ title: '오류 발생', description: '처리 중 오류가 발생했습니다.', variant: 'destructive' })
+            toast.error('오류 발생', { description: '처리 중 오류가 발생했습니다.' })
         } finally {
             setIsLoading(false)
         }
