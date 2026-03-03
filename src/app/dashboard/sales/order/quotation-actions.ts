@@ -24,7 +24,15 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         if (!client) return { success: false, error: '존재하지 않는 고객사입니다.' }
 
         // calculate amounts
-        const supply_price = data.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+        const supply_price = data.items.reduce((total, product) => {
+            const qty = Number(product.quantity) || 0
+            const unitCost = (product.bom_items || []).reduce((acc, bom) => {
+                const base = Number(bom.base_unit_price) || 0
+                const pp = (bom.post_processings || []).reduce((s, p) => s + (Number(p.unit_price) || 0), 0)
+                return acc + base + pp
+            }, 0)
+            return total + (qty * unitCost)
+        }, 0)
         const vat_amount = data.is_vat_included ? 0 : supply_price * 0.1
         const total_amount = supply_price + vat_amount
 
@@ -79,12 +87,18 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
 
             if (!prod) continue // Should ideally upsert if logic allows, but keep simple for now
 
+            const unitCost = (item.bom_items || []).reduce((acc, bom) => {
+                const base = Number(bom.base_unit_price) || 0
+                const pp = (bom.post_processings || []).reduce((s, p) => s + (Number(p.unit_price) || 0), 0)
+                return acc + base + pp
+            }, 0)
+
             itemsToInsert.push({
                 quotation_id: quotationId,
                 product_id: prod.id,
-                quantity: item.quantity,
-                unit_price: item.unit_price,
-                post_processing: item.post_processings
+                quantity: Number(item.quantity) || 0,
+                unit_price: unitCost,
+                post_processing: item.bom_items // Store the full BOM structure here
             })
         }
 

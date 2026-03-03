@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Info, Scale, Trash2, Settings2, Receipt, AlertTriangle } from 'lucide-react'
-import { useForm, useFieldArray } from 'react-hook-form'
+import React, { useState, useMemo } from 'react'
+import { Plus, Trash2, Receipt, AlertTriangle, Layers, Settings2, Minimize2, ChevronDown } from 'lucide-react'
+import { useForm, useFieldArray, Control, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { quotationSchema, type QuotationFormValues } from '@/lib/validations/quotation'
+import { quotationSchema, type QuotationFormValues, type BomItemValues, type PostProcessingValues } from '@/lib/validations/quotation'
+import { saveQuotation } from './quotation-actions'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
     Form,
@@ -30,8 +33,289 @@ import {
 
 const MOQ_LIMIT = 10000;
 
+const formatNumber = (val: any) => {
+    if (val === '' || val === undefined || val === null) return ''
+    return Number(val).toLocaleString()
+}
+
+const parseNumber = (val: string) => {
+    return val.replace(/,/g, '') === '' ? '' : Number(val.replace(/,/g, ''))
+}
+
+function PostProcessingRow({ productIndex, bomIndex, ppIndex, control, remove }: { productIndex: number, bomIndex: number, ppIndex: number, control: Control<any>, remove: (index: number) => void }) {
+    return (
+        <div className="flex items-center gap-1 bg-primary/5 p-0.5 px-1 rounded border border-primary/10 mb-1 group/pp animate-in fade-in slide-in-from-left-1">
+            <FormField
+                control={control}
+                name={`items.${productIndex}.bom_items.${bomIndex}.post_processings.${ppIndex}.type`}
+                render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger className="h-6 w-16 text-[10px] bg-transparent border-none shadow-none focus:ring-0 p-0 px-1 font-bold">
+                                <SelectValue />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {['증착', '코팅', '인쇄', '조립', '기타'].map(t => (
+                                <SelectItem key={t} value={t} className="text-[10px] font-bold">{t}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+            <FormField
+                control={control}
+                name={`items.${productIndex}.bom_items.${bomIndex}.post_processings.${ppIndex}.spec`}
+                render={({ field }) => (
+                    <FormControl>
+                        <input
+                            {...field}
+                            placeholder="사양"
+                            className="h-6 text-[10px] bg-transparent border-none focus:outline-none w-16 px-1 text-muted-foreground font-medium"
+                        />
+                    </FormControl>
+                )}
+            />
+            <FormField
+                control={control}
+                name={`items.${productIndex}.bom_items.${bomIndex}.post_processings.${ppIndex}.unit_price`}
+                render={({ field }) => (
+                    <FormControl>
+                        <input
+                            type="text"
+                            value={formatNumber(field.value)}
+                            onChange={(e) => {
+                                const val = parseNumber(e.target.value)
+                                field.onChange(val)
+                            }}
+                            placeholder="단가"
+                            className="h-6 text-[10px] bg-transparent border-none focus:outline-none w-12 px-1 text-right font-mono font-bold text-primary"
+                        />
+                    </FormControl>
+                )}
+            />
+            <button
+                type="button"
+                onClick={() => remove(ppIndex)}
+                className="opacity-0 group-hover/pp:opacity-100 transition-opacity p-0.5 hover:text-red-500"
+            >
+                <Trash2 className="w-3 h-3" />
+            </button>
+        </div>
+    )
+}
+
+function BomItemRow({ productIndex, bomIndex, control, removeProductBom }: { productIndex: number, bomIndex: number, control: Control<any>, removeProductBom: (index: number) => void }) {
+    const { fields: ppFields, append: ppAppend, remove: ppRemove } = useFieldArray({
+        control,
+        name: `items.${productIndex}.bom_items.${bomIndex}.post_processings`
+    })
+
+    const basePrice = useWatch({ control, name: `items.${productIndex}.bom_items.${bomIndex}.base_unit_price` }) || 0
+    const pps = useWatch({ control, name: `items.${productIndex}.bom_items.${bomIndex}.post_processings` }) || []
+
+    const ppTotal = pps.reduce((sum: number, pp: any) => sum + (Number(pp.unit_price) || 0), 0)
+    const lineTotal = (Number(basePrice) || 0) + ppTotal
+
+    return (
+        <tr className="border-b border-border/40 hover:bg-muted/30 transition-colors group/bom">
+            <td className="py-1 px-2 w-[180px]">
+                <FormField
+                    control={control}
+                    name={`items.${productIndex}.bom_items.${bomIndex}.part_name`}
+                    render={({ field }) => (
+                        <FormControl>
+                            <input
+                                {...field}
+                                placeholder="부품명 (캡, 용기...)"
+                                className="w-full bg-transparent text-xs font-bold focus:outline-none focus:text-primary"
+                            />
+                        </FormControl>
+                    )}
+                />
+            </td>
+            <td className="py-1 px-2 w-[120px]">
+                <FormField
+                    control={control}
+                    name={`items.${productIndex}.bom_items.${bomIndex}.base_unit_price`}
+                    render={({ field }) => (
+                        <FormControl>
+                            <input
+                                type="text"
+                                value={formatNumber(field.value)}
+                                onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                                placeholder="단가"
+                                className="w-full bg-transparent text-xs font-mono font-bold text-right focus:outline-none"
+                            />
+                        </FormControl>
+                    )}
+                />
+            </td>
+            <td className="py-1 px-2 min-w-[200px]">
+                <div className="flex flex-wrap items-center gap-1">
+                    {ppFields.map((field, ppIdx) => (
+                        <PostProcessingRow
+                            key={field.id}
+                            productIndex={productIndex}
+                            bomIndex={bomIndex}
+                            ppIndex={ppIdx}
+                            control={control}
+                            remove={ppRemove}
+                        />
+                    ))}
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[9px] font-black uppercase text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                        onClick={() => ppAppend({ type: '기타', spec: '', unit_price: '' })}
+                    >
+                        + 공정
+                    </Button>
+                </div>
+            </td>
+            <td className="py-1 px-2 w-[100px] text-right font-mono text-xs font-black text-primary">
+                {lineTotal.toLocaleString()}
+            </td>
+            <td className="py-1 px-2 w-[40px] text-center">
+                <button
+                    type="button"
+                    onClick={() => removeProductBom(bomIndex)}
+                    className="text-muted-foreground/30 hover:text-red-500 transition-colors"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            </td>
+        </tr>
+    )
+}
+
+function ProductGroup({ productIndex, control, remove, products }: any) {
+    const { fields: bomFields, append: bomAppend, remove: bomRemove } = useFieldArray({
+        control,
+        name: `items.${productIndex}.bom_items`
+    })
+
+    const quantity = useWatch({ control, name: `items.${productIndex}.quantity` }) || 0
+    const bomItems = useWatch({ control, name: `items.${productIndex}.bom_items` }) || []
+
+    const perUnitCost = bomItems.reduce((acc: number, bom: any) => {
+        const base = Number(bom.base_unit_price) || 0
+        const pp = (bom.post_processings || []).reduce((s: number, p: any) => s + (Number(p.unit_price) || 0), 0)
+        return acc + base + pp
+    }, 0)
+
+    const isMoqLow = (Number(quantity) || 0) < MOQ_LIMIT
+
+    return (
+        <div className="border border-border/60 rounded-lg overflow-hidden bg-card/30 mb-4 animate-in fade-in slide-in-from-bottom-2">
+            {/* Product Header */}
+            <div className="bg-muted/40 p-2 flex items-center gap-4 border-b border-border/40">
+                <div className="flex-1 flex items-center gap-4">
+                    <FormField
+                        control={control}
+                        name={`items.${productIndex}.product_name`}
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormControl>
+                                    <CreatableCombobox
+                                        options={products.map((p: any) => ({ name: p.name }))}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="완제품 명칭 입력 (Master Product)"
+                                        className="h-8 text-sm font-black border-none bg-transparent shadow-none focus:ring-0"
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    <div className="h-4 w-px bg-border/60" />
+                    <div className="flex items-center gap-3">
+                        <FormField
+                            control={control}
+                            name={`items.${productIndex}.quantity`}
+                            render={({ field }) => (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">견적수량</span>
+                                    <input
+                                        type="text"
+                                        value={formatNumber(field.value)}
+                                        onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                                        className={cn(
+                                            "w-24 h-7 text-xs font-mono font-black text-right rounded border border-border/40 bg-background px-2 focus:ring-1 focus:ring-primary",
+                                            isMoqLow && "border-amber-500/50 bg-amber-50 text-amber-600"
+                                        )}
+                                    />
+                                    <span className="text-[10px] text-muted-foreground mr-2 text-primary font-bold">PCS</span>
+                                </div>
+                            )}
+                        />
+                        {isMoqLow && (
+                            <Badge variant="outline" className="h-6 bg-amber-50 text-amber-600 border-amber-200 gap-1 text-[10px] animate-pulse">
+                                <AlertTriangle className="w-3 h-3" /> MOQ 미달
+                            </Badge>
+                        )}
+                        <Badge variant="secondary" className="h-6 gap-1 text-[10px]">
+                            <span className="text-muted-foreground">합계단가:</span>
+                            <span className="font-mono font-black text-primary">{perUnitCost.toLocaleString()}원</span>
+                        </Badge>
+                    </div>
+                </div>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground"
+                    onClick={() => remove(productIndex)}
+                >
+                    <Trash2 className="w-4 h-4" />
+                </Button>
+            </div>
+
+            {/* BOM Table */}
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-muted/20 text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                        <th className="py-1.5 px-2 border-b">부품명(BOM)</th>
+                        <th className="py-1.5 px-2 text-right border-b">부품단가</th>
+                        <th className="py-1.5 px-2 border-b">후가공 공정 및 사양 (공정별 단가)</th>
+                        <th className="py-1.5 px-2 text-right border-b">부품합계</th>
+                        <th className="py-1.5 px-2 border-b text-center">작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {bomFields.map((field, bIdx) => (
+                        <BomItemRow
+                            key={field.id}
+                            productIndex={productIndex}
+                            bomIndex={bIdx}
+                            control={control}
+                            removeProductBom={bomRemove}
+                        />
+                    ))}
+                    <tr>
+                        <td colSpan={5} className="p-1">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="w-full h-8 border border-dashed border-border/60 hover:bg-primary/5 hover:text-primary text-[10px] font-bold"
+                                onClick={() => bomAppend({ part_name: '', base_unit_price: '' as any, post_processings: [] })}
+                            >
+                                <Plus className="w-3 h-3 mr-1" /> BOM 부품 추가
+                            </Button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
 export function QuotationForm({ clients, products, clientProducts }: any) {
     const [isLoading, setIsLoading] = useState(false)
+    const { toast } = useToast()
+    const router = useRouter()
 
     const form = useForm<QuotationFormValues>({
         resolver: zodResolver(quotationSchema),
@@ -42,350 +326,187 @@ export function QuotationForm({ clients, products, clientProducts }: any) {
             items: [
                 {
                     product_name: '',
-                    quantity: 10000,
-                    unit_price: 0,
-                    post_processings: []
+                    quantity: '' as any,
+                    bom_items: [
+                        { part_name: '', base_unit_price: '' as any, post_processings: [] }
+                    ]
                 }
             ],
             memo: ''
         }
     })
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields: productFields, append: productAppend, remove: productRemove } = useFieldArray({
         control: form.control,
         name: "items"
     })
 
     const isVatIncluded = form.watch('is_vat_included') ?? true;
+    const allItems = form.watch('items') || []
 
-    const calculateSubtotal = () => {
-        const items = form.watch('items') ?? []
-        return items.reduce((sum, item) => sum + ((item?.quantity ?? 0) * (item?.unit_price ?? 0)), 0)
-    }
+    const subtotal = useMemo(() => {
+        return allItems.reduce((total, product) => {
+            const qty = Number(product.quantity) || 0
+            const unitCost = (product.bom_items || []).reduce((acc, bom) => {
+                const base = Number(bom.base_unit_price) || 0
+                const pp = (bom.post_processings || []).reduce((s, p) => s + (Number(p.unit_price) || 0), 0)
+                return acc + base + pp
+            }, 0)
+            return total + (qty * unitCost)
+        }, 0)
+    }, [allItems])
 
-    const subtotal = calculateSubtotal()
     const vat = isVatIncluded ? 0 : subtotal * 0.1
     const total = subtotal + vat
 
     async function onSubmit(data: QuotationFormValues) {
-        console.log('Quotation Data:', data)
-        // Server action will be called here
+        setIsLoading(true)
+        try {
+            const result = await saveQuotation(data)
+            if (result.success) {
+                toast({ title: '견적 저장 완료', description: '견적서가 성공적으로 저장되었습니다.' })
+                router.refresh()
+            } else {
+                toast({ title: '저장 실패', description: result.error, variant: 'destructive' })
+            }
+        } catch (e) {
+            console.error(e)
+            toast({ title: '오류 발생', description: '처리 중 오류가 발생했습니다.', variant: 'destructive' })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                {/* Header Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Receipt className="w-24 h-24" />
-                    </div>
-
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* Header Context - Super Compact */}
+                <div className="flex items-center gap-4 bg-card/40 p-3 rounded-xl border border-border/50 backdrop-blur-md sticky top-0 z-40">
                     <FormField
                         control={form.control}
                         name="client_name"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-sm font-bold flex items-center gap-2">
-                                    <Scale className="w-4 h-4 text-primary" />
-                                    고객사 명칭
-                                </FormLabel>
+                            <FormItem className="w-80">
                                 <FormControl>
                                     <CreatableCombobox
                                         options={clients.map((c: any) => ({ name: c.company_name }))}
                                         value={field.value}
                                         onChange={field.onChange}
-                                        placeholder="고객사 선택 또는 신규 입력..."
+                                        placeholder="고객사 선택..."
+                                        className="h-9 font-bold"
                                     />
                                 </FormControl>
-                                <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    <FormItem className="flex flex-col justify-end">
-                        <FormLabel className="text-sm font-bold mb-3 flex items-center gap-2">
-                            <Settings2 className="w-4 h-4 text-primary" />
-                            부가세(VAT) 설정
-                        </FormLabel>
-                        <div className="flex items-center gap-4 bg-muted/30 p-2.5 rounded-lg border border-border/40">
-                            <span className={cn("text-xs transition-colors", !isVatIncluded && "text-primary font-bold")}>별도</span>
-                            <FormField
-                                control={form.control}
-                                name="is_vat_included"
-                                render={({ field }) => (
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            className="data-[state=checked]:bg-primary"
-                                        />
-                                    </FormControl>
-                                )}
-                            />
-                            <span className={cn("text-xs transition-colors", isVatIncluded && "text-primary font-bold")}>포함</span>
-                            <Info className="w-3.5 h-3.5 text-muted-foreground ml-auto cursor-help" />
-                        </div>
-                    </FormItem>
-                </div>
+                    <div className="h-6 w-px bg-border/50" />
 
-                {/* Items List */}
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center bg-muted/10 p-4 rounded-xl border-l-4 border-l-primary">
-                        <div>
-                            <h3 className="text-lg font-bold">견적 품목 상세</h3>
-                            <p className="text-xs text-muted-foreground">후가공 및 수량별 단가를 입력하세요.</p>
+                    <div className="flex items-center gap-2 bg-muted/30 px-3 py-1 rounded-full border border-border/40">
+                        <span className={cn("text-[10px] font-bold transition-colors uppercase", !isVatIncluded && "text-primary")}>VAT 별도</span>
+                        <FormField
+                            control={form.control}
+                            name="is_vat_included"
+                            render={({ field }) => (
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        className="h-4 w-7 data-[state=checked]:bg-primary"
+                                    />
+                                </FormControl>
+                            )}
+                        />
+                        <span className={cn("text-[10px] font-bold transition-colors uppercase", isVatIncluded && "text-primary")}>VAT 포함</span>
+                    </div>
+
+                    <div className="ml-auto flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">Total Amount</p>
+                            <p className="text-xl font-black text-primary tracking-tighter">
+                                {total.toLocaleString()}
+                                <span className="text-xs ml-0.5">원</span>
+                            </p>
                         </div>
                         <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => append({ product_name: '', quantity: 10000, unit_price: 0, post_processings: [] })}
-                            className="h-9 font-bold px-4 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50"
+                            type="submit"
+                            disabled={isLoading}
+                            className="h-10 px-6 font-black bg-primary/95 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                         >
-                            <Plus className="w-4 h-4 mr-1" /> 품목 추가
+                            {isLoading ? '저장...' : '견적 저장'}
                         </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-6">
-                        {fields.map((field, index) => (
-                            <div key={field.id} className="relative group">
-                                <div className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/40 transition-all duration-300 shadow-lg hover:shadow-primary/5">
-                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                                        {/* Product & Client Product */}
-                                        <div className="lg:col-span-2 space-y-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`items.${index}.product_name`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs font-bold text-muted-foreground">마스터 제품명</FormLabel>
-                                                        <FormControl>
-                                                            <CreatableCombobox
-                                                                options={products.map((p: any) => ({ name: p.name }))}
-                                                                value={field.value}
-                                                                onChange={(val: string) => {
-                                                                    field.onChange(val)
-                                                                    const prod = products.find((p: any) => p.name === val)
-                                                                    if (prod) form.setValue(`items.${index}.unit_price`, prod.price)
-                                                                }}
-                                                                className="bg-muted/20"
-                                                            />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            {/* Post Processing Area */}
-                                            <div className="space-y-3 pt-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">추가 후가공</span>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-6 text-[10px] py-0 px-2 text-primary hover:bg-primary/10"
-                                                        onClick={() => {
-                                                            const current = form.getValues(`items.${index}.post_processings`)
-                                                            form.setValue(`items.${index}.post_processings`, [...current, { type: '코팅', spec: '' }])
-                                                        }}
-                                                    >
-                                                        + 공정 추가
-                                                    </Button>
-                                                </div>
-
-                                                <div className="flex flex-wrap gap-2">
-                                                    {(form.watch(`items.${index}.post_processings`) || []).map((_, pIdx) => (
-                                                        <div key={pIdx} className="flex items-center gap-1 bg-muted/40 p-1.5 rounded-lg border border-border/50 animate-in fade-in zoom-in duration-200">
-                                                            <FormField
-                                                                control={form.control}
-                                                                name={`items.${index}.post_processings.${pIdx}.type`}
-                                                                render={({ field }) => (
-                                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                                        <FormControl>
-                                                                            <SelectTrigger className="h-7 min-w-[70px] text-[10px] border-none bg-transparent p-0 px-1 shadow-none focus:ring-0">
-                                                                                <SelectValue />
-                                                                            </SelectTrigger>
-                                                                        </FormControl>
-                                                                        <SelectContent>
-                                                                            {['증착', '코팅', '인쇄', '조립', '기타'].map(t => (
-                                                                                <SelectItem key={t} value={t} className="text-[10px]">{t}</SelectItem>
-                                                                            ))}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                )}
-                                                            />
-                                                            <div className="h-3 w-px bg-border/50" />
-                                                            <FormField
-                                                                control={form.control}
-                                                                name={`items.${index}.post_processings.${pIdx}.spec`}
-                                                                render={({ field }) => (
-                                                                    <FormControl>
-                                                                        <input
-                                                                            {...field}
-                                                                            placeholder="사양 입력"
-                                                                            className="h-7 text-[10px] bg-transparent border-none focus:outline-none w-20 px-1 font-medium"
-                                                                        />
-                                                                    </FormControl>
-                                                                )}
-                                                            />
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-5 w-5 text-muted-foreground hover:text-red-500"
-                                                                onClick={() => {
-                                                                    const current = form.getValues(`items.${index}.post_processings`)
-                                                                    form.setValue(`items.${index}.post_processings`, current.filter((_, i) => i !== pIdx))
-                                                                }}
-                                                            >
-                                                                <Trash2 className="w-3 h-3" />
-                                                            </Button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Quantity & Price */}
-                                        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`items.${index}.quantity`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs font-bold text-muted-foreground">수량 (PCS)</FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative">
-                                                                <Input
-                                                                    type="number"
-                                                                    {...field}
-                                                                    onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                                                                    className={cn(
-                                                                        "font-mono font-bold transition-colors",
-                                                                        field.value < MOQ_LIMIT ? "border-amber-500/50 bg-amber-500/5 text-amber-600 focus-visible:ring-amber-500" : "bg-muted/10"
-                                                                    )}
-                                                                />
-                                                                <span className="absolute right-3 top-2.5 text-[10px] text-muted-foreground">PCS</span>
-                                                            </div>
-                                                        </FormControl>
-                                                        {field.value < MOQ_LIMIT && (
-                                                            <div className="mt-1.5 flex items-center gap-1.5 text-amber-600 font-bold animate-pulse">
-                                                                <AlertTriangle className="w-3.5 h-3.5" />
-                                                                <span className="text-[10px]">MOQ 미달: 단가 확인 필요</span>
-                                                            </div>
-                                                        )}
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name={`items.${index}.unit_price`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs font-bold text-muted-foreground">단가 (원)</FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative">
-                                                                <Input
-                                                                    type="number"
-                                                                    {...field}
-                                                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
-                                                                    className="font-mono font-bold bg-muted/10"
-                                                                />
-                                                                <span className="absolute right-3 top-2.5 text-[10px] text-muted-foreground font-mono">₩</span>
-                                                            </div>
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <div className="col-span-2 mt-2 pt-4 border-t border-border/40 flex justify-between items-end">
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] text-muted-foreground font-bold tracking-tight">항목 소계 (공급액)</p>
-                                                    <p className="text-xl font-black text-primary">
-                                                        {(form.watch(`items.${index}.quantity`) * form.watch(`items.${index}.unit_price`)).toLocaleString()}
-                                                        <span className="text-xs font-bold ml-1">원</span>
-                                                    </p>
-                                                </div>
-                                                {fields.length > 1 && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => remove(index)}
-                                                        className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-8 px-2"
-                                                    >
-                                                        <Trash2 className="w-4 h-4 mr-1.5" />
-                                                        삭제
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 </div>
 
-                {/* Summary & Action Area */}
-                <div className="sticky bottom-0 z-30 pt-10 pb-4 mt-10">
-                    <div className="p-8 rounded-3xl bg-card border-2 border-primary/20 shadow-2xl backdrop-blur-3xl overflow-hidden relative">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -z-10" />
+                {/* Main Content Areas */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div className="lg:col-span-9 space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <Layers className="w-4 h-4 text-primary" />
+                                <h3 className="text-sm font-black uppercase tracking-widest">Manufacturing BOM List</h3>
+                                <Badge variant="outline" className="text-[9px] font-bold h-5 px-1.5 opacity-60">Base MOQ: 10,000</Badge>
+                            </div>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs font-bold border-primary/30 text-primary hover:bg-primary/5"
+                                onClick={() => productAppend({ product_name: '', quantity: '' as any, bom_items: [{ part_name: '', base_unit_price: '' as any, post_processings: [] }] })}
+                            >
+                                <Plus className="w-3 h-3 mr-1" /> 신규 제품군 추가
+                            </Button>
+                        </div>
 
-                        <div className="flex flex-col md:flex-row justify-between gap-10">
-                            <div className="flex-1 space-y-4">
-                                <FormLabel className="font-bold flex items-center gap-2">
-                                    <Info className="w-4 h-4 text-primary" />
-                                    특이사항 및 조건
-                                </FormLabel>
+                        {productFields.map((field, idx) => (
+                            <ProductGroup
+                                key={field.id}
+                                productIndex={idx}
+                                control={form.control}
+                                remove={productRemove}
+                                products={products}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="lg:col-span-3 space-y-4">
+                        <div className="p-4 rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm sticky top-20">
+                            <h4 className="text-xs font-black uppercase mb-4 flex items-center gap-2">
+                                <Settings2 className="w-3.5 h-3.5 text-primary" />
+                                견적 요약 (VAT {isVatIncluded ? '포함' : '별도'})
+                            </h4>
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-muted-foreground">공급가액</span>
+                                    <span className="font-mono font-bold">{subtotal.toLocaleString()}원</span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-muted-foreground">부가세 (10%)</span>
+                                    <span className="font-mono font-bold text-amber-600">{vat.toLocaleString()}원</span>
+                                </div>
+                                <div className="h-px bg-border/40" />
+                                <div className="flex justify-between items-end">
+                                    <span className="text-sm font-black">합계</span>
+                                    <span className="text-lg font-black text-primary">{total.toLocaleString()}원</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 space-y-2">
+                                <FormLabel className="text-[10px] font-black uppercase text-muted-foreground ml-1">특이사항 (Memo)</FormLabel>
                                 <FormField
                                     control={form.control}
                                     name="memo"
                                     render={({ field }) => (
                                         <FormControl>
                                             <Textarea
-                                                placeholder="리드타임, 유효기간, 포장 조건 등 특이사항을 기록하세요."
-                                                className="min-h-[100px] border-none bg-muted/30 focus-visible:ring-primary/30"
+                                                placeholder="제작 사양, 납기, 물류 조건 등..."
+                                                className="min-h-[120px] text-xs bg-muted/20 border-border/40 focus-visible:ring-primary/20"
                                                 {...field}
+                                                value={field.value || ''}
                                             />
                                         </FormControl>
                                     )}
                                 />
-                            </div>
-
-                            <div className="w-full md:w-80 space-y-5">
-                                <div className="space-y-3 p-4 rounded-xl bg-muted/20 border border-border/50">
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-muted-foreground">공급가액 총액</span>
-                                        <span className="font-mono">{subtotal.toLocaleString()}원</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs items-center">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-muted-foreground">부가가치세 (10%)</span>
-                                            {isVatIncluded && <Badge variant="secondary" className="text-[8px] h-4 py-0 px-1">포함됨</Badge>}
-                                        </div>
-                                        <span className="font-mono">{vat.toLocaleString()}원</span>
-                                    </div>
-                                    <div className="h-px bg-border/40" />
-                                    <div className="flex justify-between items-end">
-                                        <span className="font-bold">최종 거래 합계</span>
-                                        <div className="text-right">
-                                            <p className="text-3xl font-black text-primary tracking-tighter">
-                                                {total.toLocaleString()}
-                                                <span className="text-sm ml-1">원</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    disabled={isLoading}
-                                    className="w-full h-16 text-lg font-black bg-primary hover:bg-primary/90 shadow-[0_10px_30px_rgba(theme(colors.primary.DEFAULT),0.3)] hover:shadow-[0_15px_40px_rgba(theme(colors.primary.DEFAULT),0.4)] transition-all hover:-translate-y-1 active:translate-y-0"
-                                >
-                                    {isLoading ? '저장 중...' : '견적서 저장 및 이력 생성'}
-                                </Button>
                             </div>
                         </div>
                     </div>
