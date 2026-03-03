@@ -10,7 +10,8 @@ import { Plus } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function OrderPage() {
+export default async function OrderPage({ searchParams }: { searchParams: { tab?: string } }) {
+    const activeTab = searchParams?.tab || 'quotation'
     const supabase = await createClient()
 
     // 1. Fetch Quotations
@@ -78,7 +79,7 @@ export default async function OrderPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="quotation" className="w-full relative z-10">
+            <Tabs defaultValue={activeTab} key={activeTab} className="w-full relative z-10">
                 <TabsList className="bg-card/50 border border-border/40 p-1 h-14 rounded-2xl mb-6 backdrop-blur-md">
                     <TabsTrigger value="quotation" className="flex-1 rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
                         <FileText className="w-4 h-4" /> 견적 관리

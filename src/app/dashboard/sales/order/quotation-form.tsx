@@ -234,7 +234,7 @@ export function QuotationForm({ clients, products }: any) {
             const result = await saveQuotation(data)
             if (result.success) {
                 toast.success('견적 저장 완료', { description: '목록 페이지로 이동합니다.' })
-                router.push('/dashboard/sales/order/quotations')
+                router.push('/dashboard/sales/order?tab=quotation')
                 router.refresh()
             } else {
                 toast.error('저장 실패', { description: result.error })
