@@ -14,6 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export default async function QuotationDetailPage({ params }: { params: { id: string } }) {
     const supabase = await createClient()
