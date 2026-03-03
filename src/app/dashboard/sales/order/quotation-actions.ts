@@ -26,9 +26,9 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         // calculate amounts
         const supply_price = data.items.reduce((total, product) => {
             const qty = Number(product.quantity) || 0
-            const unitCost = (product.bom_items || []).reduce((acc, bom) => {
+            const unitCost = product.bom_items.reduce((acc, bom) => {
                 const base = Number(bom.base_unit_price) || 0
-                const pp = (bom.post_processings || []).reduce((s, p) => s + (Number(p.unit_price) || 0), 0)
+                const pp = Number(bom.post_processing_unit_price) || 0
                 return acc + base + pp
             }, 0)
             return total + (qty * unitCost)
@@ -87,9 +87,9 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
 
             if (!prod) continue // Should ideally upsert if logic allows, but keep simple for now
 
-            const unitCost = (item.bom_items || []).reduce((acc, bom) => {
+            const unitCost = item.bom_items.reduce((acc, bom) => {
                 const base = Number(bom.base_unit_price) || 0
-                const pp = (bom.post_processings || []).reduce((s, p) => s + (Number(p.unit_price) || 0), 0)
+                const pp = Number(bom.post_processing_unit_price) || 0
                 return acc + base + pp
             }, 0)
 
@@ -98,7 +98,7 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
                 product_id: prod.id,
                 quantity: Number(item.quantity) || 0,
                 unit_price: unitCost,
-                post_processing: item.bom_items // Store the full BOM structure here
+                post_processing: JSON.stringify(item.bom_items) // Store the full BOM structure here
             })
         }
 
