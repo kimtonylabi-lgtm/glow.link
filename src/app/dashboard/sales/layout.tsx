@@ -10,7 +10,7 @@ const salesTabs = [
     { name: '영업기획', href: '/dashboard/sales/planning', icon: Target },
     { name: '활동관리', href: '/dashboard/sales/activity', icon: Briefcase },
     { name: 'CRM(고객)', href: '/dashboard/sales/crm', icon: Users },
-    { name: '수주/납기', href: '/dashboard/sales/order', icon: ShoppingCart },
+    { name: '수주/매출 관리', href: '/dashboard/sales/order', icon: ShoppingCart },
     { name: '샘플요청', href: '/dashboard/sales/sample', icon: FlaskConical },
     { name: '업무보고', href: '/dashboard/sales/reports', icon: FileText },
 ]
