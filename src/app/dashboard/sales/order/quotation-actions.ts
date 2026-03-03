@@ -11,19 +11,37 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
     if (!user) return { success: false, error: '인증이 필요합니다.' }
 
     const validated = quotationSchema.safeParse(data)
-    if (!validated.success) return { success: false, error: '입력값이 올바르지 않습니다.' }
+    if (!validated.success) {
+        console.error('Validation Error:', validated.error)
+        return { success: false, error: '입력값이 올바르지 않습니다. 모든 필수 필드를 확인해 주세요.' }
+    }
 
     try {
-        // 1. Resolve Client ID
+        // 1. Resolve Client ID (or insert if not exists for demo/simplicity, but here we require it)
         const { data: client } = await supabase
             .from('clients')
             .select('id')
             .eq('company_name', data.client_name)
             .maybeSingle()
 
-        if (!client) return { success: false, error: '존재하지 않는 고객사입니다.' }
+        if (!client) return { success: false, error: `고객사 '${data.client_name}'를 찾을 수 없습니다.` }
 
-        // calculate amounts
+        // 2. Automatic Master Data Registration
+        const masterEntries: { category: string, name: string }[] = []
+        data.items.forEach(item => {
+            item.bom_items.forEach(bom => {
+                if (bom.part_name) masterEntries.push({ category: 'part', name: bom.part_name })
+                if (bom.material) masterEntries.push({ category: 'material', name: bom.material })
+                if (bom.metalizing) masterEntries.push({ category: 'metalizing', name: bom.metalizing })
+                if (bom.coating) masterEntries.push({ category: 'coating', name: bom.coating })
+            })
+        })
+
+        if (masterEntries.length > 0) {
+            await (supabase.from('master_data' as any) as any).upsert(masterEntries, { onConflict: 'category,name' })
+        }
+
+        // 3. Calculate amounts
         const supply_price = data.items.reduce((total, product) => {
             const qty = Number(product.quantity) || 0
             const unitCost = product.bom_items.reduce((acc, bom) => {
@@ -33,6 +51,7 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
             }, 0)
             return total + (qty * unitCost)
         }, 0)
+
         const vat_amount = data.is_vat_included ? 0 : supply_price * 0.1
         const total_amount = supply_price + vat_amount
 
@@ -40,7 +59,6 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         let versionNo = 1;
 
         if (id) {
-            // It's a revision - get previous version info
             const { data: prev } = await (supabase
                 .from('quotations' as any)
                 .select('version_no, id')
@@ -49,12 +67,11 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
 
             if (prev) {
                 versionNo = prev.version_no + 1
-                // Set old as not current
                 await (supabase.from('quotations' as any) as any).update({ is_current: false }).eq('id', id)
             }
         }
 
-        // 2. Insert Quotation Master
+        // 4. Insert Quotation Master
         const { data: quote, error: quoteError } = await (supabase
             .from('quotations' as any)
             .insert({
@@ -76,16 +93,28 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         if (quoteError) throw quoteError
         quotationId = quote.id
 
-        // 3. Insert Items
+        // 5. Insert Items
         const itemsToInsert = []
         for (const item of data.items) {
+            // Find or insert product
+            let productId: string;
             const { data: prod } = await supabase
                 .from('products')
                 .select('id')
                 .eq('name', item.product_name)
                 .maybeSingle()
 
-            if (!prod) continue // Should ideally upsert if logic allows, but keep simple for now
+            if (!prod) {
+                const { data: newProd, error: pError } = await (supabase
+                    .from('products' as any) as any)
+                    .insert({ name: item.product_name, category: 'finished' })
+                    .select('id')
+                    .single()
+                if (pError) throw pError
+                productId = newProd.id
+            } else {
+                productId = prod.id
+            }
 
             const unitCost = item.bom_items.reduce((acc, bom) => {
                 const base = Number(bom.base_unit_price) || 0
@@ -95,10 +124,10 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
 
             itemsToInsert.push({
                 quotation_id: quotationId,
-                product_id: prod.id,
+                product_id: productId,
                 quantity: Number(item.quantity) || 0,
                 unit_price: unitCost,
-                post_processing: JSON.stringify(item.bom_items) // Store the full BOM structure here
+                post_processing: JSON.stringify(item.bom_items)
             })
         }
 
@@ -110,9 +139,9 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
 
         revalidatePath('/dashboard/sales/order')
         return { success: true, id: quotationId }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Quotation Save Error:', error)
-        return { success: false, error: '저장 중 오류가 발생했습니다.' }
+        return { success: false, error: error.message || '저장 중 오류가 발생했습니다.' }
     }
 }
 

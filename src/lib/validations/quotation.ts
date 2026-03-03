@@ -19,7 +19,6 @@ export const quotationItemSchema = z.object({
 
 export const quotationSchema = z.object({
     client_name: z.string().min(1, '고객사를 선택하거나 직접 입력하세요'),
-    due_date: z.date().optional().nullable(),
     items: z.array(quotationItemSchema).min(1, '최소 하나 이상의 제품을 입력하세요'),
     is_vat_included: z.boolean().default(true),
     memo: z.string().optional().default(''),
