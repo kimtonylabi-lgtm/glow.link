@@ -1,16 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/lib/supabase/server'
-import { QuotationFormSheet } from './quotation-form-sheet'
 import { QuotationList } from './quotation-list'
 import { OrderList } from './order-list'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileText, ShoppingCart, Truck } from 'lucide-react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Truck } from 'lucide-react'
+import { OrderPageClient } from './order-page-client'
 
 export const dynamic = 'force-dynamic'
 
-export default async function OrderPage({ searchParams }: { searchParams: { tab?: string; q?: string } }) {
+export default async function OrderPage(props: { searchParams: Promise<{ tab?: string; q?: string }> }) {
+    const searchParams = await props.searchParams
     const activeTab = searchParams?.tab || 'quotation'
     const searchQuery = searchParams?.q || ''
     const supabase = await createClient()
@@ -136,55 +134,21 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
     const orders = ordersData || []
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh] space-y-6">
-            {/* Header Area */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 relative z-10">
-                <div>
-                    <h2 className="text-3xl font-black tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/40 bg-clip-text text-transparent">
-                        수주 / 매출 관리 파이프라인
-                    </h2>
-                    <p className="text-muted-foreground text-sm mt-1">견적부터 수주, 납품까지 영업의 전체 흐름을 한눈에 관리합니다.</p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    {activeTab === 'quotation' && (
-                        <QuotationFormSheet
-                            clients={clients || []}
-                            products={products || []}
-                            clientProducts={clientProducts || []}
-                        />
-                    )}
-                </div>
-            </div>
-
-            <Tabs defaultValue={activeTab} key={activeTab} className="w-full relative z-10">
-                <TabsList className="bg-card/50 border border-border/40 p-1 h-14 rounded-2xl mb-6 backdrop-blur-md">
-                    <TabsTrigger value="quotation" className="flex-1 rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
-                        <FileText className="w-4 h-4" /> 견적 관리
-                    </TabsTrigger>
-                    <TabsTrigger value="order" className="flex-1 rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
-                        <ShoppingCart className="w-4 h-4" /> 수주 관리
-                    </TabsTrigger>
-                    <TabsTrigger value="delivery" className="flex-1 rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
-                        <Truck className="w-4 h-4" /> 납기 관리
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="quotation" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <QuotationList quotations={quotations} />
-                </TabsContent>
-
-                <TabsContent value="order" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <OrderList orders={orders} userRole={userRole} />
-                </TabsContent>
-
-                <TabsContent value="delivery" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh]">
+            <OrderPageClient
+                activeTab={activeTab}
+                clients={clients || []}
+                products={products || []}
+                clientProducts={clientProducts || []}
+                quotationContent={<QuotationList quotations={quotations} />}
+                orderContent={<OrderList orders={orders} userRole={userRole} />}
+                deliveryContent={
                     <div className="p-20 text-center rounded-3xl border border-dashed border-border/40 bg-muted/5">
                         <Truck className="w-12 h-12 mx-auto mb-4 opacity-20" />
                         <p className="text-muted-foreground font-medium">납기 관리 데이터 로딩 중...</p>
                     </div>
-                </TabsContent>
-            </Tabs>
+                }
+            />
         </div>
     )
 }

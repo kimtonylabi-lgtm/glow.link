@@ -24,11 +24,29 @@ import {
 } from "lucide-react"
 import { finalizeQuotation } from "./quotation-actions"
 import { toast } from "sonner"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { useRef } from "react"
 
 export function QuotationList({ quotations }: { quotations: any[] }) {
     const router = useRouter()
+    const pathname = usePathname()
     const searchParams = useSearchParams()
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    const handleSearch = (term: string) => {
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+        searchTimeoutRef.current = setTimeout(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            if (term) {
+                params.set('q', term)
+            } else {
+                params.delete('q')
+            }
+            params.delete('page')
+            params.set('tab', 'quotation')
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+        }, 300)
+    }
 
     const handleFinalize = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
@@ -53,16 +71,7 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                         type="search"
                         placeholder="고객사명 또는 제품명, 프로젝트 제목 검색..."
                         className="pl-9 h-10 bg-background/50 border-border/50 focus-visible:ring-primary/30"
-                        onChange={(e) => {
-                            const params = new URLSearchParams(searchParams.toString())
-                            if (e.target.value) {
-                                params.set('q', e.target.value)
-                            } else {
-                                params.delete('q')
-                            }
-                            params.set('tab', 'quotation')
-                            router.push(`?${params.toString()}`)
-                        }}
+                        onChange={(e) => handleSearch(e.target.value)}
                         defaultValue={searchParams.get('q') || ''}
                     />
                 </div>
