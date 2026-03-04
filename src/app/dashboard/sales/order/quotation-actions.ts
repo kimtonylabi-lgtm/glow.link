@@ -113,53 +113,55 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         }
         quotationId = quote.id
 
-        // 5. 품목 및 BOM 상세 저장
-        const itemsToInsert = []
-        for (const item of data.items) {
-            let productId: string;
-            const { data: prod } = await supabase
-                .from('products')
-                .select('id')
-                .eq('name', item.product_name)
-                .maybeSingle()
+        // 5. 품목 데이터 자동 동기화 및 제품 ID(productId) 일괄 매핑 (N+1 렌더링 병목 차단)
+        const productNames = Array.from(new Set(data.items.map(i => i.product_name)));
+        const { data: existingProducts, error: epError } = await supabase
+            .from('products')
+            .select('id, name')
+            .in('name', productNames);
 
-            if (!prod) {
-                // Generate a temporary item_code based on product name if needed, 
-                // but since it's nullable, we try name first.
-                const { data: newProd, error: pError } = await (supabase
-                    .from('products' as any) as any)
-                    .insert({
-                        name: item.product_name,
-                        category: 'finished', // This now matches the updated Enum
-                        item_code: `TEMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Fallback for uniqueness
-                        price: 0
-                    })
-                    .select('id')
-                    .single()
+        const existingProductMap = new Map((existingProducts || []).map((p: any) => [p.name, p.id]));
+        const missingProducts = productNames.filter(name => !existingProductMap.has(name));
 
-                if (pError) {
-                    console.error('Product registration error details:', pError)
-                    throw new Error(`신규 제품 '${item.product_name}' 등록 중 오류가 발생했습니다. (사유: ${pError.message})`)
-                }
-                productId = newProd.id
-            } else {
-                productId = prod.id
+        if (missingProducts.length > 0) {
+            const newProductsToInsert = missingProducts.map(name => ({
+                name,
+                category: 'finished',
+                item_code: `TEMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                price: 0
+            }));
+
+            const { data: newProducts, error: pError } = await (supabase
+                .from('products' as any) as any)
+                .insert(newProductsToInsert)
+                .select('id, name');
+
+            if (pError) {
+                console.error('Product registration error details:', pError);
+                throw new Error(`신규 제품 일괄 등록 중 오류가 발생했습니다. (사유: ${pError.message})`);
             }
 
+            (newProducts || []).forEach((p: any) => {
+                existingProductMap.set(p.name, p.id);
+            });
+        }
+
+        // 6. 품목 및 BOM 상세 일괄 저장 (map으로 변환)
+        const itemsToInsert = data.items.map((item) => {
             const unitCost = item.bom_items.reduce((acc, bom) => {
                 const base = Number(bom.base_unit_price) || 0
                 const pp = Number(bom.post_processing_unit_price) || 0
                 return acc + base + pp
             }, 0)
 
-            itemsToInsert.push({
+            return {
                 quotation_id: quotationId,
-                product_id: productId,
+                product_id: existingProductMap.get(item.product_name),
                 quantity: Number(item.quantity) || 0,
                 unit_price: unitCost,
                 post_processing: JSON.stringify(item.bom_items)
-            })
-        }
+            }
+        });
 
         const { error: itemsError } = await (supabase
             .from('quotation_items' as any) as any)

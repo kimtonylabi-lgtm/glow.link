@@ -13,35 +13,41 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     const searchQuery = searchParams?.q || ''
     const supabase = await createClient()
 
-    // 1. Build Query for Quotations
+    // 1. 독립적인 로드 쿼리들 (마스터 데이타 및 유저 인증) 병렬 실행 예약
+    const clientsPromise = supabase.from('clients').select('id, company_name').eq('status', 'active')
+    const productsPromise = supabase.from('products').select('*')
+    const clientProductsPromise = (supabase.from('client_products' as any) as any).select('*')
+    const authPromise = supabase.auth.getUser()
+
+    // 2. 검색 연관성 매칭 쿼리 병렬 최적화
     let matchingClientIds: string[] = []
     let matchingQuoteIdsFromProducts: string[] = []
+    let matchingOrderIdsFromProducts: string[] = []
 
     if (searchQuery) {
-        // Find matching clients
-        const { data: matchedClients } = await supabase
-            .from('clients')
-            .select('id')
-            .ilike('company_name', `%${searchQuery}%`)
-        if (matchedClients) matchingClientIds = matchedClients.map((c: any) => c.id)
+        // Find matching clients and products in parallel
+        const [matchedClientsRes, matchedProductsRes] = await Promise.all([
+            supabase.from('clients').select('id').ilike('company_name', `%${searchQuery}%`),
+            supabase.from('products').select('id').ilike('name', `%${searchQuery}%`)
+        ])
 
-        // Find matching products -> quotation_items -> quotation_id
-        const { data: matchedProducts } = await supabase
-            .from('products')
-            .select('id')
-            .ilike('name', `%${searchQuery}%`)
+        if (matchedClientsRes.data) matchingClientIds = matchedClientsRes.data.map((c: any) => c.id)
 
-        if (matchedProducts && matchedProducts.length > 0) {
-            const productIds = matchedProducts.map((p: any) => p.id)
-            const { data: matchedItems } = await (supabase
-                .from('quotation_items' as any) as any)
-                .select('quotation_id')
-                .in('product_id', productIds)
-            if (matchedItems) matchingQuoteIdsFromProducts = matchedItems.map((item: any) => item.quotation_id)
+        if (matchedProductsRes.data && matchedProductsRes.data.length > 0) {
+            const productIds = matchedProductsRes.data.map((p: any) => p.id)
+
+            // Quotation Items and Order Items parallel lookup
+            const [quoteItemsRes, orderItemsRes] = await Promise.all([
+                (supabase.from('quotation_items' as any) as any).select('quotation_id').in('product_id', productIds),
+                (supabase.from('order_items' as any) as any).select('order_id').in('product_id', productIds)
+            ])
+            if (quoteItemsRes.data) matchingQuoteIdsFromProducts = quoteItemsRes.data.map((item: any) => item.quotation_id)
+            if (orderItemsRes.data) matchingOrderIdsFromProducts = orderItemsRes.data.map((item: any) => item.order_id)
         }
     }
 
-    let query = (supabase.from('quotations' as any) as any).select(`
+    // 3. Build Query for Quotations
+    let quoteQuery = (supabase.from('quotations' as any) as any).select(`
         id, version_no, status, total_amount, is_current, created_at, client_id,
         clients (company_name),
         quotation_items (
@@ -58,21 +64,17 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
         const orConditions = [clientMatch, productMatch].filter(Boolean).join(',')
 
         if (orConditions) {
-            query = query.or(orConditions).limit(30) // 서버단 Limit 렌더링 방어
+            quoteQuery = quoteQuery.or(orConditions).limit(30) // 서버단 Limit 렌더링 방어
         } else {
-            // If we have a query but no matches at all, we should return empty.
-            // A trick is to filter by an impossible ID
-            query = query.eq('id', '00000000-0000-0000-0000-000000000000').limit(0)
+            // A trick to filter by an impossible ID when no matches
+            quoteQuery = quoteQuery.eq('id', '00000000-0000-0000-0000-000000000000').limit(0)
         }
     } else {
         // No search query: Limit to 5 non-finalized
-        query = query.neq('status', 'finalized').limit(5)
+        quoteQuery = quoteQuery.neq('status', 'finalized').limit(5)
     }
 
-    const { data: quotationsData } = await query
-    const quotations = quotationsData || []
-
-    // 2. Fetch Orders (Data Diet 적용: 불필요한 post_processing 생략)
+    // 4. Build Query for Orders (Data Diet 적용: 불필요한 post_processing 생략)
     let orderQuery = (supabase.from('orders') as any).select(`
         id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo,
         clients (company_name),
@@ -85,27 +87,6 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     `).order('created_at', { ascending: false })
 
     if (searchQuery) {
-        // Need to find matching order IDs from order_items' product relation
-        let matchingOrderIdsFromProducts: string[] = []
-        if (matchingQuoteIdsFromProducts.length > 0) { // reuse the matched products from above
-            const { data: matchedOrderItems } = await (supabase
-                .from('order_items' as any) as any)
-                .select('order_id')
-                .in('product_id', matchingQuoteIdsFromProducts) // This is using product IDs implicitly found earlier
-
-            // To be entirely accurate, let's fetch matching products again if necessary,
-            // but we already have matchedProducts list from above if searchQuery existed.
-            // Wait, we didn't save productIds, we saved matchingQuoteIdsFromProducts.
-            // Let's re-query products if needed, or better, we can just do a subquery or join for orders.
-            // Since we don't have productIds saved from block 1, let's just do a fresh query for order_items based on products:
-            const { data: matchedProducts } = await supabase.from('products').select('id').ilike('name', `%${searchQuery}%`)
-            if (matchedProducts && matchedProducts.length > 0) {
-                const pIds = matchedProducts.map((p: any) => p.id)
-                const { data: mItems } = await (supabase.from('order_items' as any) as any).select('order_id').in('product_id', pIds)
-                if (mItems) matchingOrderIdsFromProducts = mItems.map((item: any) => item.order_id)
-            }
-        }
-
         const orderClientMatch = matchingClientIds.length > 0 ? `client_id.in.(${matchingClientIds.join(',')})` : ''
         const orderProductMatch = matchingOrderIdsFromProducts.length > 0 ? `id.in.(${matchingOrderIdsFromProducts.join(',')})` : ''
         const poNumberMatch = `po_number.ilike.%${searchQuery}%`
@@ -120,18 +101,35 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
         orderQuery = orderQuery.limit(20) // 기본 조회 한도 제한
     }
 
-    const { data: ordersData } = await orderQuery
+    // 5. Ultimate Parallel Resolution (Promise.all 파괴적 결합 성능)
+    const [
+        quotationsRes,
+        ordersRes,
+        clientsRes,
+        productsRes,
+        clientProductsRes,
+        authRes
+    ] = await Promise.all([
+        quoteQuery,
+        orderQuery,
+        clientsPromise,
+        productsPromise,
+        clientProductsPromise,
+        authPromise
+    ])
 
-    // 3. Fetch Master Data for Form
-    const { data: clients } = await supabase.from('clients').select('id, company_name').eq('status', 'active')
-    const { data: products } = await supabase.from('products').select('*')
-    const { data: clientProducts } = await (supabase.from('client_products' as any) as any).select('*')
+    const quotations = quotationsRes.data || []
+    const orders = ordersRes.data || []
+    const clients = clientsRes.data || []
+    const products = productsRes.data || []
+    const clientProducts = clientProductsRes.data || []
 
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id || '').single()
-    const userRole = profile?.role || 'sales'
-
-    const orders = ordersData || []
+    const user = authRes.data?.user
+    let userRole = 'sales'
+    if (user?.id) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        if (profile?.role) userRole = profile.role
+    }
 
     return (
         <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh]">
