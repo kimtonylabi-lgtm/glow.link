@@ -47,6 +47,27 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
+            {/* Warning Banner for Past Versions */}
+            {!quote.is_current && (
+                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 rounded-lg p-3 flex justify-between items-center z-20 relative font-bold text-sm shadow-sm backdrop-blur-md">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        <span>⚠️ 과거 버전(v{quote.version_no})을 열람 중입니다. 고객 안내에 주의해 주세요.</span>
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="default"
+                        className="bg-rose-500 hover:bg-rose-600 text-white shrink-0"
+                        onClick={() => {
+                            const latest = versions[versions.length - 1];
+                            if (latest) router.push(`/dashboard/sales/order/quotations/${latest.id}`);
+                        }}
+                    >
+                        최신 버전으로 돌아가기
+                    </Button>
+                </div>
+            )}
+
             {/* Back Button */}
             <Button
                 variant="ghost"
@@ -60,21 +81,21 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
             {/* Header info */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 border-b border-border/40 pb-4">
                 <div>
-                    <div className="flex items-center gap-3 mb-3">
-                        <Badge variant="outline" className="text-xs font-mono px-2 py-1 bg-primary/5 border-primary/20 text-primary">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs font-mono px-2 py-0.5 bg-primary/5 border-primary/20 text-primary">
                             Quotation v{quote.version_no}
                         </Badge>
                         <span className="text-muted-foreground text-xs">{format(new Date(quote.created_at), 'PPP', { locale: ko })}</span>
                     </div>
-                    <h2 className="text-3xl font-black tracking-tighter text-foreground">
-                        {quote.clients?.company_name || '고객사 정보 없음'} <span className="text-primary/40 font-light ml-2">견적서 상세</span>
+                    <h2 className="text-3xl font-black tracking-tighter text-foreground leading-none">
+                        {quote.clients?.company_name || '고객사 정보 없음'}
                     </h2>
                 </div>
 
-                <div className="flex flex-col items-end gap-3">
-                    <div className="flex flex-col items-end gap-1">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Amount</p>
-                        <p className="text-4xl font-black text-primary tracking-tighter">
+                <div className="flex flex-col items-end gap-2 mt-4 md:mt-0">
+                    <div className="flex flex-col items-end gap-0">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-tight">Total Amount</p>
+                        <p className="text-4xl font-black text-primary tracking-tighter leading-none">
                             ₩{(Number(quote.total_amount) || 0).toLocaleString()}
                         </p>
                     </div>
@@ -84,7 +105,7 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
                         initialData={initialData}
                         parentId={quote.id}
                         triggerButton={
-                            <Button className="h-9 px-4 font-bold bg-primary/20 text-primary hover:bg-primary hover:text-white transition-colors border border-primary/30">
+                            <Button className="h-8 px-4 font-bold bg-primary/20 text-primary hover:bg-primary hover:text-white transition-colors border border-primary/30 mt-1">
                                 팔로우업(v{quote.version_no + 1}) 작성
                             </Button>
                         }
@@ -92,151 +113,158 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Left: Item Detail & Specs */}
-                <div className="xl:col-span-2 space-y-4">
-                    <section className="space-y-3">
-                        <h3 className="text-lg font-bold flex items-center gap-2">
-                            <FileCheck className="w-5 h-5 text-primary" />
-                            견적 품목 상세
-                        </h3>
-                        <div className="grid grid-cols-1 gap-4">
-                            {quote.quotation_items?.length > 0 ? quote.quotation_items.map((item: any) => (
-                                <Card key={item.id} className="bg-card/30 border-border/40 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
-                                    <CardContent className="p-0">
-                                        <div className="flex flex-col md:flex-row">
-                                            <div className="p-4 flex-1 space-y-3">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Product Name</p>
-                                                        <h4 className="text-xl font-bold group-hover:text-primary transition-colors">{item.products?.name || '부품명 정보 없음'}</h4>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Unit Price</p>
-                                                        <p className="text-lg font-mono font-bold">₩{(Number(item.unit_price) || 0).toLocaleString()}</p>
-                                                    </div>
-                                                </div>
+            <div className="space-y-4">
+                {/* High Density Item Specs Grid */}
+                <section className="space-y-2">
+                    <h3 className="text-sm font-bold flex items-center gap-1.5 text-foreground">
+                        <FileCheck className="w-4 h-4 text-primary" />
+                        견적 품목 상세
+                    </h3>
+                    <div className="space-y-2">
+                        {quote.quotation_items?.length > 0 ? quote.quotation_items.map((item: any) => (
+                            <div key={item.id} className="bg-card/40 border border-border/40 rounded-lg overflow-hidden shadow-sm">
+                                <div className="flex justify-between items-center p-2 bg-muted/40 border-b border-border/40">
+                                    <div className="flex items-center gap-3">
+                                        <h4 className="text-sm font-black text-primary">{item.products?.name || '부품명 정보 없음'}</h4>
+                                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-none text-[10px] px-2 py-0 h-5 my-auto">
+                                            MOQ: {(Number(item.quantity) || 0).toLocaleString()}개
+                                        </Badge>
+                                    </div>
+                                    <div className="text-xs font-mono font-black tabular-nums">
+                                        단가합: ₩{(Number(item.unit_price) || 0).toLocaleString()}
+                                    </div>
+                                </div>
 
-                                                {/* Post processings display */}
-                                                {item.post_processing && Array.isArray(item.post_processing) && item.post_processing.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2 pt-2">
-                                                        {item.post_processing.map((pp: any, i: number) => (
-                                                            <Badge key={i} variant="secondary" className="bg-muted/50 text-[10px] py-0.5 border-border/50">
-                                                                <span className="text-primary mr-1 bg-primary/10 px-1 rounded">{pp.type}</span>
-                                                                {pp.spec}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="bg-muted/20 border-l border-border/40 p-4 flex flex-col justify-center items-center md:w-32 gap-1">
-                                                <p className="text-[10px] text-muted-foreground font-bold">Quantity</p>
-                                                <p className="text-xl font-black tracking-tighter">{(Number(item.quantity) || 0).toLocaleString()} <span className="text-xs font-medium">PCS</span></p>
-                                                {Number(item.quantity) < 10000 && (
-                                                    <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] h-4">MOQ 미달</Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )) : (
-                                <p className="text-muted-foreground text-sm italic py-10 text-center border border-dashed rounded-2xl">등록된 부품 내역이 없습니다.</p>
-                            )}
-                        </div>
+                                {/* Excel-like High Density Table */}
+                                <div className="overflow-x-auto w-full">
+                                    <table className="w-full text-[11px] table-fixed min-w-[600px]">
+                                        <thead className="bg-muted/10 text-muted-foreground border-b border-border/20">
+                                            <tr>
+                                                <th className="w-[20%] p-1.5 text-left font-semibold truncate">부품명</th>
+                                                <th className="w-[15%] p-1.5 text-left font-semibold truncate">재질</th>
+                                                <th className="w-[15%] p-1.5 text-left font-semibold truncate">색상</th>
+                                                <th className="w-[25%] p-1.5 text-left font-semibold truncate">후가공(증착/코팅/인쇄)</th>
+                                                <th className="w-[12%] p-1.5 text-right font-semibold truncate">부품단가</th>
+                                                <th className="w-[13%] p-1.5 text-right font-semibold truncate">가공단가</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(() => {
+                                                const bomData = typeof item.post_processing === 'string' ? JSON.parse(item.post_processing) : item.post_processing || [];
+                                                return bomData.map((bom: any, i: number) => (
+                                                    <tr key={i} className="border-b border-border/5 hover:bg-muted/5 transition-colors">
+                                                        <td className="p-1.5 truncate font-medium text-foreground">{bom.part_name || '-'}</td>
+                                                        <td className="p-1.5 truncate text-foreground/80">{bom.material || '-'}</td>
+                                                        <td className="p-1.5 truncate text-foreground/80">{bom.color || '-'}</td>
+                                                        <td className="p-1.5 truncate">
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {bom.metalizing && <span className="bg-primary/10 text-primary px-1 rounded-[3px] text-[9px] truncate">{bom.metalizing}</span>}
+                                                                {bom.coating && <span className="bg-primary/10 text-primary px-1 rounded-[3px] text-[9px] truncate">{bom.coating}</span>}
+                                                                {bom.printing && <span className="bg-primary/10 text-primary px-1 rounded-[3px] text-[9px] truncate">{bom.printing}</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-1.5 text-right font-mono truncate text-foreground/80">₩{(Number(bom.base_unit_price) || 0).toLocaleString()}</td>
+                                                        <td className="p-1.5 text-right font-mono truncate text-foreground/80">₩{(Number(bom.post_processing_unit_price) || 0).toLocaleString()}</td>
+                                                    </tr>
+                                                ));
+                                            })()}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="text-muted-foreground text-xs italic py-4 text-center border border-dashed border-border/40 rounded-lg bg-card/10">등록된 부품 내역이 없습니다.</p>
+                        )}
+                    </div>
+                </section>
+
+                {quote.memo && (
+                    <section className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 space-y-1 shadow-inner">
+                        <h4 className="text-[10px] font-bold text-amber-600 flex items-center gap-1 uppercase tracking-wide">
+                            <AlertCircle className="w-3 h-3" /> Special Memo / Remark
+                        </h4>
+                        <p className="text-xs leading-relaxed text-muted-foreground italic whitespace-pre-wrap">{quote.memo}</p>
                     </section>
+                )}
 
-                    {quote.memo && (
-                        <section className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 space-y-2 shadow-inner">
-                            <h4 className="text-xs font-bold text-amber-600 flex items-center gap-1.5 uppercase tracking-wide">
-                                <AlertCircle className="w-3.5 h-3.5" /> Special Memo / Remark
-                            </h4>
-                            <p className="text-sm leading-relaxed text-muted-foreground italic whitespace-pre-wrap">"{quote.memo}"</p>
-                        </section>
-                    )}
-                </div>
-
-                {/* Right: History & Timeline */}
-                <div className="space-y-4">
-                    <Card className="bg-card/40 backdrop-blur-xl border-border/40 shadow-xl overflow-hidden relative">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -z-10" />
-
-                        <CardHeader className="border-b border-border/40 bg-muted/20 py-3">
-                            <CardTitle className="text-sm font-black flex items-center gap-2 uppercase tracking-widest text-primary/80">
-                                <HistoryIcon className="w-4 h-4" />
+                {/* Horizontal History / Timeline */}
+                <section className="pt-2">
+                    <Card className="bg-card/40 backdrop-blur-xl border-border/40 shadow-sm overflow-hidden border-none rounded-xl">
+                        <div className="border-b border-border/40 bg-muted/10 p-2.5 px-3 flex items-center gap-2">
+                            <HistoryIcon className="w-4 h-4 text-primary" />
+                            <CardTitle className="text-[11px] font-black uppercase tracking-widest text-primary/80">
                                 Price Variation Timeline
                             </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 space-y-6">
-                            <div className="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-primary/50 before:via-primary/20 before:to-transparent">
+                        </div>
+                        <CardContent className="p-3 bg-muted/5">
+                            <div className="flex flex-row overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar">
                                 {versions?.map((v: any, idx: number) => {
                                     const isCurrent = v.id === quote.id
                                     const prevVersion = versions[idx - 1]
 
+                                    const primaryItem = v.quotation_items?.[0]
+                                    const unitPrice = Number(primaryItem?.unit_price) || 0
+                                    const prevItem = prevVersion?.quotation_items?.find((p: any) => p.product_id === primaryItem?.product_id)
+                                    const diff = prevItem ? unitPrice - (Number(prevItem.unit_price) || 0) : 0
+
                                     return (
-                                        <div key={v.id} className={cn(
-                                            "relative group",
-                                            isCurrent ? "scale-105 origin-left transition-transform" : "opacity-60 hover:opacity-100 transition-opacity"
-                                        )}>
-                                            <div className={cn(
-                                                "absolute -left-[27px] top-1 w-4 h-4 rounded-full border-2 bg-background transition-all",
-                                                isCurrent ? "border-primary shadow-[0_0_10px_theme(colors.primary.DEFAULT)] scale-125" : "border-muted-foreground/30"
-                                            )} />
+                                        <div
+                                            key={v.id}
+                                            onClick={() => router.push(`/dashboard/sales/order/quotations/${v.id}`)}
+                                            className={cn(
+                                                "min-w-[160px] max-w-[200px] flex-1 shrink-0 p-3 rounded-lg border transition-all cursor-pointer snap-start relative group",
+                                                isCurrent
+                                                    ? "border-primary/50 bg-primary/5 shadow-sm shadow-primary/10"
+                                                    : "border-border/50 bg-card hover:bg-muted/40 hover:border-border"
+                                            )}
+                                        >
+                                            {isCurrent && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_theme(colors.emerald.500)]" />}
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <Badge variant="outline" className={cn(
+                                                    "text-[9px] px-1 py-0 h-4 font-mono leading-none border-border/40",
+                                                    isCurrent ? "text-primary border-primary/30 bg-primary/10" : "text-muted-foreground bg-muted/20"
+                                                )}>
+                                                    v{v.version_no}
+                                                </Badge>
+                                                <span className="text-[9px] text-muted-foreground tabular-nums opacity-80">{format(new Date(v.created_at), 'MM.dd', { locale: ko })}</span>
+                                            </div>
 
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <p className={cn("text-xs font-black", isCurrent ? "text-primary" : "text-muted-foreground")}>v{v.version_no}</p>
-                                                    <p className="text-[10px] text-muted-foreground">{format(new Date(v.created_at), 'yy. MM. dd', { locale: ko })}</p>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] text-muted-foreground truncate font-medium group-hover:text-foreground transition-colors">{primaryItem?.products?.name || '제품명 없음'}</p>
+                                                <div className="flex items-baseline justify-between mb-0.5">
+                                                    <p className={cn(
+                                                        "text-xl font-black tracking-tighter tabular-nums leading-none",
+                                                        isCurrent ? "text-foreground" : "text-foreground/70"
+                                                    )}>
+                                                        <span className="text-[10px] font-medium mr-0.5 opacity-60">단가</span>
+                                                        ₩{unitPrice.toLocaleString()}
+                                                    </p>
                                                 </div>
 
-                                                <div className="space-y-2">
-                                                    {v.quotation_items?.map((qi: any) => {
-                                                        const prevQi = prevVersion?.quotation_items?.find((p: any) => p.product_id === qi.product_id)
-                                                        const diff = prevQi ? Number(qi.unit_price) - Number(prevQi.unit_price) : 0
-
-                                                        return (
-                                                            <div key={qi.id} className="flex justify-between items-center bg-muted/10 p-2.5 rounded-lg border border-border/10">
-                                                                <span className="text-[10px] font-bold truncate max-w-[100px]">{qi.products?.name || '부품명 정보 없음'}</span>
-                                                                <div className="flex items-center gap-3">
-                                                                    <span className="text-[11px] font-mono font-bold">₩{(Number(qi.unit_price) || 0).toLocaleString()}</span>
-                                                                    {diff !== 0 && (
-                                                                        <div className={cn(
-                                                                            "flex items-center text-[9px] font-black italic",
-                                                                            diff > 0 ? "text-rose-500" : "text-emerald-500"
-                                                                        )}>
-                                                                            {diff > 0 ? <TrendingUp className="w-2.5 h-2.5 mr-0.5" /> : <TrendingDown className="w-2.5 h-2.5 mr-0.5" />}
-                                                                            {Math.abs(diff).toLocaleString()}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    })}
-                                                </div>
-
-                                                <div className="flex justify-between items-end pt-1">
-                                                    <p className="text-[10px] text-muted-foreground">Total Supply</p>
-                                                    <p className="text-sm font-black text-foreground">₩{(Number(v.total_amount) || 0).toLocaleString()}</p>
+                                                <div className="flex items-center justify-between mt-1 pt-1 border-t border-border/30">
+                                                    {diff !== 0 ? (
+                                                        <div className={cn(
+                                                            "text-[9px] font-black italic flex items-center tabular-nums",
+                                                            diff > 0 ? "text-rose-500" : "text-emerald-500"
+                                                        )}>
+                                                            {diff > 0 ? <TrendingUp className="w-2.5 h-2.5 mr-0.5" /> : <TrendingDown className="w-2.5 h-2.5 mr-0.5" />}
+                                                            {Math.abs(diff).toLocaleString()}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-[9px] text-muted-foreground opacity-50 italic">-</div>
+                                                    )}
+                                                    <p className="text-[9px] font-mono text-muted-foreground opacity-80">
+                                                        MOQ {Number(primaryItem?.quantity || 0).toLocaleString()}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
                                     )
                                 })}
                             </div>
-
-                            <Separator className="bg-border/40" />
-
-                            <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 text-center space-y-4">
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    고객사와 협의된 최종 견적을 확정하여 <br />
-                                    <span className="text-primary font-bold">수주 파이프라인</span>으로 넘기시겠습니까?
-                                </p>
-                                <Button className="w-full bg-primary hover:bg-primary/90 font-black h-12 shadow-xl hover:shadow-primary/20 transition-all active:scale-95">
-                                    최종 견적 확정 (수주) <ArrowRight className="w-4 h-4 ml-2" />
-                                </Button>
-                            </div>
                         </CardContent>
                     </Card>
-                </div>
+                </section>
             </div>
         </div>
     )
