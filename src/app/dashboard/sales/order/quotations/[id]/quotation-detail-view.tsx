@@ -20,9 +20,25 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { QuotationFormSheet } from '../../quotation-form-sheet'
+import { useTransition } from 'react'
+import { toast } from 'sonner'
+import { finalizeQuotation } from '../../quotation-actions'
 
 export function QuotationDetailView({ quote, versions, clients, products }: { quote: any, versions: any[], clients?: any[], products?: any[] }) {
     const router = useRouter()
+    const [isPending, startTransition] = useTransition()
+
+    const handleFinalize = () => {
+        startTransition(async () => {
+            const res = await finalizeQuotation(quote.id)
+            if (res.success) {
+                toast.success('수주가 확정되었습니다.')
+                router.push('/dashboard/sales/order')
+            } else {
+                toast.error(res.error || '수주 확정 실패')
+            }
+        })
+    }
 
     const initialData = quote ? {
         client_name: quote.clients?.company_name || '',
@@ -73,7 +89,7 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
                 variant="ghost"
                 size="sm"
                 className="gap-2 text-muted-foreground hover:text-primary transition-colors h-8"
-                onClick={() => router.back()}
+                onClick={() => router.push('/dashboard/sales/order')}
             >
                 <ChevronLeft className="w-4 h-4" /> 목록으로 돌아가기
             </Button>
@@ -265,6 +281,25 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
                         </CardContent>
                     </Card>
                 </section>
+                {/* Finalize Button Area */}
+                {quote.is_current && (
+                    <section className="pt-4 pb-8">
+                        <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 text-center space-y-4">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                고객사와 협의된 최종 견적을 확정하여 <br />
+                                <span className="text-primary font-bold">수주 파이프라인</span>으로 넘기시겠습니까?
+                            </p>
+                            <Button
+                                onClick={handleFinalize}
+                                disabled={isPending || quote.status === 'finalized'}
+                                className="w-full bg-primary hover:bg-primary/90 font-black h-12 shadow-xl hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isPending ? '처리 중...' : (quote.status === 'finalized' ? '수주 확정 완료' : '최종 견적 확정 (수주)')}
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </div>
+                    </section>
+                )}
             </div>
         </div>
     )

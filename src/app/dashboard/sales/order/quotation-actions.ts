@@ -182,49 +182,19 @@ export async function finalizeQuotation(id: string) {
     const supabase = await createClient()
 
     try {
-        // 1. Fetch Quotation and Items
-        const { data: quote, error: quoteError } = await (supabase
-            .from('quotations' as any)
-            .select('*, quotation_items(*)')
-            .eq('id', id)
-            .single() as any)
+        const { data, error } = await (supabase.rpc as any)('finalize_quotation_to_order', {
+            p_quotation_id: id
+        })
 
-        if (quoteError || !quote) throw quoteError || new Error('Quotation not found')
-
-        // 2. Create Order (Transaction-like)
-        const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert({
-                client_id: quote.client_id,
-                sales_person_id: quote.sales_person_id,
-                total_amount: quote.total_amount,
-                status: 'confirmed',
-                quotation_id: quote.id
-            })
-            .select('id')
-            .single()
-
-        if (orderError) throw orderError
-
-        // 3. Create Order Items
-        const orderItems = quote.quotation_items.map((qi: any) => ({
-            order_id: order.id,
-            product_id: qi.product_id,
-            quantity: qi.quantity,
-            unit_price: qi.unit_price,
-            subtotal: qi.quantity * qi.unit_price
-        }))
-
-        const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
-        if (itemsError) throw itemsError
-
-        // 4. Update Quotation Status
-        await (supabase.from('quotations' as any) as any).update({ status: 'finalized' }).eq('id', id)
+        if (error) {
+            console.error('Finalize Quotation RPC Error:', JSON.stringify(error, null, 2))
+            throw error
+        }
 
         revalidatePath('/dashboard/sales/order')
-        return { success: true }
-    } catch (error) {
-        console.error('Finalize Error:', error)
-        return { success: false, error: '최종 확정 처리 중 오류가 발생했습니다.' }
+        return { success: true, order_id: data?.order_id }
+    } catch (error: any) {
+        console.error('Finalize Quotation Catch Error:', JSON.stringify(error, null, 2))
+        return { success: false, error: error.message || '최종 확정 처리 중 오류가 발생했습니다.' }
     }
 }

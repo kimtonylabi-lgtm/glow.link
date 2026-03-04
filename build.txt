@@ -1,0 +1,76 @@
+﻿
+> glowlink-tmp@0.1.0 build
+> next build
+
+??Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+??Compiled successfully in 6.2s
+  Running TypeScript ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/6) ...
+  Generating static pages using 15 workers (1/6) 
+node.exe : Naver API cr
+edentials missing. Retu
+rning fallback data.
+위치 줄:1 문자:1
++ & "C:\Program Files\n
+odejs/node.exe" "C:\Pro
+gram Files\nodejs/node_
+mo ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Naver API cre   
+ de... fallback dat    
+a.:String) [], Rem    o
+teException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Naver API credentials m
+issing. Returning fallb
+ack data.
+Naver API credentials m
+issing. Returning fallb
+ack data.
+  Generating static pages using 15 workers (2/6) 
+  Generating static pages using 15 workers (4/6) 
+??Generating static pages using 15 workers (6/6) in 251.5ms
+  Finalizing page optimization ...
+
+Route (app)
+????/
+????/_not-found
+??? /api/revalidate
+??? /dashboard
+??? /dashboard/admin/settings
+??? /dashboard/admin/users
+??? /dashboard/head
+??? /dashboard/pending
+??? /dashboard/sales/activity
+??? /dashboard/sales/crm
+??? /dashboard/sales/crm/[id]
+??? /dashboard/sales/order
+??? /dashboard/sales/order/quotations/[id]
+??? /dashboard/sales/planning
+??? /dashboard/sales/reports
+??? /dashboard/sales/sample
+??? /dashboard/sample_team
+??? /dashboard/settings
+??? /dashboard/support/closing
+??? /dashboard/support/shipping
+????/login
+??? /pending
+
+
+? Proxy (Middleware)
+
+?? (Static)   prerendered as static content
+?  (Dynamic)  server-rendered on demand
+
