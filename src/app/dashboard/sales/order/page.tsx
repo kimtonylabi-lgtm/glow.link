@@ -19,7 +19,11 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
         .from('quotations' as any) as any)
         .select(`
             *,
-            clients (company_name)
+            clients (company_name),
+            quotation_items (
+                quantity,
+                products (name)
+            )
         `)
         .eq('is_current', true)
         .order('created_at', { ascending: false })

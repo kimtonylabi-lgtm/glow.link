@@ -19,9 +19,21 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
+import { QuotationFormSheet } from '../../quotation-form-sheet'
 
-export function QuotationDetailView({ quote, versions }: { quote: any, versions: any[] }) {
+export function QuotationDetailView({ quote, versions, clients, products }: { quote: any, versions: any[], clients?: any[], products?: any[] }) {
     const router = useRouter()
+
+    const initialData = quote ? {
+        client_name: quote.clients?.company_name || '',
+        is_vat_included: quote.is_vat_included,
+        items: quote.quotation_items?.map((item: any) => ({
+            product_name: item.products?.name || '',
+            quantity: item.quantity,
+            bom_items: typeof item.post_processing === 'string' ? JSON.parse(item.post_processing) : item.post_processing || []
+        })) || [],
+        memo: quote.memo || ''
+    } : undefined;
 
     if (!quote) return (
         <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground">
@@ -31,7 +43,7 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
     )
 
     return (
-        <div className="p-6 lg:p-10 space-y-10 relative overflow-hidden bg-background/50 animate-in fade-in duration-700">
+        <div className="p-4 lg:p-6 space-y-6 relative overflow-hidden bg-background/50 animate-in fade-in duration-700">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
@@ -39,14 +51,14 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
             <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 text-muted-foreground hover:text-primary transition-colors"
+                className="gap-2 text-muted-foreground hover:text-primary transition-colors h-8"
                 onClick={() => router.back()}
             >
                 <ChevronLeft className="w-4 h-4" /> 목록으로 돌아가기
             </Button>
 
             {/* Header info */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-border/40 pb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 border-b border-border/40 pb-4">
                 <div>
                     <div className="flex items-center gap-3 mb-3">
                         <Badge variant="outline" className="text-xs font-mono px-2 py-1 bg-primary/5 border-primary/20 text-primary">
@@ -54,23 +66,36 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                         </Badge>
                         <span className="text-muted-foreground text-xs">{format(new Date(quote.created_at), 'PPP', { locale: ko })}</span>
                     </div>
-                    <h2 className="text-4xl font-black tracking-tighter text-foreground">
+                    <h2 className="text-3xl font-black tracking-tighter text-foreground">
                         {quote.clients?.company_name || '고객사 정보 없음'} <span className="text-primary/40 font-light ml-2">견적서 상세</span>
                     </h2>
                 </div>
 
-                <div className="flex flex-col items-end gap-1">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Amount</p>
-                    <p className="text-5xl font-black text-primary tracking-tighter">
-                        ₩{(Number(quote.total_amount) || 0).toLocaleString()}
-                    </p>
+                <div className="flex flex-col items-end gap-3">
+                    <div className="flex flex-col items-end gap-1">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Amount</p>
+                        <p className="text-4xl font-black text-primary tracking-tighter">
+                            ₩{(Number(quote.total_amount) || 0).toLocaleString()}
+                        </p>
+                    </div>
+                    <QuotationFormSheet
+                        clients={clients}
+                        products={products}
+                        initialData={initialData}
+                        parentId={quote.id}
+                        triggerButton={
+                            <Button className="h-9 px-4 font-bold bg-primary/20 text-primary hover:bg-primary hover:text-white transition-colors border border-primary/30">
+                                팔로우업(v{quote.version_no + 1}) 작성
+                            </Button>
+                        }
+                    />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Left: Item Detail & Specs */}
-                <div className="xl:col-span-2 space-y-8">
-                    <section className="space-y-4">
+                <div className="xl:col-span-2 space-y-4">
+                    <section className="space-y-3">
                         <h3 className="text-lg font-bold flex items-center gap-2">
                             <FileCheck className="w-5 h-5 text-primary" />
                             견적 품목 상세
@@ -80,7 +105,7 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                                 <Card key={item.id} className="bg-card/30 border-border/40 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
                                     <CardContent className="p-0">
                                         <div className="flex flex-col md:flex-row">
-                                            <div className="p-6 flex-1 space-y-4">
+                                            <div className="p-4 flex-1 space-y-3">
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Product Name</p>
@@ -104,7 +129,7 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="bg-muted/20 border-l border-border/40 p-6 flex flex-col justify-center items-center md:w-40 gap-1">
+                                            <div className="bg-muted/20 border-l border-border/40 p-4 flex flex-col justify-center items-center md:w-32 gap-1">
                                                 <p className="text-[10px] text-muted-foreground font-bold">Quantity</p>
                                                 <p className="text-xl font-black tracking-tighter">{(Number(item.quantity) || 0).toLocaleString()} <span className="text-xs font-medium">PCS</span></p>
                                                 {Number(item.quantity) < 10000 && (
@@ -131,18 +156,18 @@ export function QuotationDetailView({ quote, versions }: { quote: any, versions:
                 </div>
 
                 {/* Right: History & Timeline */}
-                <div className="space-y-8">
+                <div className="space-y-4">
                     <Card className="bg-card/40 backdrop-blur-xl border-border/40 shadow-xl overflow-hidden relative">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -z-10" />
 
-                        <CardHeader className="border-b border-border/40 bg-muted/20">
+                        <CardHeader className="border-b border-border/40 bg-muted/20 py-3">
                             <CardTitle className="text-sm font-black flex items-center gap-2 uppercase tracking-widest text-primary/80">
                                 <HistoryIcon className="w-4 h-4" />
                                 Price Variation Timeline
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-10">
-                            <div className="relative pl-8 space-y-12 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-primary/50 before:via-primary/20 before:to-transparent">
+                        <CardContent className="p-4 space-y-6">
+                            <div className="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-primary/50 before:via-primary/20 before:to-transparent">
                                 {versions?.map((v: any, idx: number) => {
                                     const isCurrent = v.id === quote.id
                                     const prevVersion = versions[idx - 1]

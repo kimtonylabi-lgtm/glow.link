@@ -48,8 +48,9 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                         <TableHead className="w-[100px]">버전</TableHead>
                         <TableHead>상태</TableHead>
                         <TableHead>고객사</TableHead>
+                        <TableHead>제품명</TableHead>
+                        <TableHead>MOQ</TableHead>
                         <TableHead className="text-right">견적 총액</TableHead>
-                        <TableHead className="hidden md:table-cell">생성일</TableHead>
                         <TableHead className="text-right">작업</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -92,11 +93,14 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                                 <TableCell className="font-bold group-hover:text-primary transition-colors">
                                     {quote.clients?.company_name}
                                 </TableCell>
+                                <TableCell className="text-foreground font-medium">
+                                    {quote.quotation_items?.[0]?.products?.name || '-'}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground font-mono">
+                                    {Number(quote.quotation_items?.[0]?.quantity || 0).toLocaleString()}
+                                </TableCell>
                                 <TableCell className="text-right font-mono font-bold text-primary">
                                     ₩{quote.total_amount.toLocaleString()}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground hidden md:table-cell text-xs">
-                                    {format(new Date(quote.created_at), 'yy. MM. dd HH:mm', { locale: ko })}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex items-center justify-end gap-2">

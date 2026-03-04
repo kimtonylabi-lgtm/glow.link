@@ -17,7 +17,8 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
     }
 
     try {
-        // 1. 고객사 확인
+        // 1. 고객사 확인 및 신규 등록(Upsert)
+        let clientId: string;
         const { data: client, error: clientFetchError } = await supabase
             .from('clients')
             .select('id')
@@ -25,7 +26,18 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
             .maybeSingle()
 
         if (clientFetchError) throw new Error('고객사 정보를 불러오는 중 오류가 발생했습니다.')
-        if (!client) return { success: false, error: `'${data.client_name}'는 등록되지 않은 고객사입니다. 먼저 등록해 주세요.` }
+
+        if (!client) {
+            const { data: newClient, error: newClientError } = await supabase
+                .from('clients')
+                .insert({ company_name: data.client_name, status: 'active' })
+                .select('id')
+                .single()
+            if (newClientError) throw new Error(`신규 고객사 '${data.client_name}' 자동 등록 중 오류가 발생했습니다.`)
+            clientId = newClient.id;
+        } else {
+            clientId = client.id;
+        }
 
         // 2. 마스터 데이터 자동 동기화
         const masterEntries: { category: string, name: string }[] = []
@@ -61,11 +73,25 @@ export async function saveQuotation(data: QuotationFormValues, id?: string) {
         let quotationId: string;
         let versionNo = 1;
 
+        if (id) {
+            const { data: parentQuote } = await supabase
+                .from('quotations' as any)
+                .select('version_no')
+                .eq('id', id)
+                .single() as any;
+
+            if (parentQuote) {
+                versionNo = (parentQuote.version_no || 0) + 1;
+                // 이전 버전을 is_current = false 처리
+                await (supabase.from('quotations' as any) as any).update({ is_current: false }).eq('id', id);
+            }
+        }
+
         // 4. 견적 마스터 데이터 저장 (PGRST116 에러 방지용 체크 포함)
         const { data: quote, error: quoteError } = await (supabase
             .from('quotations' as any)
             .insert({
-                client_id: client.id,
+                client_id: clientId,
                 sales_person_id: user.id,
                 version_no: versionNo,
                 parent_id: id || null,

@@ -170,7 +170,7 @@ function BomRow({
     )
 }
 
-export function QuotationForm({ clients, products, onSuccess }: any) {
+export function QuotationForm({ clients, products, onSuccess, initialData, parentId }: any) {
     const [isLoading, setIsLoading] = useState(false)
     const [masterData, setMasterData] = useState<Record<string, { name: string }[]>>({})
     const router = useRouter()
@@ -193,7 +193,7 @@ export function QuotationForm({ clients, products, onSuccess }: any) {
 
     const form = useForm<QuotationFormValues>({
         resolver: zodResolver(quotationSchema) as any,
-        defaultValues: {
+        defaultValues: initialData || {
             client_name: '',
             is_vat_included: true,
             items: [
@@ -227,7 +227,7 @@ export function QuotationForm({ clients, products, onSuccess }: any) {
     async function onSubmit(data: QuotationFormValues) {
         setIsLoading(true)
         try {
-            const result = await saveQuotation(data)
+            const result = await saveQuotation(data, parentId)
             if (result.success) {
                 toast.success('견적 저장 완료', { description: '목록 페이지로 이동합니다.' })
                 if (onSuccess) onSuccess()

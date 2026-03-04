@@ -30,7 +30,7 @@ async function QuotationDataFetcher({ id }: { id: string }) {
     }
 
     // 2. Fetch history (simpler approach: same client)
-    const { data: history, error: historyError } = await (supabase
+    const { data: rawHistory, error: historyError } = await (supabase
         .from('quotations' as any)
         .select(`
             *,
@@ -46,7 +46,16 @@ async function QuotationDataFetcher({ id }: { id: string }) {
         console.warn('History fetch error:', historyError)
     }
 
-    return <QuotationDetailView quote={quote} versions={history || []} />
+    const primaryProductId = quote.quotation_items?.[0]?.product_id;
+    const history = (rawHistory || []).filter((h: any) =>
+        h.quotation_items?.some((qi: any) => qi.product_id === primaryProductId)
+    );
+
+    // 3. For Follow-up (Revision) Form
+    const { data: clients } = await supabase.from('clients').select('id, company_name').eq('status', 'active')
+    const { data: products } = await supabase.from('products').select('*')
+
+    return <QuotationDetailView quote={quote} versions={history} clients={clients || []} products={products || []} />
 }
 
 export default async function QuotationDetailPage({ params }: { params: Promise<{ id: string }> }) {
