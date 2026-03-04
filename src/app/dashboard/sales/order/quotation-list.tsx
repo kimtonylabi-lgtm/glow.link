@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { format } from "date-fns"
@@ -25,28 +26,40 @@ import {
 import { finalizeQuotation } from "./quotation-actions"
 import { toast } from "sonner"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { useRef } from "react"
+import { useRef, useState, useEffect, useTransition } from "react"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export function QuotationList({ quotations }: { quotations: any[] }) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-    const handleSearch = (term: string) => {
-        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
-        searchTimeoutRef.current = setTimeout(() => {
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '')
+    const debouncedSearchTerm = useDebounce(searchTerm, 300)
+    const [isPending, startTransition] = useTransition()
+    const isFirstRender = useRef(true)
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false
+            return
+        }
+
+        const currentQ = searchParams.get('q') || ''
+        if (currentQ === debouncedSearchTerm) return
+
+        startTransition(() => {
             const params = new URLSearchParams(searchParams.toString())
-            if (term) {
-                params.set('q', term)
+            if (debouncedSearchTerm) {
+                params.set('q', debouncedSearchTerm)
             } else {
                 params.delete('q')
             }
             params.delete('page')
             params.set('tab', 'quotation')
             router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-        }, 300)
-    }
+        })
+    }, [debouncedSearchTerm, pathname, router, searchParams])
 
     const handleFinalize = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
@@ -71,18 +84,18 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                         type="search"
                         placeholder="고객사명 또는 제품명, 프로젝트 제목 검색..."
                         className="pl-9 h-10 bg-background/50 border-border/50 focus-visible:ring-primary/30"
-                        onChange={(e) => handleSearch(e.target.value)}
-                        defaultValue={searchParams.get('q') || ''}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        value={searchTerm}
                     />
                 </div>
-                {searchParams.get('q') && (
+                {searchParams.get('q') && searchParams.get('tab') === 'quotation' && (
                     <div className="text-sm text-primary font-medium px-4">
                         총 {quotations.length}건의 검색 결과
                     </div>
                 )}
             </div>
 
-            <div className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xl overflow-hidden shadow-xl">
+            <div className={`rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xl overflow-hidden shadow-xl relative transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent border-b-border/40">
