@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useTransition } from 'react'
+import { useTransition, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileText, ShoppingCart, Truck } from 'lucide-react'
 import { QuotationFormSheet } from './quotation-form-sheet'
@@ -28,16 +28,18 @@ export function OrderPageClient({
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
+    const [currentTab, setCurrentTab] = useState(activeTab)
     const [isPending, startTransition] = useTransition()
 
     const handleTabChange = (value: string) => {
-        startTransition(() => {
-            const params = new URLSearchParams(searchParams.toString())
-            params.set('tab', value)
-            params.delete('page') // Reset page on tab change
-            // Replace instead of Push, and scroll: false to prevent flickering
-            router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-        })
+        // 즉각적인 탭 UI 변경 (클라이언트 상태)
+        setCurrentTab(value)
+
+        // URL은 조용히 업데이트 (새로고침 시 해당 탭 유지를 위함, 서버 파편화 방지)
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('tab', value)
+        params.delete('page')
+        window.history.replaceState(null, '', `${pathname}?${params.toString()}`)
     }
 
     const tabInfo = {
@@ -54,7 +56,7 @@ export function OrderPageClient({
             desc: '등록된 모든 납기(Delivery) 및 출하/배차 상태를 관리합니다.'
         }
     }
-    const currentTabInfo = tabInfo[activeTab as keyof typeof tabInfo] || tabInfo.order
+    const currentTabInfo = tabInfo[currentTab as keyof typeof tabInfo] || tabInfo.order
 
     return (
         <>
@@ -74,7 +76,7 @@ export function OrderPageClient({
 
                     <div className="flex items-center gap-3">
                         {/* 조건부 렌더링: URL이 확실히 quotation일 때만 렌더링되므로 탭 이동 시 즉각 삭제됨 */}
-                        {activeTab === 'quotation' && (
+                        {currentTab === 'quotation' && (
                             <QuotationFormSheet
                                 clients={clients}
                                 products={products}
@@ -84,7 +86,7 @@ export function OrderPageClient({
                     </div>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full relative z-10">
+                <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full relative z-10">
                     <TabsList className="bg-card/50 border border-border/40 p-1 h-14 rounded-2xl mb-6 backdrop-blur-md">
                         <TabsTrigger value="quotation" className="flex-1 rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
                             <FileText className="w-4 h-4" /> 견적 관리
