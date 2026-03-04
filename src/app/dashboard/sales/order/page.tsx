@@ -54,11 +54,10 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
 
     if (searchQuery) {
         // Construct OR filter
-        const titleMatch = `title.ilike.%${searchQuery}%`
         const clientMatch = matchingClientIds.length > 0 ? `client_id.in.(${matchingClientIds.join(',')})` : ''
         const productMatch = matchingQuoteIdsFromProducts.length > 0 ? `id.in.(${matchingQuoteIdsFromProducts.join(',')})` : ''
 
-        const orConditions = [titleMatch, clientMatch, productMatch].filter(Boolean).join(',')
+        const orConditions = [clientMatch, productMatch].filter(Boolean).join(',')
 
         if (orConditions) {
             query = query.or(orConditions)
@@ -76,21 +75,54 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
     const quotations = quotationsData || []
 
     // 2. Fetch Orders
-    const { data: ordersData } = await (supabase
-        .from('orders') as any)
-        .select(`
-            *,
-            clients (company_name),
-            profiles (full_name),
-            order_items (
-                id,
-                quantity,
-                unit_price,
-                post_processing,
-                products ( name )
-            )
-        `)
-        .order('created_at', { ascending: false })
+    let orderQuery = (supabase.from('orders') as any).select(`
+        *,
+        clients (company_name),
+        profiles (full_name),
+        order_items (
+            id,
+            quantity,
+            unit_price,
+            post_processing,
+            products ( name )
+        )
+    `).order('created_at', { ascending: false })
+
+    if (searchQuery) {
+        // Need to find matching order IDs from order_items' product relation
+        let matchingOrderIdsFromProducts: string[] = []
+        if (matchingQuoteIdsFromProducts.length > 0) { // reuse the matched products from above
+            const { data: matchedOrderItems } = await (supabase
+                .from('order_items' as any) as any)
+                .select('order_id')
+                .in('product_id', matchingQuoteIdsFromProducts) // This is using product IDs implicitly found earlier
+
+            // To be entirely accurate, let's fetch matching products again if necessary,
+            // but we already have matchedProducts list from above if searchQuery existed.
+            // Wait, we didn't save productIds, we saved matchingQuoteIdsFromProducts.
+            // Let's re-query products if needed, or better, we can just do a subquery or join for orders.
+            // Since we don't have productIds saved from block 1, let's just do a fresh query for order_items based on products:
+            const { data: matchedProducts } = await supabase.from('products').select('id').ilike('name', `%${searchQuery}%`)
+            if (matchedProducts && matchedProducts.length > 0) {
+                const pIds = matchedProducts.map((p: any) => p.id)
+                const { data: mItems } = await (supabase.from('order_items' as any) as any).select('order_id').in('product_id', pIds)
+                if (mItems) matchingOrderIdsFromProducts = mItems.map((item: any) => item.order_id)
+            }
+        }
+
+        const orderClientMatch = matchingClientIds.length > 0 ? `client_id.in.(${matchingClientIds.join(',')})` : ''
+        const orderProductMatch = matchingOrderIdsFromProducts.length > 0 ? `id.in.(${matchingOrderIdsFromProducts.join(',')})` : ''
+        const poNumberMatch = `po_number.ilike.%${searchQuery}%`
+
+        const orOrderConditions = [orderClientMatch, orderProductMatch, poNumberMatch].filter(Boolean).join(',')
+        if (orOrderConditions) {
+            orderQuery = orderQuery.or(orOrderConditions)
+        } else {
+            orderQuery = orderQuery.eq('id', '00000000-0000-0000-0000-000000000000')
+        }
+    }
+
+    const { data: ordersData } = await orderQuery
 
     // 3. Fetch Master Data for Form
     const { data: clients } = await supabase.from('clients').select('id, company_name').eq('status', 'active')
@@ -115,11 +147,13 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <QuotationFormSheet
-                        clients={clients || []}
-                        products={products || []}
-                        clientProducts={clientProducts || []}
-                    />
+                    {activeTab === 'quotation' && (
+                        <QuotationFormSheet
+                            clients={clients || []}
+                            products={products || []}
+                            clientProducts={clientProducts || []}
+                        />
+                    )}
                 </div>
             </div>
 

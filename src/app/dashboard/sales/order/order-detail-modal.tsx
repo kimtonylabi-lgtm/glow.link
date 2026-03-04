@@ -56,10 +56,12 @@ export function OrderDetailModal({
     useEffect(() => {
         if (isOpen && order) {
             setPoNumber(order.po_number || '')
+            setClientName(order.clients?.company_name || '')
 
             const firstItem = order.order_items?.[0]
             if (firstItem) {
                 setOrderQuantity(formatNumber(firstItem.quantity || ''))
+                setTaeSungProductName(firstItem.products?.name || '')
 
                 let parsed = []
                 try {
@@ -271,7 +273,10 @@ export function OrderDetailModal({
                         </table>
                     </div>
 
-                    <button className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold flex items-center gap-1 transition-colors">
+                    <button
+                        onClick={() => setBomItems([...bomItems, { part_name: '', material: '', color: '', mapped_coating: '', mapped_printing: '' }])}
+                        className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold flex items-center gap-1 transition-colors"
+                    >
                         <Plus className="w-4 h-4" /> BOM 행 추가
                     </button>
 

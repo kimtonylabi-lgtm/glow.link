@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
-
 import {
     Table,
     TableBody,
@@ -15,9 +14,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-
-import { Edit2, Trash2 } from "lucide-react"
+import { Edit2, Trash2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { OrderDetailModal } from "./order-detail-modal"
 
 type Order = {
@@ -28,6 +27,7 @@ type Order = {
     due_date: string | null
     total_amount: number
     status: 'draft' | 'confirmed' | 'production' | 'shipped'
+    po_number?: string
     memo: string | null
     created_at: string
     clients: { company_name: string } | null
@@ -40,6 +40,8 @@ type Order = {
 }
 
 export function OrderList({ orders, userRole }: { orders: Order[], userRole: string }) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const canManage = ['admin', 'head', 'support'].includes(userRole)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -52,11 +54,39 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
     }
 
     return (
-        <Card className="bg-card/40 backdrop-blur-xl border-border/40 w-full overflow-hidden">
+        <Card className="bg-card/40 backdrop-blur-xl border-border/40 w-full overflow-hidden space-y-4">
             {/* Glow Effect Top */}
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
-            <CardHeader>
+            {/* Search Bar */}
+            <div className="flex justify-between items-center bg-card/40 backdrop-blur-xl border-b border-border/40 p-4">
+                <div className="flex-1 max-w-md relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="고객사명, 제품명 또는 PO No. 검색..."
+                        className="pl-9 h-10 bg-background/50 border-border/50 focus-visible:ring-primary/30"
+                        onChange={(e) => {
+                            const params = new URLSearchParams(searchParams.toString())
+                            if (e.target.value) {
+                                params.set('q', e.target.value)
+                            } else {
+                                params.delete('q')
+                            }
+                            params.set('tab', 'order')
+                            router.push(`?${params.toString()}`)
+                        }}
+                        defaultValue={searchParams.get('q') || ''}
+                    />
+                </div>
+                {searchParams.get('q') && searchParams.get('tab') === 'order' && (
+                    <div className="text-sm text-primary font-medium px-4">
+                        총 {orders.length}건의 검색 결과
+                    </div>
+                )}
+            </div>
+
+            <CardHeader className="pt-2">
                 <CardTitle className="bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">수주 현황 (Order Master)</CardTitle>
                 <CardDescription>
                     등록된 모든 수주(Order)의 진행 상태와 총액을 마스터 단위로 관리합니다.
