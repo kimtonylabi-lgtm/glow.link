@@ -134,110 +134,98 @@ export function OrderDetailModal({
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Excel Form Table 2.0 */}
-                    <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm">
-                        <table className="w-full border-collapse">
-                            <colgroup>
-                                <col className="w-[85px]" />
-                                <col className="w-auto" />
-                                <col className="w-[80px]" />
-                                <col className="w-[120px]" />
-                                <col className="w-[85px]" />
-                                <col className="w-[110px]" />
-                            </colgroup>
-                            <tbody>
-                                {/* Row 1 */}
-                                <tr className="border-b border-slate-700">
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[13px]">발주No.</td>
-                                    <td className="p-0 border-r border-slate-700">
-                                        <Input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="PO 번호 입력" className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 font-mono text-slate-100 px-3" />
-                                    </td>
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[13px]">발주일</td>
-                                    <td colSpan={3} className="p-0">
-                                        <div className="flex items-center w-full px-2">
-                                            <Input value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 font-mono text-slate-100 px-1 placeholder:text-slate-600" />
-                                            <span className="text-slate-500 text-xs">📅</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {/* Row 2 */}
-                                <tr className="border-b border-slate-700">
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[13px]">발주처</td>
-                                    <td className="p-0 border-r border-slate-700 relative">
-                                        <div className="flex flex-row items-center h-9 w-full">
-                                            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3 font-semibold" />
-                                            <div className="w-[80px] border-l border-slate-700 flex flex-row h-full">
-                                                <button onClick={() => setExportType('내수')} className={`flex-1 text-[11px] font-bold transition-colors ${exportType === '내수' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}>내수</button>
-                                                <button onClick={() => setExportType('수출')} className={`flex-1 text-[11px] font-bold border-l border-slate-700 transition-colors ${exportType === '수출' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}>수출</button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[13px]">발주수량</td>
-                                    <td className="p-0 border-r border-slate-700">
-                                        <Input value={orderQuantity} onChange={(e) => setOrderQuantity(formatNumber(e.target.value))} className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center font-mono text-slate-100" />
-                                    </td>
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-1 py-1 border-r border-slate-700 text-center text-[12px] leading-tight">출고예정일</td>
-                                    <td className="p-0">
-                                        <div className="flex items-center w-full px-2">
-                                            <Input value={expectedShipDate} onChange={(e) => setExpectedShipDate(e.target.value)} placeholder="yyyy-mm-dd" className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 px-0 font-mono text-[13px]" />
-                                            <span className="text-slate-500 text-xs">📅</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {/* Row 3: 태성측 + 견본유무 */}
-                                <tr className="border-b border-slate-700">
-                                    <td className="bg-slate-800 text-slate-300 font-semibold border-r border-slate-700 text-center text-[13px]" rowSpan={2}>제품명</td>
-                                    <td className="p-0 border-r border-slate-700">
-                                        <div className="flex flex-row items-center h-9">
-                                            <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center h-full border-r border-slate-700 text-[11px] font-semibold">태성측</div>
-                                            <Input value={taeSungProductName} onChange={(e) => setTaeSungProductName(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3 font-semibold" />
-                                        </div>
-                                    </td>
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[13px]">입고처</td>
-                                    <td className="p-0 border-r border-slate-700">
-                                        <Input value={warehouse} onChange={(e) => setWarehouse(e.target.value)} className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-2" />
-                                    </td>
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[12px]">견본유무</td>
-                                    <td className="p-0">
-                                        <div className="flex flex-row h-full p-1 gap-1 items-center">
-                                            <button onClick={() => setHasSample(true)} className={`flex-1 h-6 rounded text-[11px] font-bold transition-colors ${hasSample ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>있음</button>
-                                            <button onClick={() => setHasSample(false)} className={`flex-1 h-6 rounded text-[11px] font-bold transition-colors ${!hasSample ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>없음</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {/* Row 4: 업체측 + 필름/라바 */}
-                                <tr className="border-slate-700">
-                                    <td className="p-0 border-r border-slate-700">
-                                        <div className="flex flex-row items-center h-9">
-                                            <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center h-full border-r border-slate-700 text-[11px] font-semibold">업체측</div>
-                                            <Input value={clientProductName} onChange={(e) => setClientProductName(e.target.value)} placeholder="입력하세요" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
-                                        </div>
-                                    </td>
-                                    <td className="bg-slate-800 text-slate-300 font-semibold px-2 py-1.5 border-r border-slate-700 text-center text-[13px]">Cat No.</td>
-                                    <td className="p-0 border-r border-slate-700">
-                                        <Input value={catNo} onChange={(e) => setCatNo(e.target.value)} placeholder="카탈로그 번호" className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-2" />
-                                    </td>
-                                    <td colSpan={2} className="p-0">
-                                        <div className="flex flex-row h-full w-full">
-                                            <div className="flex-1 flex flex-row items-center border-r border-slate-700">
-                                                <div className="w-[50px] bg-slate-800 text-slate-400 font-semibold text-center text-[10px] h-full flex flex-col justify-center border-r border-slate-700">필름유무</div>
-                                                <div className="flex-1 flex flex-row p-1 gap-1">
-                                                    <button onClick={() => setHasFilm(true)} className={`flex-1 h-6 rounded-sm text-[10px] font-bold transition-colors ${hasFilm ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>있음</button>
-                                                    <button onClick={() => setHasFilm(false)} className={`flex-1 h-6 rounded-sm text-[10px] font-bold transition-colors ${!hasFilm ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>없음</button>
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 flex flex-row items-center">
-                                                <div className="w-[50px] bg-slate-800 text-slate-400 font-semibold text-center text-[10px] h-full flex flex-col justify-center border-r border-slate-700">라바유무</div>
-                                                <div className="flex-1 flex flex-row p-1 gap-1">
-                                                    <button onClick={() => setHasLaba(true)} className={`flex-1 h-6 rounded-sm text-[10px] font-bold transition-colors ${hasLaba ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>있음</button>
-                                                    <button onClick={() => setHasLaba(false)} className={`flex-1 h-6 rounded-sm text-[10px] font-bold transition-colors ${!hasLaba ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>없음</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    {/* Excel Form Table 3.0 (Grid Layout) */}
+                    <div className="w-full border-t border-l border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm flex flex-col font-sans">
+
+                        {/* Row 1: grid-cols-3 (1:1:1) */}
+                        <div className="w-full grid grid-cols-3">
+                            <div className="flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주No.</div>
+                                <Input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="PO 번호 입력" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-100 font-mono" />
+                            </div>
+                            <div className="flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주일</div>
+                                <div className="flex-1 flex items-center px-2">
+                                    <Input value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 font-mono text-slate-100 px-1 placeholder:text-slate-600" />
+                                    <span className="text-slate-500 text-xs ml-1">📅</span>
+                                </div>
+                            </div>
+                            <div className="flex border-r border-b border-slate-700 h-10 bg-slate-900/50">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">출고예정일</div>
+                                <div className="flex-1 flex items-center px-2">
+                                    <Input value={expectedShipDate} onChange={(e) => setExpectedShipDate(e.target.value)} placeholder="yyyy-mm-dd" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 px-0 font-mono text-[13px]" />
+                                    <span className="text-slate-500 text-xs ml-1">📅</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Row 2: grid-cols-10 (4:3:3) */}
+                        <div className="w-full grid grid-cols-10">
+                            <div className="col-span-4 flex border-r border-b border-slate-700 h-10 relative">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주처</div>
+                                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3 font-semibold" />
+                                <div className="w-[84px] border-l border-slate-700 flex flex-row h-full">
+                                    <button onClick={() => setExportType('내수')} className={`flex-1 text-[11px] font-bold transition-colors border-r border-slate-700/50 ${exportType === '내수' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}>내수</button>
+                                    <button onClick={() => setExportType('수출')} className={`flex-1 text-[11px] font-bold transition-colors ${exportType === '수출' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}>수출</button>
+                                </div>
+                            </div>
+                            <div className="col-span-3 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주수량</div>
+                                <Input value={orderQuantity} onChange={(e) => setOrderQuantity(formatNumber(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center font-mono text-slate-100" />
+                            </div>
+                            <div className="col-span-3 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">입고처</div>
+                                <Input value={warehouse} onChange={(e) => setWarehouse(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
+                            </div>
+                        </div>
+
+                        {/* Row 3: grid-cols-4 (2:1:1) */}
+                        <div className="w-full grid grid-cols-4">
+                            <div className="col-span-2 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex flex-col items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700 leading-tight">
+                                    <span>제품명</span>
+                                    <span className="text-[10px] text-slate-500 font-normal">(태성측)</span>
+                                </div>
+                                <Input value={taeSungProductName} onChange={(e) => setTaeSungProductName(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3 font-semibold" />
+                            </div>
+                            <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">Cat No.</div>
+                                <Input value={catNo} onChange={(e) => setCatNo(e.target.value)} placeholder="카탈로그 번호" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-2 text-[13px]" />
+                            </div>
+                            <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">견본유무</div>
+                                <div className="flex-1 flex flex-row h-full p-1.5 gap-1 items-center">
+                                    <button onClick={() => setHasSample(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-colors ${hasSample ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>있음</button>
+                                    <button onClick={() => setHasSample(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-colors ${!hasSample ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>없음</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Row 4: grid-cols-4 (2:1:1) */}
+                        <div className="w-full grid grid-cols-4">
+                            <div className="col-span-2 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex flex-col items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700 leading-tight">
+                                    <span>제품명</span>
+                                    <span className="text-[10px] text-slate-500 font-normal">(업체측)</span>
+                                </div>
+                                <Input value={clientProductName} onChange={(e) => setClientProductName(e.target.value)} placeholder="입력하세요" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
+                            </div>
+                            <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">필름유무</div>
+                                <div className="flex-1 flex flex-row h-full p-1.5 gap-1 items-center bg-slate-900/40">
+                                    <button onClick={() => setHasFilm(true)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${hasFilm ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>있음</button>
+                                    <button onClick={() => setHasFilm(false)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${!hasFilm ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>없음</button>
+                                </div>
+                            </div>
+                            <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">라바유무</div>
+                                <div className="flex-1 flex flex-row h-full p-1.5 gap-1 items-center bg-slate-900/40">
+                                    <button onClick={() => setHasLaba(true)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${hasLaba ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>있음</button>
+                                    <button onClick={() => setHasLaba(false)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${!hasLaba ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>없음</button>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* BOM Table Section */}
