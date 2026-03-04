@@ -23,6 +23,7 @@ import {
     ArrowRightLeft,
     Search
 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { finalizeQuotation } from "./quotation-actions"
 import { toast } from "sonner"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
@@ -109,9 +110,11 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {quotations.length === 0 ? (
+                        {isPending ? (
+                            <QuotationTableSkeleton />
+                        ) : quotations.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
+                                <TableCell colSpan={7} className="h-40 text-center text-muted-foreground">
                                     <FileText className="w-10 h-10 mx-auto mb-2 opacity-20" />
                                     <p>등록된 견적 내역이 없습니다.</p>
                                 </TableCell>
@@ -154,7 +157,7 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                                         {Number(quote.quotation_items?.[0]?.quantity || 0).toLocaleString()}
                                     </TableCell>
                                     <TableCell className="text-right font-mono font-bold text-primary">
-                                        ₩{quote.total_amount.toLocaleString()}
+                                        ₩{quote.total_amount?.toLocaleString() || '0'}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
@@ -180,5 +183,28 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                 </Table>
             </div>
         </div>
+    )
+}
+
+function QuotationTableSkeleton() {
+    return (
+        <>
+            {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i} className="border-b-border/40">
+                    <TableCell><Skeleton className="h-[22px] w-[40px] rounded-md" /></TableCell>
+                    <TableCell><Skeleton className="h-[22px] w-[70px] rounded-md" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[90px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[50px]" /></TableCell>
+                    <TableCell className="text-right flex justify-end"><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2 h-8">
+                            <Skeleton className="h-8 w-[80px] rounded-md" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ))}
+        </>
     )
 }

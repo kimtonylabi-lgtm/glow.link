@@ -42,7 +42,7 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     }
 
     let query = (supabase.from('quotations' as any) as any).select(`
-        *,
+        id, version_no, status, total_amount, is_current, created_at, client_id,
         clients (company_name),
         quotation_items (
             quantity,
@@ -58,11 +58,11 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
         const orConditions = [clientMatch, productMatch].filter(Boolean).join(',')
 
         if (orConditions) {
-            query = query.or(orConditions)
+            query = query.or(orConditions).limit(30) // 서버단 Limit 렌더링 방어
         } else {
             // If we have a query but no matches at all, we should return empty.
             // A trick is to filter by an impossible ID
-            query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+            query = query.eq('id', '00000000-0000-0000-0000-000000000000').limit(0)
         }
     } else {
         // No search query: Limit to 5 non-finalized
@@ -72,16 +72,14 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     const { data: quotationsData } = await query
     const quotations = quotationsData || []
 
-    // 2. Fetch Orders
+    // 2. Fetch Orders (Data Diet 적용: 불필요한 post_processing 생략)
     let orderQuery = (supabase.from('orders') as any).select(`
-        *,
+        id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo,
         clients (company_name),
         profiles (full_name),
         order_items (
             id,
             quantity,
-            unit_price,
-            post_processing,
             products ( name )
         )
     `).order('created_at', { ascending: false })
@@ -114,10 +112,12 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
 
         const orOrderConditions = [orderClientMatch, orderProductMatch, poNumberMatch].filter(Boolean).join(',')
         if (orOrderConditions) {
-            orderQuery = orderQuery.or(orOrderConditions)
+            orderQuery = orderQuery.or(orOrderConditions).limit(30) // 브라우저 폭탄 방어
         } else {
-            orderQuery = orderQuery.eq('id', '00000000-0000-0000-0000-000000000000')
+            orderQuery = orderQuery.eq('id', '00000000-0000-0000-0000-000000000000').limit(0)
         }
+    } else {
+        orderQuery = orderQuery.limit(20) // 기본 조회 한도 제한
     }
 
     const { data: ordersData } = await orderQuery

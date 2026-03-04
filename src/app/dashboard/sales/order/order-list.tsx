@@ -14,6 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Edit2, Trash2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -121,9 +122,11 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {orders.length === 0 ? (
+                            {isPending ? (
+                                <OrderTableSkeleton canManage={canManage} />
+                            ) : orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={canManage ? 7 : 6} className="h-24 text-center text-muted-foreground">
+                                    <TableCell colSpan={canManage ? 8 : 7} className="h-24 text-center text-muted-foreground">
                                         조회된 수주 내역이 없습니다.
                                     </TableCell>
                                 </TableRow>
@@ -204,5 +207,36 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                 />
             </div>
         </div>
+    )
+}
+
+function OrderTableSkeleton({ canManage }: { canManage: boolean }) {
+    return (
+        <>
+            {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i} className="border-b-border/40">
+                    <TableCell><Skeleton className="h-[22px] w-[60px] rounded-md" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[110px]" /></TableCell>
+                    <TableCell>
+                        <div className="flex flex-col gap-1">
+                            <Skeleton className="h-4 w-[90px]" />
+                            <Skeleton className="h-2 w-[40px]" />
+                        </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
+                    <TableCell className="text-right flex justify-end"><Skeleton className="h-4 w-[90px]" /></TableCell>
+                    <TableCell className="hidden md:table-cell pl-3"><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    {canManage && (
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1 h-8">
+                                <Skeleton className="h-8 w-8 rounded-md" />
+                                <Skeleton className="h-8 w-8 rounded-md" />
+                            </div>
+                        </TableCell>
+                    )}
+                </TableRow>
+            ))}
+        </>
     )
 }
