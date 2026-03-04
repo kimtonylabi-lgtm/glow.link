@@ -34,7 +34,8 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
         .select(`
             *,
             clients (company_name),
-            profiles (full_name)
+            profiles (full_name),
+            order_items ( products ( name ) )
         `)
         .order('created_at', { ascending: false })
 

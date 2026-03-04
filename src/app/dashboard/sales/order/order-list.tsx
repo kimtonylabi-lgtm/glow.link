@@ -29,6 +29,11 @@ type Order = {
     created_at: string
     clients: { company_name: string } | null
     profiles: { full_name: string | null } | null
+    order_items?: {
+        products?: {
+            name: string
+        } | null
+    }[]
 }
 
 export function OrderList({ orders, userRole }: { orders: Order[], userRole: string }) {
@@ -57,13 +62,14 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                     <Table>
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
-                                <TableHead className="w-[120px] font-semibold">진행 상태</TableHead>
+                                <TableHead className="w-[120px] font-semibold">진행상태</TableHead>
                                 <TableHead className="font-semibold">고객사</TableHead>
+                                <TableHead className="font-semibold">제품명</TableHead>
                                 <TableHead className="font-semibold">담당자</TableHead>
-                                <TableHead className="font-semibold text-right">수주 총액</TableHead>
+                                <TableHead className="font-semibold text-right">수주총액</TableHead>
                                 <TableHead className="font-semibold hidden md:table-cell">수주일</TableHead>
                                 <TableHead className="font-semibold hidden lg:table-cell">납기일</TableHead>
-                                {canManage && <TableHead className="font-semibold text-center">관리</TableHead>}
+                                {canManage && <TableHead className="font-semibold text-center w-[100px]">관리</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -87,6 +93,18 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                                                 {order.clients?.company_name || '알 수 없음'}
                                             </TableCell>
                                             <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-foreground">
+                                                        {order.order_items?.[0]?.products?.name || '제품 없음'}
+                                                    </span>
+                                                    {(order.order_items?.length || 0) > 1 && (
+                                                        <span className="text-[10px] text-muted-foreground mt-0.5">
+                                                            외 {order.order_items!.length - 1}건
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
                                                 {order.profiles?.full_name || '알 수 없음'}
                                             </TableCell>
                                             <TableCell className="text-right font-mono font-bold">
@@ -96,11 +114,11 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                                                 {/* Line connection effect for recent items */}
                                                 <div className="absolute left-0 top-0 bottom-0 w-px bg-border/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 <div className="pl-3">
-                                                    {format(new Date(order.order_date), 'yy. MM. dd', { locale: ko })}
+                                                    {format(new Date(order.order_date), 'yyyy-MM-dd', { locale: ko })}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground hidden lg:table-cell text-sm">
-                                                {order.due_date ? format(new Date(order.due_date), 'yy. MM. dd', { locale: ko }) : '-'}
+                                                {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
                                             </TableCell>
                                             {canManage && (
                                                 <TableCell className="text-center">
