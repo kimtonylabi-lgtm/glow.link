@@ -15,34 +15,65 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
     const searchQuery = searchParams?.q || ''
     const supabase = await createClient()
 
-    // 1. Fetch Quotations (is_current=true)
-    const { data: quotationsData } = await (supabase
-        .from('quotations' as any) as any)
-        .select(`
-            *,
-            clients (company_name),
-            quotation_items (
-                quantity,
-                products (name)
-            )
-        `)
-        .eq('is_current', true)
-        .order('created_at', { ascending: false })
+    // 1. Build Query for Quotations
+    let matchingClientIds: string[] = []
+    let matchingQuoteIdsFromProducts: string[] = []
 
-    let quotations = quotationsData || []
-
-    // [서버 검색 방어] 검색어가 있으면 전체 검색(finalized 포함), 없으면 '초안/제시' 상태 5건만 노출
     if (searchQuery) {
-        const lowerQ = searchQuery.toLowerCase()
-        quotations = quotations.filter((quote: any) => {
-            const hasClient = quote.clients?.company_name?.toLowerCase().includes(lowerQ)
-            const hasProduct = quote.quotation_items?.some((item: any) => item.products?.name?.toLowerCase().includes(lowerQ))
-            const hasTitle = quote.title?.toLowerCase().includes(lowerQ)
-            return hasClient || hasProduct || hasTitle
-        })
-    } else {
-        quotations = quotations.filter((quote: any) => quote.status !== 'finalized').slice(0, 5)
+        // Find matching clients
+        const { data: matchedClients } = await supabase
+            .from('clients')
+            .select('id')
+            .ilike('company_name', `%${searchQuery}%`)
+        if (matchedClients) matchingClientIds = matchedClients.map((c: any) => c.id)
+
+        // Find matching products -> quotation_items -> quotation_id
+        const { data: matchedProducts } = await supabase
+            .from('products')
+            .select('id')
+            .ilike('name', `%${searchQuery}%`)
+
+        if (matchedProducts && matchedProducts.length > 0) {
+            const productIds = matchedProducts.map((p: any) => p.id)
+            const { data: matchedItems } = await (supabase
+                .from('quotation_items' as any) as any)
+                .select('quotation_id')
+                .in('product_id', productIds)
+            if (matchedItems) matchingQuoteIdsFromProducts = matchedItems.map((item: any) => item.quotation_id)
+        }
     }
+
+    let query = (supabase.from('quotations' as any) as any).select(`
+        *,
+        clients (company_name),
+        quotation_items (
+            quantity,
+            products (name)
+        )
+    `).eq('is_current', true).order('created_at', { ascending: false })
+
+    if (searchQuery) {
+        // Construct OR filter
+        const titleMatch = `title.ilike.%${searchQuery}%`
+        const clientMatch = matchingClientIds.length > 0 ? `client_id.in.(${matchingClientIds.join(',')})` : ''
+        const productMatch = matchingQuoteIdsFromProducts.length > 0 ? `id.in.(${matchingQuoteIdsFromProducts.join(',')})` : ''
+
+        const orConditions = [titleMatch, clientMatch, productMatch].filter(Boolean).join(',')
+
+        if (orConditions) {
+            query = query.or(orConditions)
+        } else {
+            // If we have a query but no matches at all, we should return empty.
+            // A trick is to filter by an impossible ID
+            query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+        }
+    } else {
+        // No search query: Limit to 5 non-finalized
+        query = query.neq('status', 'finalized').limit(5)
+    }
+
+    const { data: quotationsData } = await query
+    const quotations = quotationsData || []
 
     // 2. Fetch Orders
     const { data: ordersData } = await (supabase
