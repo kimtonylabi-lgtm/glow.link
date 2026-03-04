@@ -283,19 +283,18 @@ export function QuotationDetailView({ quote, versions, clients, products }: { qu
                 </section>
                 {/* Finalize Button Area */}
                 {quote.is_current && (
-                    <section className="pt-4 pb-8">
-                        <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 text-center space-y-4">
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                고객사와 협의된 최종 견적을 확정하여 <br />
-                                <span className="text-primary font-bold">수주 파이프라인</span>으로 넘기시겠습니까?
+                    <section className="pt-1 pb-1">
+                        <div className="bg-primary/5 rounded-xl p-3 border border-primary/10 text-center space-y-2 flex flex-col justify-center items-center">
+                            <p className="text-xs text-muted-foreground leading-snug">
+                                견적을 확정하여 <span className="text-primary font-bold">수주 파이프라인</span>으로 넘기시겠습니까?
                             </p>
                             <Button
                                 onClick={handleFinalize}
                                 disabled={isPending || quote.status === 'finalized'}
-                                className="w-full bg-primary hover:bg-primary/90 font-black h-12 shadow-xl hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-primary hover:bg-primary/90 font-black h-10 shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isPending ? '처리 중...' : (quote.status === 'finalized' ? '수주 확정 완료' : '최종 견적 확정 (수주)')}
-                                <ArrowRight className="w-4 h-4 ml-2" />
+                                <ArrowRight className="w-3.5 h-3.5 ml-2" />
                             </Button>
                         </div>
                     </section>

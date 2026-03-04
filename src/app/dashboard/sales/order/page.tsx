@@ -10,11 +10,12 @@ import { Plus } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function OrderPage({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function OrderPage({ searchParams }: { searchParams: { tab?: string; q?: string } }) {
     const activeTab = searchParams?.tab || 'quotation'
+    const searchQuery = searchParams?.q || ''
     const supabase = await createClient()
 
-    // 1. Fetch Quotations
+    // 1. Fetch Quotations (is_current=true)
     const { data: quotationsData } = await (supabase
         .from('quotations' as any) as any)
         .select(`
@@ -28,14 +29,35 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
         .eq('is_current', true)
         .order('created_at', { ascending: false })
 
+    let quotations = quotationsData || []
+
+    // [서버 검색 방어] 검색어가 있으면 전체 검색(finalized 포함), 없으면 '초안/제시' 상태 5건만 노출
+    if (searchQuery) {
+        const lowerQ = searchQuery.toLowerCase()
+        quotations = quotations.filter((quote: any) => {
+            const hasClient = quote.clients?.company_name?.toLowerCase().includes(lowerQ)
+            const hasProduct = quote.quotation_items?.some((item: any) => item.products?.name?.toLowerCase().includes(lowerQ))
+            const hasTitle = quote.title?.toLowerCase().includes(lowerQ)
+            return hasClient || hasProduct || hasTitle
+        })
+    } else {
+        quotations = quotations.filter((quote: any) => quote.status !== 'finalized').slice(0, 5)
+    }
+
     // 2. Fetch Orders
-    const { data: ordersData } = await supabase
-        .from('orders')
+    const { data: ordersData } = await (supabase
+        .from('orders') as any)
         .select(`
             *,
             clients (company_name),
             profiles (full_name),
-            order_items ( products ( name ) )
+            order_items (
+                id,
+                quantity,
+                unit_price,
+                post_processing,
+                products ( name )
+            )
         `)
         .order('created_at', { ascending: false })
 
@@ -48,7 +70,6 @@ export default async function OrderPage({ searchParams }: { searchParams: { tab?
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id || '').single()
     const userRole = profile?.role || 'sales'
 
-    const quotations = quotationsData || []
     const orders = ordersData || []
 
     return (
