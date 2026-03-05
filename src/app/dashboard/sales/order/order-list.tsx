@@ -148,8 +148,8 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                 {/* Glow Effect Top */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
-                <div className="overflow-hidden">
-                    <Table>
+                <div className="overflow-x-auto">
+                    <Table className="min-w-[1000px]">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="w-[120px] font-semibold">진행상태</TableHead>
@@ -158,8 +158,8 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                 <TableHead className="font-semibold">제품명</TableHead>
                                 <TableHead className="font-semibold">담당자</TableHead>
                                 <TableHead className="font-semibold text-right">수주총액</TableHead>
-                                <TableHead className="font-semibold hidden md:table-cell">수주일</TableHead>
-                                <TableHead className="font-semibold hidden lg:table-cell">납기일</TableHead>
+                                <TableHead className="font-semibold whitespace-nowrap">수주일</TableHead>
+                                <TableHead className="font-semibold whitespace-nowrap">납기일</TableHead>
                                 {canManage && <TableHead className="font-semibold text-center w-[100px]">관리</TableHead>}
                             </TableRow>
                         </TableHeader>
@@ -204,14 +204,14 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                             <TableCell className="text-right font-mono font-bold">
                                                 ₩ {order.total_amount.toLocaleString('ko-KR')}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground hidden md:table-cell text-sm relative">
+                                            <TableCell className="text-muted-foreground whitespace-nowrap text-sm relative">
                                                 {/* Line connection effect for recent items */}
                                                 <div className="absolute left-0 top-0 bottom-0 w-px bg-border/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 <div className="pl-3">
                                                     {format(new Date(order.order_date), 'yyyy-MM-dd', { locale: ko })}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground hidden lg:table-cell text-sm">
+                                            <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
                                                 {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
                                             </TableCell>
                                             {canManage && (
