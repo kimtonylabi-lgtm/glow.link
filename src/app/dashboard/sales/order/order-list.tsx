@@ -144,7 +144,7 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                 )}
             </div>
 
-            <div className={`rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xl w-full overflow-hidden shadow-xl relative transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xl w-full shadow-xl relative transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                 {/* Glow Effect Top */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
@@ -160,13 +160,13 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                 <TableHead className="font-semibold text-right">수주총액</TableHead>
                                 <TableHead className="font-semibold whitespace-nowrap">수주일</TableHead>
                                 <TableHead className="font-semibold whitespace-nowrap">납기일</TableHead>
-                                {canManage && <TableHead className="font-semibold text-center w-[100px]">관리</TableHead>}
+                                <TableHead className="font-semibold text-center whitespace-nowrap">관리</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={canManage ? 9 : 8} className="h-24 text-center text-muted-foreground">
+                                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                                         조회된 내역이 없습니다.
                                     </TableCell>
                                 </TableRow>
@@ -214,45 +214,43 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                             <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
                                                 {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
                                             </TableCell>
-                                            {canManage && (
-                                                <TableCell className="text-center">
-                                                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        {tabType === 'order' ? (
-                                                            <>
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        setSelectedOrder(order)
-                                                                        setIsDetailModalOpen(true)
-                                                                    }}
-                                                                >
-                                                                    <Edit2 className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                            </>
-                                                        ) : (
+                                            <TableCell className="text-center">
+                                                <div className="flex items-center justify-center gap-1 transition-opacity">
+                                                    {tabType === 'order' ? (
+                                                        <>
                                                             <Button
-                                                                size="sm"
+                                                                size="icon"
                                                                 variant="ghost"
-                                                                className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-300 hover:text-slate-100"
+                                                                className="h-8 w-8"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
-                                                                    setOrderToCancel(order)
-                                                                    setCancelReason('')
-                                                                    setCancelModalOpen(true)
+                                                                    setSelectedOrder(order)
+                                                                    setIsDetailModalOpen(true)
                                                                 }}
                                                             >
-                                                                <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
+                                                                <Edit2 className="h-3.5 w-3.5" />
                                                             </Button>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                            )}
+                                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-300 hover:text-slate-100"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setOrderToCancel(order)
+                                                                setCancelReason('')
+                                                                setCancelModalOpen(true)
+                                                            }}
+                                                        >
+                                                            <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     )
                                 })
