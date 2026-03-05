@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { saveOrderDetails, confirmOrderToDelivery, fetchOrderDetail } from './order-actions'
-import { Loader2, Save, X, Plus, Rocket } from 'lucide-react'
+import { Loader2, Save, X, Plus, Rocket, Trash2 } from 'lucide-react'
 
 const formatNumber = (val: string | number) => {
     if (!val) return ''
@@ -217,7 +217,6 @@ export function OrderDetailModal({
                         <div>
                             <SheetTitle className="text-lg font-bold text-slate-100 flex items-center gap-2 m-0 p-0">
                                 발주 상세 입력
-                                <span className="text-muted-foreground font-normal text-sm ml-2">— BOM / 특이사항 / 작업사진</span>
                             </SheetTitle>
                         </div>
                     </div>
@@ -367,9 +366,10 @@ export function OrderDetailModal({
                                 <thead className="bg-slate-800 text-slate-300 border-b border-slate-700">
                                     <tr>
                                         <th className="font-semibold py-2 px-3 border-r border-slate-700 w-[20%]" rowSpan={2}>부품명</th>
-                                        <th className="font-semibold py-2 px-3 border-r border-slate-700 w-[30%]" colSpan={2}>사출</th>
+                                        <th className="font-semibold py-2 px-3 border-r border-slate-700 w-[25%]" colSpan={2}>사출</th>
                                         <th className="font-semibold py-2 px-3 border-r border-slate-700 w-[25%]" rowSpan={2}>증착 및 코팅</th>
-                                        <th className="font-semibold py-2 px-3 w-[25%]" rowSpan={2}>인쇄 및 박</th>
+                                        <th className="font-semibold py-2 px-3 border-r border-slate-700 w-[20%]" rowSpan={2}>인쇄 및 박</th>
+                                        <th className="font-semibold py-2 px-3 w-[10%]" rowSpan={2}></th>
                                     </tr>
                                     <tr>
                                         <th className="font-semibold py-1.5 px-3 border-r border-t border-slate-700 text-slate-400 bg-slate-800/80 w-[15%]">원료명</th>
@@ -391,13 +391,25 @@ export function OrderDetailModal({
                                             <td className="p-0 border-r border-slate-700">
                                                 <Input value={bom.mapped_coating} onChange={(e) => { const newBoms = [...bomItems]; newBoms[idx].mapped_coating = e.target.value; setBomItems(newBoms); }} className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-300 text-[13px]" />
                                             </td>
-                                            <td className="p-0">
+                                            <td className="p-0 border-r border-slate-700">
                                                 <Input value={bom.mapped_printing} onChange={(e) => { const newBoms = [...bomItems]; newBoms[idx].mapped_printing = e.target.value; setBomItems(newBoms); }} className="h-9 border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-300 text-[13px]" />
+                                            </td>
+                                            <td className="p-0 align-middle text-center">
+                                                <button
+                                                    onClick={() => {
+                                                        const newBoms = bomItems.filter((_, i) => i !== idx)
+                                                        setBomItems(newBoms)
+                                                    }}
+                                                    className="w-full h-full min-h-[36px] flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                    title="행 삭제"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </td>
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan={5} className="py-8 text-slate-500 font-medium text-center">BOM 내역이 없습니다.</td>
+                                            <td colSpan={6} className="py-8 text-slate-500 font-medium text-center">BOM 내역이 없습니다.</td>
                                         </tr>
                                     )}
                                 </tbody>
