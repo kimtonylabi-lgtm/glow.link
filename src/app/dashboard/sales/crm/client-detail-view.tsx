@@ -194,7 +194,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
 
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pt-6">
                 {/* Tab Contents */}
-                <TabsContent value="info" className="mt-0 space-y-6">
+                <TabsContent value="info" className="mt-0 h-full w-full space-y-6">
                     <div className="grid grid-cols-1 gap-6">
                         <Card className="bg-card/40 border-border/40 rounded-2xl overflow-hidden shadow-sm">
                             <CardContent className="p-6">
@@ -244,7 +244,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="orders" className="mt-0">
+                <TabsContent value="orders" className="mt-0 h-full w-full">
                     <div className="bg-card/30 border border-border/40 rounded-2xl overflow-hidden shadow-sm">
                         <div className="p-0">
                             {isLoading ? (
@@ -260,7 +260,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="samples" className="mt-0">
+                <TabsContent value="samples" className="mt-0 h-full w-full">
                     <div className="space-y-3">
                         {isLoading ? (
                             <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary/30" /></div>
@@ -295,7 +295,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="contacts" className="mt-0 space-y-4">
+                <TabsContent value="contacts" className="mt-0 h-full w-full space-y-4">
                     <Card className="bg-slate-900 border-none rounded-2xl overflow-hidden text-slate-100 shadow-xl">
                         <CardHeader className="pb-3 border-b border-white/5 bg-white/5 flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-black flex items-center gap-2 text-emerald-400">
@@ -368,7 +368,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="history" className="mt-0 pb-10">
+                <TabsContent value="history" className="mt-0 h-full w-full pb-10">
                     {isLoading ? (
                         <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary/30" /></div>
                     ) : history.length > 0 ? (
