@@ -13,10 +13,8 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     const searchQuery = searchParams?.q || ''
     const supabase = await createClient()
 
-    // 1. 독립적인 로드 쿼리들 (마스터 데이타 및 유저 인증) 병렬 실행 예약
+    // 1. 독립적인 로드 쿼리들 병렬 실행 예약
     const clientsPromise = supabase.from('clients').select('id, company_name').eq('status', 'active')
-    const productsPromise = supabase.from('products').select('*')
-    const clientProductsPromise = (supabase.from('client_products' as any) as any).select('*')
     const authPromise = supabase.auth.getUser()
 
     // 2. 검색 연관성 매칭 쿼리 병렬 최적화
@@ -25,10 +23,10 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     let matchingOrderIdsFromProducts: string[] = []
 
     if (searchQuery) {
-        // Find matching clients and products in parallel
+        // Find matching clients and products in parallel, applying strict limit to prevent DB overload
         const [matchedClientsRes, matchedProductsRes] = await Promise.all([
-            supabase.from('clients').select('id').ilike('company_name', `%${searchQuery}%`),
-            supabase.from('products').select('id').ilike('name', `%${searchQuery}%`)
+            supabase.from('clients').select('id').ilike('company_name', `%${searchQuery}%`).limit(50),
+            supabase.from('products').select('id').ilike('name', `%${searchQuery}%`).limit(50)
         ])
 
         if (matchedClientsRes.data) matchingClientIds = matchedClientsRes.data.map((c: any) => c.id)
@@ -101,28 +99,25 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
         orderQuery = orderQuery.limit(20) // 기본 조회 한도 제한
     }
 
-    // 5. Ultimate Parallel Resolution (Promise.all 파괴적 결합 성능)
+    // 5. Ultimate Parallel Resolution
     const [
         quotationsRes,
         ordersRes,
         clientsRes,
-        productsRes,
-        clientProductsRes,
         authRes
     ] = await Promise.all([
         quoteQuery,
         orderQuery,
         clientsPromise,
-        productsPromise,
-        clientProductsPromise,
         authPromise
     ])
 
     const quotations = quotationsRes.data || []
     const orders = ordersRes.data || []
     const clients = clientsRes.data || []
-    const products = productsRes.data || []
-    const clientProducts = clientProductsRes.data || []
+    // Provide empty fallback arrays for props to prevent front-end errors, since we deleted the heavy table loads
+    const products: any[] = []
+    const clientProducts: any[] = []
 
     const user = authRes.data?.user
     let userRole = 'sales'
