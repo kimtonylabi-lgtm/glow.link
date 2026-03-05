@@ -40,6 +40,7 @@ type Order = {
     status: 'draft' | 'confirmed' | 'production' | 'shipped'
     po_number?: string
     memo: string | null
+    warehouse: string | null
     created_at: string
     clients: { company_name: string } | null
     profiles: { full_name: string | null } | null
@@ -183,8 +184,17 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                             <TableCell className="text-center font-mono opacity-80 text-sm">
                                                 {order.po_number || '-'}
                                             </TableCell>
-                                            <TableCell className="font-medium group-hover:text-primary transition-colors">
-                                                {order.clients?.company_name || '알 수 없음'}
+                                            <TableCell className="group-hover:text-primary transition-colors">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-foreground">
+                                                        {order.clients?.company_name || '알 수 없음'}
+                                                    </span>
+                                                    {order.warehouse && (
+                                                        <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                                            <span className="opacity-50">↳</span> 입고처: {order.warehouse}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">

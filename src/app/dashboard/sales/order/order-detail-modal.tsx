@@ -85,6 +85,7 @@ export function OrderDetailModal({
         if (isOpen && detailedOrder) {
             setPoNumber(detailedOrder.po_number || '')
             setClientName(detailedOrder.clients?.company_name || '')
+            setWarehouse(detailedOrder.warehouse || '')
 
             // 날짜 데이터 초기값 자동 바인딩 (수주일/작성일 ➔ 발주일, 납기일 ➔ 출고예정일)
             if (detailedOrder.order_date) {
@@ -147,7 +148,8 @@ export function OrderDetailModal({
                 orderDate,
                 expectedShipDate,
                 firstItemId,
-                bomItems
+                bomItems,
+                warehouse
             )
             if (res.success) {
                 toast.success('발주 정보가 저장되었습니다.')
@@ -186,7 +188,8 @@ export function OrderDetailModal({
                 orderDate,
                 expectedShipDate,
                 firstItemId,
-                bomItems
+                bomItems,
+                warehouse
             )
             if (res.success) {
                 toast.success('발주가 확정되어 납기 관리로 이관되었습니다.')

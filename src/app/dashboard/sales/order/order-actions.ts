@@ -9,7 +9,8 @@ export async function saveOrderDetails(
     orderDate?: string | null,
     expectedShipDate?: string | null,
     orderItemId?: string,
-    bomItems?: any[]
+    bomItems?: any[],
+    warehouse?: string | null
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -38,6 +39,9 @@ export async function saveOrderDetails(
         }
         if (expectedShipDate !== undefined) {
             updatePayload.due_date = expectedShipDate ? expectedShipDate : null
+        }
+        if (warehouse !== undefined) {
+            updatePayload.warehouse = warehouse ? warehouse : null
         }
 
         const { error } = await supabase
@@ -79,7 +83,8 @@ export async function confirmOrderToDelivery(
     orderDate?: string | null,
     expectedShipDate?: string | null,
     orderItemId?: string,
-    bomItems?: any[]
+    bomItems?: any[],
+    warehouse?: string | null
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -126,6 +131,7 @@ export async function confirmOrderToDelivery(
             po_number: poNumber,
             order_date: orderDate,
             due_date: expectedShipDate ? expectedShipDate : null,
+            warehouse: warehouse ? warehouse : null,
             status: 'production',
             status_history: [...history, newLog]
         }

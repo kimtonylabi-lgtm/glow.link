@@ -75,7 +75,7 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     // 4. Build Query for Orders (Separated by Pipeline Status)
     const buildOrderQuery = (statuses: string[]) => {
         let q = (supabase.from('orders') as any).select(`
-            id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo,
+            id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo, warehouse,
             clients (company_name),
             profiles (full_name),
             order_items (
