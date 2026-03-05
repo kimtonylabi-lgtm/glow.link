@@ -60,7 +60,19 @@ export function CreatableCombobox({
     const showCreatable = search.trim() !== "" && !hasExactMatch
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isOpen && search.trim() !== "" && search.trim() !== value) {
+                    // Mobile Virtual Keyboard 'Done' or blur fallback
+                    onChange(search.trim())
+                }
+                if (!isOpen) {
+                    setSearch("")
+                }
+                setOpen(isOpen)
+            }}
+        >
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
