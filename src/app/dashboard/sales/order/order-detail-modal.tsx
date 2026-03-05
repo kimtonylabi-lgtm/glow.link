@@ -237,7 +237,7 @@ export function OrderDetailModal({
                         <div className="w-full border-t border-l border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm flex flex-col font-sans">
 
                             {/* Row 1: grid-cols-3 (1:1:1) */}
-                            <div className="w-full grid grid-cols-3">
+                            <div className="w-full grid grid-cols-1 md:grid-cols-3">
                                 <div className="flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주No.</div>
                                     <Input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="PO 번호 입력" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-100 font-mono" />
@@ -293,8 +293,8 @@ export function OrderDetailModal({
                             </div>
 
                             {/* Row 2: grid-cols-10 (4:3:3) */}
-                            <div className="w-full grid grid-cols-10">
-                                <div className="col-span-4 flex border-r border-b border-slate-700 h-10 relative">
+                            <div className="w-full grid grid-cols-1 md:grid-cols-10">
+                                <div className="md:col-span-4 flex border-r border-b border-slate-700 h-10 relative">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주처</div>
                                     <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3 font-semibold" />
                                     <div className="w-[84px] border-l border-slate-700 flex flex-row h-full">
@@ -302,30 +302,30 @@ export function OrderDetailModal({
                                         <button onClick={() => setExportType('수출')} className={`flex-1 text-[11px] font-bold transition-colors ${exportType === '수출' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}>수출</button>
                                     </div>
                                 </div>
-                                <div className="col-span-3 flex border-r border-b border-slate-700 h-10">
+                                <div className="md:col-span-3 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주수량</div>
                                     <Input value={orderQuantity} onChange={(e) => setOrderQuantity(formatNumber(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center font-mono text-slate-100" />
                                 </div>
-                                <div className="col-span-3 flex border-r border-b border-slate-700 h-10">
+                                <div className="md:col-span-3 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">입고처</div>
                                     <Input value={warehouse} onChange={(e) => setWarehouse(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
                                 </div>
                             </div>
 
                             {/* Row 3: grid-cols-4 (2:1:1) */}
-                            <div className="w-full grid grid-cols-4">
-                                <div className="col-span-2 flex border-r border-b border-slate-700 h-10">
+                            <div className="w-full grid grid-cols-1 md:grid-cols-4">
+                                <div className="md:col-span-2 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex flex-col items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700 leading-tight">
                                         <span>제품명</span>
                                         <span className="text-[10px] text-slate-500 font-normal">(태성측)</span>
                                     </div>
                                     <Input value={taeSungProductName} onChange={(e) => setTaeSungProductName(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3 font-semibold" />
                                 </div>
-                                <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="md:col-span-1 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">Cat No.</div>
                                     <Input value={catNo} onChange={(e) => setCatNo(e.target.value)} placeholder="카탈로그 번호" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-2 text-[13px]" />
                                 </div>
-                                <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="md:col-span-1 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">견본유무</div>
                                     <div className="flex-1 flex flex-row h-full p-1.5 gap-1 items-center">
                                         <button onClick={() => setHasSample(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-colors ${hasSample ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>있음</button>
@@ -335,22 +335,22 @@ export function OrderDetailModal({
                             </div>
 
                             {/* Row 4: grid-cols-4 (2:1:1) */}
-                            <div className="w-full grid grid-cols-4">
-                                <div className="col-span-2 flex border-r border-b border-slate-700 h-10">
+                            <div className="w-full grid grid-cols-1 md:grid-cols-4">
+                                <div className="md:col-span-2 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex flex-col items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700 leading-tight">
                                         <span>제품명</span>
                                         <span className="text-[10px] text-slate-500 font-normal">(업체측)</span>
                                     </div>
                                     <Input value={clientProductName} onChange={(e) => setClientProductName(e.target.value)} placeholder="입력하세요" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
                                 </div>
-                                <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="md:col-span-1 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">필름유무</div>
                                     <div className="flex-1 flex flex-row h-full p-1.5 gap-1 items-center bg-slate-900/40">
                                         <button onClick={() => setHasFilm(true)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${hasFilm ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>있음</button>
                                         <button onClick={() => setHasFilm(false)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${!hasFilm ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>없음</button>
                                     </div>
                                 </div>
-                                <div className="col-span-1 flex border-r border-b border-slate-700 h-10">
+                                <div className="md:col-span-1 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">라바유무</div>
                                     <div className="flex-1 flex flex-row h-full p-1.5 gap-1 items-center bg-slate-900/40">
                                         <button onClick={() => setHasLaba(true)} className={`flex-1 h-full rounded-sm text-[11px] font-bold transition-colors ${hasLaba ? 'bg-slate-600 text-white' : 'text-slate-500 hover:bg-slate-800 border border-slate-700'}`}>있음</button>
@@ -362,8 +362,8 @@ export function OrderDetailModal({
                         </div>
 
                         {/* BOM Table Section */}
-                        <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm mt-4">
-                            <table className="w-full text-center border-collapse">
+                        <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-x-auto whitespace-nowrap text-sm mt-4">
+                            <table className="w-full text-center border-collapse min-w-[600px]">
                                 <thead className="bg-slate-800 text-slate-300 border-b border-slate-700">
                                     <tr>
                                         <th className="font-semibold py-2 px-3 border-r border-slate-700 w-[20%]" rowSpan={2}>부품명</th>
@@ -422,11 +422,11 @@ export function OrderDetailModal({
                             />
                         </div>
 
-                        <div className={readOnly ? "grid grid-cols-1 mt-8" : "grid grid-cols-3 gap-4 mt-8"}>
+                        <div className={readOnly ? "flex flex-col mt-8" : "flex flex-col md:flex-row md:justify-end gap-3 md:gap-4 mt-8"}>
                             <Button
                                 variant="outline"
                                 onClick={() => onOpenChange(false)}
-                                className="w-full h-12 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300"
+                                className="w-full md:w-auto md:px-8 h-12 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300"
                             >
                                 {readOnly ? '닫기' : '취소'}
                             </Button>
@@ -435,7 +435,7 @@ export function OrderDetailModal({
                                     <Button
                                         onClick={handleSave}
                                         disabled={isLoading}
-                                        className="w-full h-12 text-base font-bold bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white"
+                                        className="w-full md:w-auto md:px-8 h-12 text-base font-bold bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white"
                                     >
                                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
                                         발주 상세 저장
@@ -443,7 +443,7 @@ export function OrderDetailModal({
                                     <Button
                                         onClick={handleConfirm}
                                         disabled={isLoading}
-                                        className="w-full h-12 text-base font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
+                                        className="w-full md:w-auto md:px-8 h-12 text-base font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
                                     >
                                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Rocket className="w-5 h-5 mr-2" />}
                                         발주 확정 (납기 이관)
