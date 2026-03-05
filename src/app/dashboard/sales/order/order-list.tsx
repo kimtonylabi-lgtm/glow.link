@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useTransition } from 'react'
+import { cn } from "@/lib/utils"
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Badge } from "@/components/ui/badge"
@@ -163,16 +164,19 @@ export function OrderList({
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
                 <div className="overflow-x-auto">
-                    <Table className="min-w-[1000px]">
+                    <Table className={cn(
+                        "w-full",
+                        viewMode === 'customer' ? "table-fixed min-w-[700px]" : "min-w-[1000px]"
+                    )}>
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
                                 {viewMode === 'default' && <TableHead className="w-[120px] font-semibold">진행상태</TableHead>}
-                                <TableHead className="font-semibold text-center w-[120px]">발주번호(PO)</TableHead>
-                                <TableHead className="font-semibold">고객사</TableHead>
-                                <TableHead className="font-semibold">제품명</TableHead>
-                                <TableHead className="font-semibold">담당자</TableHead>
-                                <TableHead className="font-semibold text-right">수주총액</TableHead>
-                                <TableHead className="font-semibold whitespace-nowrap">수주일</TableHead>
+                                <TableHead className={cn("font-semibold text-center py-2 px-2", viewMode === 'customer' ? "w-[80px]" : "w-[120px]")}>발주번호(PO)</TableHead>
+                                <TableHead className={cn("font-semibold py-2 px-2", viewMode === 'customer' && "w-[180px]")}>고객사</TableHead>
+                                <TableHead className="font-semibold py-2 px-2">제품명</TableHead>
+                                <TableHead className={cn("font-semibold py-2 px-2", viewMode === 'customer' && "w-[90px]")}>담당자</TableHead>
+                                <TableHead className={cn("font-semibold text-right py-2 px-2", viewMode === 'customer' && "w-[120px]")}>수주총액</TableHead>
+                                <TableHead className={cn("font-semibold whitespace-nowrap py-2 px-2", viewMode === 'customer' && "w-[100px]")}>수주일</TableHead>
                                 {viewMode === 'default' && <TableHead className="font-semibold whitespace-nowrap">납기일</TableHead>}
                                 {viewMode === 'default' && <TableHead className="font-semibold text-center whitespace-nowrap">관리</TableHead>}
                             </TableRow>
@@ -196,44 +200,44 @@ export function OrderList({
                                                     </Badge>
                                                 </TableCell>
                                             )}
-                                            <TableCell className="text-center font-mono opacity-80 text-sm">
+                                            <TableCell className="text-center font-mono opacity-80 text-xs py-1 px-2 truncate" title={order.po_number || ''}>
                                                 {order.po_number || '-'}
                                             </TableCell>
-                                            <TableCell className="group-hover:text-primary transition-colors">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-foreground">
+                                            <TableCell className="group-hover:text-primary transition-colors py-1 px-2">
+                                                <div className="flex flex-col min-w-0 leading-tight">
+                                                    <span className="font-medium text-foreground truncate text-xs" title={order.clients?.company_name || ''}>
                                                         {order.clients?.company_name || '알 수 없음'}
                                                     </span>
-                                                    <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                                        <span className="opacity-50">↳</span> 입고처: {order.receiving_destination || '-'}
+                                                    <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1 truncate" title={`입고처: ${order.receiving_destination || '-'}`}>
+                                                        <span className="opacity-50">↳</span> {order.receiving_destination || '-'}
                                                     </span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-foreground">
+                                            <TableCell className="py-1 px-2">
+                                                <div className="flex flex-col min-w-0 leading-tight">
+                                                    <span className="font-semibold text-bold text-foreground truncate text-xs" title={order.order_items?.[0]?.products?.name || ''}>
                                                         {order.order_items?.[0]?.products?.name || '제품 없음'}
                                                     </span>
-                                                    <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                                        <span className="opacity-50">↳</span> 고객사명칭: {order.order_items?.[0]?.client_product_name || '-'}
+                                                    <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1 truncate" title={`고객사명칭: ${order.order_items?.[0]?.client_product_name || '-'}`}>
+                                                        <span className="opacity-50">↳</span> {order.order_items?.[0]?.client_product_name || '-'}
                                                     </span>
-                                                    {(order.order_items?.length || 0) > 1 && (
+                                                    {viewMode === 'default' && (order.order_items?.length || 0) > 1 && (
                                                         <span className="text-[10px] text-muted-foreground mt-0.5">
                                                             외 {order.order_items!.length - 1}건
                                                         </span>
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="py-1 px-2 text-xs truncate" title={order.profiles?.full_name || ''}>
                                                 {order.profiles?.full_name || '알 수 없음'}
                                             </TableCell>
-                                            <TableCell className="text-right font-mono font-bold">
+                                            <TableCell className="text-right font-mono font-bold py-1 px-2 text-xs">
                                                 ₩ {order.total_amount.toLocaleString('ko-KR')}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground whitespace-nowrap text-sm relative">
+                                            <TableCell className="text-muted-foreground whitespace-nowrap text-xs relative py-1 px-2">
                                                 {/* Line connection effect for recent items */}
                                                 <div className="absolute left-0 top-0 bottom-0 w-px bg-border/30 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                <div className="pl-3">
+                                                <div className="pl-1">
                                                     {order.order_date ? format(new Date(order.order_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
                                                 </div>
                                             </TableCell>

@@ -192,7 +192,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar pt-10">
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pt-6">
                 {/* Tab Contents */}
                 <TabsContent value="info" className="mt-0 space-y-6">
                     <div className="grid grid-cols-1 gap-6">
@@ -246,17 +246,15 @@ export function ClientDetailView({ clientId, onBack }: Props) {
 
                 <TabsContent value="orders" className="mt-0">
                     <div className="bg-card/30 border border-border/40 rounded-2xl overflow-hidden shadow-sm">
-                        <div className="p-1">
+                        <div className="p-0">
                             {isLoading ? (
                                 <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary/30" /></div>
                             ) : (
-                                <div className="max-w-[100vw] overflow-x-auto">
-                                    <OrderList
-                                        orders={orders}
-                                        userRole={userRole}
-                                        viewMode="customer"
-                                    />
-                                </div>
+                                <OrderList
+                                    orders={orders}
+                                    userRole={userRole}
+                                    viewMode="customer"
+                                />
                             )}
                         </div>
                     </div>
