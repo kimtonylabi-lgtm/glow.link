@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
 import { saveOrderDetails } from './order-actions'
 import { Loader2, Save, X, Plus } from 'lucide-react'
 
@@ -147,17 +149,41 @@ export function OrderDetailModal({
                             </div>
                             <div className="flex border-r border-b border-slate-700 h-10">
                                 <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주일</div>
-                                <div className="flex-1 flex items-center px-2">
-                                    <Input value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 font-mono text-slate-100 px-1 placeholder:text-slate-600" />
-                                    <span className="text-slate-500 text-xs ml-1">📅</span>
-                                </div>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"ghost"} className="flex-1 h-full justify-between font-mono font-normal hover:bg-slate-800 focus-visible:ring-0 px-3 rounded-none hover:text-slate-100 text-slate-100 data-[state=open]:bg-slate-800">
+                                            {orderDate ? orderDate : <span className="text-slate-600">yyyy-mm-dd</span>}
+                                            <span className="text-slate-500 text-xs opacity-80">📅</span>
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 z-[9999] border-slate-700 shadow-xl" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={orderDate ? new Date(orderDate) : undefined}
+                                            onSelect={(date) => date && setOrderDate(format(date, 'yyyy-MM-dd'))}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <div className="flex border-r border-b border-slate-700 h-10 bg-slate-900/50">
                                 <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">출고예정일</div>
-                                <div className="flex-1 flex items-center px-2">
-                                    <Input value={expectedShipDate} onChange={(e) => setExpectedShipDate(e.target.value)} placeholder="yyyy-mm-dd" className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 px-0 font-mono text-[13px]" />
-                                    <span className="text-slate-500 text-xs ml-1">📅</span>
-                                </div>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"ghost"} className="flex-1 h-full justify-between font-mono font-normal hover:bg-slate-800 focus-visible:ring-0 px-3 rounded-none hover:text-slate-100 text-slate-100 data-[state=open]:bg-slate-800">
+                                            {expectedShipDate ? expectedShipDate : <span className="text-slate-600">yyyy-mm-dd</span>}
+                                            <span className="text-slate-500 text-xs opacity-80">📅</span>
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 z-[9999] border-slate-700 shadow-xl" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={expectedShipDate ? new Date(expectedShipDate) : undefined}
+                                            onSelect={(date) => date && setExpectedShipDate(format(date, 'yyyy-MM-dd'))}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
 
