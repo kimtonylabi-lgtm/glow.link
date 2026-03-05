@@ -115,7 +115,12 @@ export function OrderDetailModal({
 
         setIsLoading(true)
         try {
-            const res = await saveOrderDetails(order.id, poNumber.trim())
+            const res = await saveOrderDetails(
+                order.id,
+                poNumber.trim(),
+                orderDate,
+                expectedShipDate
+            )
             if (res.success) {
                 toast.success('발주 정보가 저장되었습니다.')
                 onOpenChange(false)

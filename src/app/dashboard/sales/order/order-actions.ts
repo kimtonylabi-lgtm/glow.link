@@ -3,7 +3,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function saveOrderDetails(orderId: string, poNumber: string) {
+export async function saveOrderDetails(
+    orderId: string,
+    poNumber: string,
+    orderDate?: string | null,
+    expectedShipDate?: string | null
+) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -23,9 +28,19 @@ export async function saveOrderDetails(orderId: string, poNumber: string) {
             return { success: false, error: '이미 등록된 발주 번호입니다.' }
         }
 
+        const updatePayload: any = { po_number: poNumber }
+
+        // 빈 문자열 방어: "" 이면 null로 매핑, 아니면 날짜 문자열(yyyy-MM-dd) 그대로 매핑
+        if (orderDate !== undefined) {
+            updatePayload.order_date = orderDate ? orderDate : null
+        }
+        if (expectedShipDate !== undefined) {
+            updatePayload.due_date = expectedShipDate ? expectedShipDate : null
+        }
+
         const { error } = await supabase
             .from('orders')
-            .update({ po_number: poNumber } as any)
+            .update(updatePayload)
             .eq('id', orderId)
 
         if (error) {
