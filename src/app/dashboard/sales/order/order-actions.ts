@@ -58,3 +58,130 @@ export async function saveOrderDetails(
         return { success: false, error: '서버 오류가 발생했습니다.' }
     }
 }
+
+export async function confirmOrderToDelivery(
+    orderId: string,
+    poNumber: string,
+    orderDate?: string | null,
+    expectedShipDate?: string | null
+) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: '인증되지 않은 사용자입니다.' }
+
+    if (!poNumber?.trim() || !orderDate) {
+        return { success: false, error: '발주 No. 와 발주일은 납기 이관 필수 항목입니다.' }
+    }
+
+    try {
+        const { count } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('po_number', poNumber)
+            .neq('id', orderId)
+
+        if (count && count > 0) {
+            return { success: false, error: '이미 등록된 발주 번호입니다.' }
+        }
+
+        const { data: currentOrder } = await (supabase.from('orders') as any)
+            .select('status_history')
+            .eq('id', orderId)
+            .single()
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+
+        const userName = profile?.full_name || user.email || 'System'
+
+        const history = Array.isArray(currentOrder?.status_history) ? currentOrder.status_history : []
+        const newLog = {
+            date: new Date().toISOString(),
+            status: 'production',
+            worker: userName,
+            reason: '발주 확정 및 납기 이관'
+        }
+
+        const updatePayload: any = {
+            po_number: poNumber,
+            order_date: orderDate,
+            due_date: expectedShipDate ? expectedShipDate : null,
+            status: 'production',
+            status_history: [...history, newLog]
+        }
+
+        const { error } = await supabase
+            .from('orders')
+            .update(updatePayload)
+            .eq('id', orderId)
+
+        if (error) {
+            console.error('confirmOrderToDelivery error:', error)
+            return { success: false, error: '납기 이관에 실패했습니다.' }
+        }
+
+        revalidatePath('/dashboard/sales/order')
+        return { success: true }
+    } catch (error) {
+        console.error('confirmOrderToDelivery exception:', error)
+        return { success: false, error: '서버 오류가 발생했습니다.' }
+    }
+}
+
+export async function cancelOrderConfirmation(orderId: string, reason: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: '인증되지 않은 사용자입니다.' }
+    if (!reason?.trim()) return { success: false, error: '취소 사유를 입력해주세요.' }
+
+    try {
+        const { data: currentOrder } = await (supabase.from('orders') as any)
+            .select('status_history, status')
+            .eq('id', orderId)
+            .single()
+
+        if ((currentOrder as any)?.status !== 'production') {
+            return { success: false, error: '납기 대기(생산 진행) 중인 건만 취소할 수 있습니다.' }
+        }
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+
+        const userName = profile?.full_name || user.email || 'System'
+
+        const history = Array.isArray(currentOrder?.status_history) ? currentOrder.status_history : []
+        const newLog = {
+            date: new Date().toISOString(),
+            status: 'draft',
+            worker: userName,
+            reason: `[확정 취소] ${reason.trim()}`
+        }
+
+        const { error } = await supabase
+            .from('orders')
+            .update({
+                status: 'draft',
+                status_history: [...history, newLog]
+            })
+            .eq('id', orderId)
+
+        if (error) {
+            console.error('cancelOrderConfirmation error:', error)
+            return { success: false, error: '이관 취소에 실패했습니다.' }
+        }
+
+        revalidatePath('/dashboard/sales/order')
+        return { success: true }
+    } catch (error) {
+        console.error('cancelOrderConfirmation exception:', error)
+        return { success: false, error: '서버 오류가 발생했습니다.' }
+    }
+}

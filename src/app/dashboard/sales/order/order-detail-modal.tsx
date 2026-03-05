@@ -14,8 +14,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { saveOrderDetails } from './order-actions'
-import { Loader2, Save, X, Plus } from 'lucide-react'
+import { saveOrderDetails, confirmOrderToDelivery } from './order-actions'
+import { Loader2, Save, X, Plus, Rocket } from 'lucide-react'
 
 const formatNumber = (val: string | number) => {
     if (!val) return ''
@@ -27,11 +27,13 @@ const formatNumber = (val: string | number) => {
 export function OrderDetailModal({
     order,
     isOpen,
-    onOpenChange
+    onOpenChange,
+    readOnly
 }: {
     order: any
     isOpen: boolean
     onOpenChange: (open: boolean) => void
+    readOnly?: boolean
 }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
@@ -130,6 +132,37 @@ export function OrderDetailModal({
             }
         } catch (error) {
             toast.error('저장 중 오류가 발생했습니다.')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleConfirm = async () => {
+        if (!poNumber.trim() || !orderDate) {
+            toast.error('필수값(발주 No. 와 발주일)을 입력해야 확정할 수 있습니다.')
+            return
+        }
+
+        const isConfirm = window.confirm('정말 납기 관리로 이관하시겠습니까?\n이후에는 발주 내역 수정이 제한될 수 있습니다.')
+        if (!isConfirm) return
+
+        setIsLoading(true)
+        try {
+            const res = await confirmOrderToDelivery(
+                order.id,
+                poNumber.trim(),
+                orderDate,
+                expectedShipDate
+            )
+            if (res.success) {
+                toast.success('발주가 확정되어 납기 관리로 이관되었습니다.')
+                onOpenChange(false)
+                router.refresh()
+            } else {
+                toast.error(res.error || '납기 이관에 실패했습니다.')
+            }
+        } catch (error) {
+            toast.error('이관 중 오류가 발생했습니다.')
         } finally {
             setIsLoading(false)
         }
@@ -349,22 +382,34 @@ export function OrderDetailModal({
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-8">
+                    <div className={readOnly ? "grid grid-cols-1 mt-8" : "grid grid-cols-3 gap-4 mt-8"}>
                         <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                             className="w-full h-12 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300"
                         >
-                            취소
+                            {readOnly ? '닫기' : '취소'}
                         </Button>
-                        <Button
-                            onClick={handleSave}
-                            disabled={isLoading}
-                            className="w-full h-12 text-base font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
-                        >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                            발주 상세 저장
-                        </Button>
+                        {!readOnly && (
+                            <>
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={isLoading}
+                                    className="w-full h-12 text-base font-bold bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white"
+                                >
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                                    발주 상세 저장
+                                </Button>
+                                <Button
+                                    onClick={handleConfirm}
+                                    disabled={isLoading}
+                                    className="w-full h-12 text-base font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
+                                >
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Rocket className="w-5 h-5 mr-2" />}
+                                    발주 확정 (납기 이관)
+                                </Button>
+                            </>
+                        )}
                     </div>
 
                 </div>

@@ -15,10 +15,20 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
-import { Edit2, Trash2, Search } from "lucide-react"
+import { Edit2, Trash2, Search, Undo2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { OrderDetailModal } from "./order-detail-modal"
+import { cancelOrderConfirmation } from "./order-actions"
+import { toast } from 'sonner'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 
 type Order = {
     id: string
@@ -40,7 +50,7 @@ type Order = {
     }[]
 }
 
-export function OrderList({ orders, userRole }: { orders: Order[], userRole: string }) {
+export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Order[], userRole: string, tabType?: 'order' | 'delivery' }) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -52,6 +62,37 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
     const debouncedSearchTerm = useDebounce(searchTerm, 300)
     const [isPending, startTransition] = useTransition()
     const isFirstRender = useRef(true)
+
+    const [cancelModalOpen, setCancelModalOpen] = useState(false)
+    const [orderToCancel, setOrderToCancel] = useState<Order | null>(null)
+    const [cancelReason, setCancelReason] = useState('')
+    const [isCancelling, setIsCancelling] = useState(false)
+
+    const handleCancelSubmit = async () => {
+        if (!orderToCancel) return
+        if (!cancelReason.trim()) {
+            toast.error('취소 사유를 입력해주세요.')
+            return
+        }
+
+        setIsCancelling(true)
+        try {
+            const res = await cancelOrderConfirmation(orderToCancel.id, cancelReason)
+            if (res.success) {
+                toast.success('발주 확정이 취소되었으며 수주 관리로 롤백되었습니다.')
+                setCancelModalOpen(false)
+                setOrderToCancel(null)
+                setCancelReason('')
+                router.refresh()
+            } else {
+                toast.error(res.error || '이관 취소에 실패했습니다.')
+            }
+        } catch (e) {
+            toast.error('오류가 발생했습니다.')
+        } finally {
+            setIsCancelling(false)
+        }
+    }
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -70,15 +111,15 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                 params.delete('q')
             }
             params.delete('page')
-            params.set('tab', 'order')
+            params.set('tab', tabType)
             router.replace(`${pathname}?${params.toString()}`, { scroll: false })
         })
     }, [debouncedSearchTerm, pathname, router, searchParams])
 
     const statusConfig = {
-        'draft': { label: '초안', color: 'bg-muted/50 text-muted-foreground border-border/50' },
+        'draft': { label: '수주 대기', color: 'bg-muted/50 text-muted-foreground border-border/50' },
         'confirmed': { label: '수주 확정', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_10px_theme(colors.blue.500)/20]' },
-        'production': { label: '생산 중', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20 shadow-[0_0_10px_theme(colors.purple.500)/20]' },
+        'production': { label: '생산 진행', color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20 shadow-[0_0_10px_theme(colors.indigo.500)/20]' },
         'shipped': { label: '출하 완료', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_10px_theme(colors.emerald.500)/20]' }
     }
 
@@ -96,7 +137,7 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                         value={searchTerm}
                     />
                 </div>
-                {searchParams.get('q') && searchParams.get('tab') === 'order' && (
+                {searchParams.get('q') && searchParams.get('tab') === tabType && (
                     <div className="text-sm text-primary font-medium px-4">
                         총 {orders.length}건의 검색 결과
                     </div>
@@ -112,6 +153,7 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="w-[120px] font-semibold">진행상태</TableHead>
+                                <TableHead className="font-semibold text-center w-[120px]">발주번호(PO)</TableHead>
                                 <TableHead className="font-semibold">고객사</TableHead>
                                 <TableHead className="font-semibold">제품명</TableHead>
                                 <TableHead className="font-semibold">담당자</TableHead>
@@ -124,8 +166,8 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                         <TableBody>
                             {orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={canManage ? 8 : 7} className="h-24 text-center text-muted-foreground">
-                                        조회된 수주 내역이 없습니다.
+                                    <TableCell colSpan={canManage ? 9 : 8} className="h-24 text-center text-muted-foreground">
+                                        조회된 내역이 없습니다.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -137,6 +179,9 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                                                 <Badge variant="outline" className={config.color}>
                                                     {config.label}
                                                 </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center font-mono opacity-80 text-sm">
+                                                {order.po_number || '-'}
                                             </TableCell>
                                             <TableCell className="font-medium group-hover:text-primary transition-colors">
                                                 {order.clients?.company_name || '알 수 없음'}
@@ -172,21 +217,39 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                                             {canManage && (
                                                 <TableCell className="text-center">
                                                     <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                setSelectedOrder(order)
-                                                                setIsDetailModalOpen(true)
-                                                            }}
-                                                        >
-                                                            <Edit2 className="h-3.5 w-3.5" />
-                                                        </Button>
-                                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </Button>
+                                                        {tabType === 'order' ? (
+                                                            <>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setSelectedOrder(order)
+                                                                        setIsDetailModalOpen(true)
+                                                                    }}
+                                                                >
+                                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </>
+                                                        ) : (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-300 hover:text-slate-100"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    setOrderToCancel(order)
+                                                                    setCancelReason('')
+                                                                    setCancelModalOpen(true)
+                                                                }}
+                                                            >
+                                                                <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             )}
@@ -202,7 +265,42 @@ export function OrderList({ orders, userRole }: { orders: Order[], userRole: str
                     isOpen={isDetailModalOpen}
                     onOpenChange={setIsDetailModalOpen}
                     order={selectedOrder}
+                    readOnly={tabType === 'delivery'}
                 />
+
+                <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl">이관 확정 취소</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <p className="text-sm text-muted-foreground">
+                                발주 확정을 취소하고 수주 대기 상태로 되돌립니다.<br />
+                                돌아간 주문 내역은 담당자가 다시 수정하고, 이관할 수 있습니다.
+                            </p>
+                            <div className="space-y-2 mt-2">
+                                <label className="text-sm font-semibold">
+                                    취소 사유 (필수) <span className="text-destructive">*</span>
+                                </label>
+                                <Textarea
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    placeholder="단가 조정 대상, 공장 캐파 부족 등 사유를 입력하세요."
+                                    className="resize-none min-h-[100px]"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setCancelModalOpen(false)}>
+                                닫기
+                            </Button>
+                            <Button onClick={handleCancelSubmit} disabled={isCancelling} variant="destructive">
+                                {isCancelling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Undo2 className="w-4 h-4 mr-2" />}
+                                취소 원복 실행
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )

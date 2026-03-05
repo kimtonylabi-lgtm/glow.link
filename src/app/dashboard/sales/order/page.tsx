@@ -72,50 +72,59 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
         quoteQuery = quoteQuery.neq('status', 'finalized').limit(5)
     }
 
-    // 4. Build Query for Orders (Data Diet 적용: 불필요한 post_processing 생략)
-    let orderQuery = (supabase.from('orders') as any).select(`
-        id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo,
-        clients (company_name),
-        profiles (full_name),
-        order_items (
-            id,
-            quantity,
-            products ( name )
-        )
-    `).order('created_at', { ascending: false })
+    // 4. Build Query for Orders (Separated by Pipeline Status)
+    const buildOrderQuery = (statuses: string[]) => {
+        let q = (supabase.from('orders') as any).select(`
+            id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo,
+            clients (company_name),
+            profiles (full_name),
+            order_items (
+                id,
+                quantity,
+                products ( name )
+            )
+        `).in('status', statuses).order('created_at', { ascending: false })
 
-    if (searchQuery) {
-        const orderClientMatch = matchingClientIds.length > 0 ? `client_id.in.(${matchingClientIds.join(',')})` : ''
-        const orderProductMatch = matchingOrderIdsFromProducts.length > 0 ? `id.in.(${matchingOrderIdsFromProducts.join(',')})` : ''
-        const poNumberMatch = `po_number.ilike.%${searchQuery}%`
+        if (searchQuery) {
+            const orderClientMatch = matchingClientIds.length > 0 ? `client_id.in.(${matchingClientIds.join(',')})` : ''
+            const orderProductMatch = matchingOrderIdsFromProducts.length > 0 ? `id.in.(${matchingOrderIdsFromProducts.join(',')})` : ''
+            const poNumberMatch = `po_number.ilike.%${searchQuery}%`
 
-        const orOrderConditions = [orderClientMatch, orderProductMatch, poNumberMatch].filter(Boolean).join(',')
-        if (orOrderConditions) {
-            orderQuery = orderQuery.or(orOrderConditions).limit(30) // 브라우저 폭탄 방어
+            const orOrderConditions = [orderClientMatch, orderProductMatch, poNumberMatch].filter(Boolean).join(',')
+            if (orOrderConditions) {
+                q = q.or(orOrderConditions).limit(30)
+            } else {
+                q = q.eq('id', '00000000-0000-0000-0000-000000000000').limit(0)
+            }
         } else {
-            orderQuery = orderQuery.eq('id', '00000000-0000-0000-0000-000000000000').limit(0)
+            q = q.limit(20)
         }
-    } else {
-        orderQuery = orderQuery.limit(20) // 기본 조회 한도 제한
+        return q
     }
+
+    const pendingOrderPromise = buildOrderQuery(['draft', 'confirmed'])
+    const deliveryOrderPromise = buildOrderQuery(['production', 'shipped'])
 
     // 5. Ultimate Parallel Resolution
     const [
         quotationsRes,
-        ordersRes,
+        pendingOrdersRes,
+        deliveryOrdersRes,
         clientsRes,
         authRes
     ] = await Promise.all([
         quoteQuery,
-        orderQuery,
+        pendingOrderPromise,
+        deliveryOrderPromise,
         clientsPromise,
         authPromise
     ])
 
     const quotations = quotationsRes.data || []
-    const orders = ordersRes.data || []
+    const pendingOrders = pendingOrdersRes.data || []
+    const deliveryOrders = deliveryOrdersRes.data || []
     const clients = clientsRes.data || []
-    // Provide empty fallback arrays for props to prevent front-end errors, since we deleted the heavy table loads
+    // Provide empty fallback arrays for props to prevent front-end errors
     const products: any[] = []
     const clientProducts: any[] = []
 
@@ -134,13 +143,8 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
                 products={products || []}
                 clientProducts={clientProducts || []}
                 quotationContent={<QuotationList quotations={quotations} />}
-                orderContent={<OrderList orders={orders} userRole={userRole} />}
-                deliveryContent={
-                    <div className="p-20 text-center rounded-3xl border border-dashed border-border/40 bg-muted/5">
-                        <Truck className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                        <p className="text-muted-foreground font-medium">납기 관리 데이터 로딩 중...</p>
-                    </div>
-                }
+                orderContent={<OrderList orders={pendingOrders} userRole={userRole} tabType="order" />}
+                deliveryContent={<OrderList orders={deliveryOrders} userRole={userRole} tabType="delivery" />}
             />
         </div>
     )
