@@ -137,7 +137,7 @@ export async function confirmOrderToDelivery(
 
         if (error) {
             console.error('confirmOrderToDelivery orders err:', error)
-            return { success: false, error: '납기 이관에 실패했습니다.' }
+            return { success: false, error: '납기 이관 실패: ' + error.message }
         }
 
         // BOM Update Transaction
@@ -148,7 +148,7 @@ export async function confirmOrderToDelivery(
 
             if (itemsError) {
                 console.error('confirmOrderToDelivery items err:', itemsError)
-                return { success: false, error: 'BOM 정보 이관 저장에 실패했습니다.' }
+                return { success: false, error: 'BOM 정보 이관 저장 실패: ' + itemsError.message }
             }
         }
 
