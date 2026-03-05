@@ -60,6 +60,21 @@ export function OrderDetailModal({
             setPoNumber(order.po_number || '')
             setClientName(order.clients?.company_name || '')
 
+            // 날짜 데이터 초기값 자동 바인딩 (수주일/작성일 ➔ 발주일, 납기일 ➔ 출고예정일)
+            if (order.order_date) {
+                setOrderDate(format(new Date(order.order_date), 'yyyy-MM-dd'))
+            } else if (order.created_at) {
+                setOrderDate(format(new Date(order.created_at), 'yyyy-MM-dd'))
+            } else {
+                setOrderDate('')
+            }
+
+            if (order.due_date) {
+                setExpectedShipDate(format(new Date(order.due_date), 'yyyy-MM-dd'))
+            } else {
+                setExpectedShipDate('')
+            }
+
             const firstItem = order.order_items?.[0]
             if (firstItem) {
                 setOrderQuantity(formatNumber(firstItem.quantity || ''))
