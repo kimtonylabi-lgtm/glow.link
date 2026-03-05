@@ -295,7 +295,7 @@ export async function getClientOrders(clientId: string) {
         const { data: orders, error } = await supabase
             .from('orders')
             .select(`
-                *,
+                id, client_id, sales_person_id, order_date, due_date, total_amount, status, po_number, created_at, memo, receiving_destination,
                 clients (company_name),
                 profiles (full_name),
                 order_items (

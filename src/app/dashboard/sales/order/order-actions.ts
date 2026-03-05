@@ -10,7 +10,8 @@ export async function saveOrderDetails(
     expectedShipDate?: string | null,
     orderItemId?: string,
     bomItems?: any[],
-    receiving_destination?: string | null
+    receiving_destination?: string | null,
+    client_product_name?: string | null
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -58,14 +59,20 @@ export async function saveOrderDetails(
         }
 
         // BOM Update (Order Items)
-        if (orderItemId && bomItems) {
-            const { error: itemsError } = await (supabase.from('order_items') as any)
-                .update({ post_processing: bomItems })
-                .eq('id', orderItemId)
+        if (orderItemId) {
+            const itemPayload: any = {}
+            if (bomItems) itemPayload.post_processing = bomItems
+            if (client_product_name !== undefined) itemPayload.client_product_name = client_product_name
 
-            if (itemsError) {
-                console.error('saveOrderDetails items err:', itemsError)
-                return { success: false, error: 'BOM 정보 업데이트에 실패했습니다.' }
+            if (Object.keys(itemPayload).length > 0) {
+                const { error: itemsError } = await (supabase.from('order_items') as any)
+                    .update(itemPayload)
+                    .eq('id', orderItemId)
+
+                if (itemsError) {
+                    console.error('saveOrderDetails items err:', itemsError)
+                    return { success: false, error: '품목 정보 업데이트에 실패했습니다.' }
+                }
             }
         }
 
@@ -84,7 +91,8 @@ export async function confirmOrderToDelivery(
     expectedShipDate?: string | null,
     orderItemId?: string,
     bomItems?: any[],
-    receiving_destination?: string | null
+    receiving_destination?: string | null,
+    client_product_name?: string | null
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -147,14 +155,18 @@ export async function confirmOrderToDelivery(
         }
 
         // BOM Update Transaction
-        if (orderItemId && bomItems) {
+        if (orderItemId) {
+            const itemPayload: any = {}
+            if (bomItems) itemPayload.post_processing = bomItems
+            if (client_product_name !== undefined) itemPayload.client_product_name = client_product_name
+
             const { error: itemsError } = await (supabase.from('order_items') as any)
-                .update({ post_processing: bomItems })
+                .update(itemPayload)
                 .eq('id', orderItemId)
 
             if (itemsError) {
                 console.error('confirmOrderToDelivery items err:', itemsError)
-                return { success: false, error: 'BOM 정보 이관 저장 실패: ' + itemsError.message }
+                return { success: false, error: '품목 정보 이관 저장 실패: ' + itemsError.message }
             }
         }
 

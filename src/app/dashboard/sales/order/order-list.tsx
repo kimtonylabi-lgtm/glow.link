@@ -45,6 +45,9 @@ type Order = {
     clients: { company_name: string } | null
     profiles: { full_name: string | null } | null
     order_items?: {
+        id: string
+        quantity: number
+        client_product_name: string | null
         products?: {
             name: string
         } | null
@@ -201,11 +204,9 @@ export function OrderList({
                                                     <span className="font-medium text-foreground">
                                                         {order.clients?.company_name || '알 수 없음'}
                                                     </span>
-                                                    {(order.receiving_destination || '').length > 0 && (
-                                                        <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                                            <span className="opacity-50">↳</span> 입고처: {order.receiving_destination}
-                                                        </span>
-                                                    )}
+                                                    <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                                        <span className="opacity-50">↳</span> 입고처: {order.receiving_destination || '-'}
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -213,12 +214,9 @@ export function OrderList({
                                                     <span className="font-semibold text-foreground">
                                                         {order.order_items?.[0]?.products?.name || '제품 없음'}
                                                     </span>
-                                                    {/* 업체측 제품명 추가 */}
-                                                    {(order.order_items?.[0] as any)?.client_product_name && (
-                                                        <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                                            <span className="opacity-50">↳</span> 고객사명칭: {(order.order_items?.[0] as any).client_product_name}
-                                                        </span>
-                                                    )}
+                                                    <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                                        <span className="opacity-50">↳</span> 고객사명칭: {order.order_items?.[0]?.client_product_name || '-'}
+                                                    </span>
                                                     {(order.order_items?.length || 0) > 1 && (
                                                         <span className="text-[10px] text-muted-foreground mt-0.5">
                                                             외 {order.order_items!.length - 1}건

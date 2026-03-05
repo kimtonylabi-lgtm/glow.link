@@ -108,6 +108,7 @@ export function OrderDetailModal({
             if (firstItem) {
                 setOrderQuantity(formatNumber(firstItem.quantity || ''))
                 setTaeSungProductName(firstItem.products?.name || '')
+                setClientProductName(firstItem.client_product_name || '')
 
                 let parsed = []
                 try {
@@ -151,7 +152,8 @@ export function OrderDetailModal({
                 expectedShipDate,
                 firstItemId,
                 bomItems,
-                receivingDestination
+                receivingDestination,
+                clientProductName
             )
             if (res.success) {
                 toast.success('발주 정보가 저장되었습니다.')
@@ -191,7 +193,8 @@ export function OrderDetailModal({
                 expectedShipDate,
                 firstItemId,
                 bomItems,
-                receivingDestination
+                receivingDestination,
+                clientProductName
             )
             if (res.success) {
                 toast.success('발주가 확정되어 납기 관리로 이관되었습니다.')
