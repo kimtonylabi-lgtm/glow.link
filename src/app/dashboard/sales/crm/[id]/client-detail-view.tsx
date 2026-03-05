@@ -100,7 +100,7 @@ export function ClientDetailView({ initialClient }: Props) {
             </div>
 
             {/* Main Content Area with Fixed Height & Isolated Scroll */}
-            <div className="bg-card/20 backdrop-blur-xl border border-border/40 rounded-3xl overflow-hidden shadow-sm h-[800px] flex flex-col">
+            <div className="bg-card/20 backdrop-blur-xl border border-border/40 rounded-3xl overflow-hidden shadow-sm h-[85vh] md:h-[800px] flex flex-col">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col overflow-hidden">
                     {/* Integrated Tab Header (Sticky & Stable) */}
                     <div className="pt-6 px-6 border-b border-border/40 bg-card/60 backdrop-blur-3xl sticky top-0 z-20">

@@ -233,7 +233,7 @@ export function CrmClient({ initialData }: CrmClientProps) {
 
             {/* Right Panel: Detail View */}
             <div className={cn(
-                "w-[800px] h-[800px] shrink-0 bg-card/20 backdrop-blur-xl border border-border/40 rounded-3xl overflow-hidden shadow-sm relative",
+                "w-full md:w-[800px] shrink-0 h-[85vh] md:h-[800px] bg-card/20 backdrop-blur-xl border border-border/40 rounded-3xl overflow-hidden shadow-sm relative flex flex-col",
                 !selectedId && "hidden md:flex",
                 selectedId ? "flex" : "hidden md:flex"
             )}>

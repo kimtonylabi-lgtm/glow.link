@@ -143,7 +143,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
     const primaryContact = client.contacts?.find((c: any) => c.is_primary) || client.contacts?.[0]
 
     return (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden bg-card/10 backdrop-blur-md">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500 bg-card/10 backdrop-blur-md">
             {/* Compact Page Header with Tabs Integrated */}
             <div className="pt-6 px-6 border-b border-border/40 bg-card/60 backdrop-blur-3xl sticky top-0 md:top-0 z-20 overflow-visible">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">

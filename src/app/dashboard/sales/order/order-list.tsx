@@ -163,10 +163,10 @@ export function OrderList({
                 {/* Glow Effect Top */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
-                <div className="overflow-x-auto">
+                <div className="w-full overflow-x-auto">
                     <Table className={cn(
-                        "w-full",
-                        viewMode === 'customer' ? "table-fixed min-w-[700px]" : "min-w-[1000px]"
+                        "",
+                        viewMode === 'customer' ? "table-fixed min-w-[620px] w-full" : "min-w-[1000px] w-full"
                     )}>
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
