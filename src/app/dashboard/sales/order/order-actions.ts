@@ -7,7 +7,9 @@ export async function saveOrderDetails(
     orderId: string,
     poNumber: string,
     orderDate?: string | null,
-    expectedShipDate?: string | null
+    expectedShipDate?: string | null,
+    orderItemId?: string,
+    bomItems?: any[]
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -47,8 +49,20 @@ export async function saveOrderDetails(
             if (error.code === '23505') { // Unique violation code in Postgres
                 return { success: false, error: '이미 등록된 발주 번호입니다.' }
             }
-            console.error('saveOrderDetails error:', error)
+            console.error('saveOrderDetails orders err:', error)
             return { success: false, error: '발주 정보 업데이트에 실패했습니다.' }
+        }
+
+        // BOM Update (Order Items)
+        if (orderItemId && bomItems) {
+            const { error: itemsError } = await (supabase.from('order_items') as any)
+                .update({ post_processing: bomItems })
+                .eq('id', orderItemId)
+
+            if (itemsError) {
+                console.error('saveOrderDetails items err:', itemsError)
+                return { success: false, error: 'BOM 정보 업데이트에 실패했습니다.' }
+            }
         }
 
         revalidatePath('/dashboard/sales/order')
@@ -63,7 +77,9 @@ export async function confirmOrderToDelivery(
     orderId: string,
     poNumber: string,
     orderDate?: string | null,
-    expectedShipDate?: string | null
+    expectedShipDate?: string | null,
+    orderItemId?: string,
+    bomItems?: any[]
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -120,8 +136,20 @@ export async function confirmOrderToDelivery(
             .eq('id', orderId)
 
         if (error) {
-            console.error('confirmOrderToDelivery error:', error)
+            console.error('confirmOrderToDelivery orders err:', error)
             return { success: false, error: '납기 이관에 실패했습니다.' }
+        }
+
+        // BOM Update Transaction
+        if (orderItemId && bomItems) {
+            const { error: itemsError } = await (supabase.from('order_items') as any)
+                .update({ post_processing: bomItems })
+                .eq('id', orderItemId)
+
+            if (itemsError) {
+                console.error('confirmOrderToDelivery items err:', itemsError)
+                return { success: false, error: 'BOM 정보 이관 저장에 실패했습니다.' }
+            }
         }
 
         revalidatePath('/dashboard/sales/order')
@@ -183,5 +211,38 @@ export async function cancelOrderConfirmation(orderId: string, reason: string) {
     } catch (error) {
         console.error('cancelOrderConfirmation exception:', error)
         return { success: false, error: '서버 오류가 발생했습니다.' }
+    }
+}
+
+export async function fetchOrderDetail(orderId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data, error } = await (supabase.from('orders') as any)
+            .select(`
+                *,
+                clients (company_name),
+                profiles (full_name),
+                order_items (
+                    id,
+                    quantity,
+                    post_processing,
+                    unit_price,
+                    subtotal,
+                    products (name)
+                )
+            `)
+            .eq('id', orderId)
+            .single()
+
+        if (error) {
+            console.error('fetchOrderDetail db error:', error)
+            return { success: false, data: null }
+        }
+
+        return { success: true, data }
+    } catch (e) {
+        console.error('fetchOrderDetail exception:', e)
+        return { success: false, data: null }
     }
 }
