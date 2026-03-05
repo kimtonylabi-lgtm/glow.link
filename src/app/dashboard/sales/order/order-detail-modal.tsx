@@ -40,21 +40,22 @@ export function OrderDetailModal({
 
     // Form States
     const [poNumber, setPoNumber] = useState('')
-    const [orderDate, setOrderDate] = useState('')
+    const [orderDate, setOrderDate] = useState<string>('')
     const [orderDateOpen, setOrderDateOpen] = useState(false)
     const [clientName, setClientName] = useState('')
     const [exportType, setExportType] = useState<'내수' | '수출'>('내수')
     const [orderQuantity, setOrderQuantity] = useState('')
-    const [expectedShipDate, setExpectedShipDate] = useState('')
+    const [expectedShipDate, setExpectedShipDate] = useState<string>('')
     const [expectedShipDateOpen, setExpectedShipDateOpen] = useState(false)
     const [taeSungProductName, setTaeSungProductName] = useState('')
     const [clientProductName, setClientProductName] = useState('')
-    const [warehouse, setWarehouse] = useState('')
+    const [receivingDestination, setReceivingDestination] = useState<string>('')
     const [catNo, setCatNo] = useState('')
     const [hasSample, setHasSample] = useState(false)
     const [hasFilm, setHasFilm] = useState(false)
     const [hasLaba, setHasLaba] = useState(false)
     const [remarks, setRemarks] = useState('')
+    const [memo, setMemo] = useState<string>('')
 
     // Parsed BOM
     const [bomItems, setBomItems] = useState<any[]>([])
@@ -85,7 +86,8 @@ export function OrderDetailModal({
         if (isOpen && detailedOrder) {
             setPoNumber(detailedOrder.po_number || '')
             setClientName(detailedOrder.clients?.company_name || '')
-            setWarehouse(detailedOrder.warehouse || '')
+            setReceivingDestination(detailedOrder.receiving_destination || '')
+            setMemo(detailedOrder.memo || '')
 
             // 날짜 데이터 초기값 자동 바인딩 (수주일/작성일 ➔ 발주일, 납기일 ➔ 출고예정일)
             if (detailedOrder.order_date) {
@@ -149,7 +151,7 @@ export function OrderDetailModal({
                 expectedShipDate,
                 firstItemId,
                 bomItems,
-                warehouse
+                receivingDestination
             )
             if (res.success) {
                 toast.success('발주 정보가 저장되었습니다.')
@@ -189,7 +191,7 @@ export function OrderDetailModal({
                 expectedShipDate,
                 firstItemId,
                 bomItems,
-                warehouse
+                receivingDestination
             )
             if (res.success) {
                 toast.success('발주가 확정되어 납기 관리로 이관되었습니다.')
@@ -310,7 +312,7 @@ export function OrderDetailModal({
                                 </div>
                                 <div className="md:col-span-3 flex border-r border-b border-slate-700 h-10">
                                     <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">입고처</div>
-                                    <Input value={warehouse} onChange={(e) => setWarehouse(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
+                                    <Input value={receivingDestination} onChange={(e) => setReceivingDestination(e.target.value)} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-slate-100 px-3" />
                                 </div>
                             </div>
 

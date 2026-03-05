@@ -294,7 +294,17 @@ export async function getClientOrders(clientId: string) {
         const supabase = await createClient()
         const { data: orders, error } = await supabase
             .from('orders')
-            .select('*')
+            .select(`
+                *,
+                clients (company_name),
+                profiles (full_name),
+                order_items (
+                    id,
+                    quantity,
+                    client_product_name,
+                    products (name)
+                )
+            `)
             .eq('client_id', clientId)
             .order('order_date', { ascending: false })
 

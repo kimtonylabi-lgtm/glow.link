@@ -10,7 +10,7 @@ export async function saveOrderDetails(
     expectedShipDate?: string | null,
     orderItemId?: string,
     bomItems?: any[],
-    warehouse?: string | null
+    receiving_destination?: string | null
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -40,8 +40,8 @@ export async function saveOrderDetails(
         if (expectedShipDate !== undefined) {
             updatePayload.due_date = expectedShipDate ? expectedShipDate : null
         }
-        if (warehouse !== undefined) {
-            updatePayload.warehouse = warehouse ? warehouse : null
+        if (receiving_destination !== undefined) {
+            updatePayload.receiving_destination = receiving_destination ? receiving_destination : null
         }
 
         const { error } = await supabase
@@ -84,7 +84,7 @@ export async function confirmOrderToDelivery(
     expectedShipDate?: string | null,
     orderItemId?: string,
     bomItems?: any[],
-    warehouse?: string | null
+    receiving_destination?: string | null
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -131,7 +131,7 @@ export async function confirmOrderToDelivery(
             po_number: poNumber,
             order_date: orderDate,
             due_date: expectedShipDate ? expectedShipDate : null,
-            warehouse: warehouse ? warehouse : null,
+            receiving_destination: receiving_destination ? receiving_destination : null,
             status: 'production',
             status_history: [...history, newLog]
         }
@@ -235,6 +235,7 @@ export async function fetchOrderDetail(orderId: string) {
                     post_processing,
                     unit_price,
                     subtotal,
+                    client_product_name,
                     products (name)
                 )
             `)

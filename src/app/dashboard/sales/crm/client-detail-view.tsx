@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import { getClientDetail, getClientOrders, getClientSamples, getClientHistory, setPrimaryContact } from './actions'
 import { ContactFormModal } from './contact-form-modal'
 import { toast } from 'sonner'
+import { OrderList } from '../order/order-list'
 
 interface Props {
     clientId: string | null
@@ -45,6 +46,7 @@ export function ClientDetailView({ clientId, onBack }: Props) {
     const [samples, setSamples] = useState<any[]>([])
     const [history, setHistory] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [userRole, setUserRole] = useState<string>('sales')
     const [isDetailLoading, setIsDetailLoading] = useState(false)
 
     // Reset and fetch when ID changes
@@ -243,35 +245,20 @@ export function ClientDetailView({ clientId, onBack }: Props) {
                 </TabsContent>
 
                 <TabsContent value="orders" className="mt-0">
-                    <div className="space-y-3">
-                        {isLoading ? (
-                            <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary/30" /></div>
-                        ) : orders.length > 0 ? (
-                            orders.map((order) => (
-                                <div key={order.id} className="p-4 rounded-xl bg-card border border-border/40 hover:border-primary/30 transition-all group flex items-center justify-between shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 border border-emerald-500/20">
-                                            <ShoppingCart className="h-5 w-5" />
-                                        </div>
-                                        <div>
-                                            <div className="text-[9px] font-black text-muted-foreground tracking-tighter uppercase mb-0.5">Order No. {order.id.slice(0, 8)}</div>
-                                            <div className="text-sm font-black">₩ {order.total_amount.toLocaleString()}</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right flex flex-col items-end gap-1.5">
-                                        <Badge variant="outline" className="text-[9px] h-4 px-1 border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
-                                            {order.status.toUpperCase()}
-                                        </Badge>
-                                        <span className="text-[9px] text-muted-foreground font-medium">{format(new Date(order.order_date), 'yyyy.MM.dd')}</span>
-                                    </div>
+                    <div className="bg-card/30 border border-border/40 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="p-1">
+                            {isLoading ? (
+                                <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary/30" /></div>
+                            ) : (
+                                <div className="max-w-[100vw] overflow-x-auto">
+                                    <OrderList
+                                        orders={orders}
+                                        userRole={userRole}
+                                        viewMode="customer"
+                                    />
                                 </div>
-                            ))
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground/40 space-y-2">
-                                <ShoppingCart className="h-10 w-10 opacity-10" />
-                                <p className="text-xs font-bold tracking-tight">수주 이력이 없습니다.</p>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </TabsContent>
 

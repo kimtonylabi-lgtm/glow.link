@@ -40,7 +40,7 @@ type Order = {
     status: 'draft' | 'confirmed' | 'production' | 'shipped'
     po_number?: string
     memo: string | null
-    warehouse: string | null
+    receiving_destination: string | null
     created_at: string
     clients: { company_name: string } | null
     profiles: { full_name: string | null } | null
@@ -51,7 +51,17 @@ type Order = {
     }[]
 }
 
-export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Order[], userRole: string, tabType?: 'order' | 'delivery' }) {
+export function OrderList({
+    orders,
+    userRole,
+    tabType = 'order',
+    viewMode = 'default'
+}: {
+    orders: Order[],
+    userRole: string,
+    tabType?: 'order' | 'delivery',
+    viewMode?: 'default' | 'customer'
+}) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -153,21 +163,21 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                     <Table className="min-w-[1000px]">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
-                                <TableHead className="w-[120px] font-semibold">진행상태</TableHead>
+                                {viewMode === 'default' && <TableHead className="w-[120px] font-semibold">진행상태</TableHead>}
                                 <TableHead className="font-semibold text-center w-[120px]">발주번호(PO)</TableHead>
                                 <TableHead className="font-semibold">고객사</TableHead>
                                 <TableHead className="font-semibold">제품명</TableHead>
                                 <TableHead className="font-semibold">담당자</TableHead>
                                 <TableHead className="font-semibold text-right">수주총액</TableHead>
                                 <TableHead className="font-semibold whitespace-nowrap">수주일</TableHead>
-                                <TableHead className="font-semibold whitespace-nowrap">납기일</TableHead>
-                                <TableHead className="font-semibold text-center whitespace-nowrap">관리</TableHead>
+                                {viewMode === 'default' && <TableHead className="font-semibold whitespace-nowrap">납기일</TableHead>}
+                                {viewMode === 'default' && <TableHead className="font-semibold text-center whitespace-nowrap">관리</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                                    <TableCell colSpan={viewMode === 'customer' ? 6 : 9} className="h-24 text-center text-muted-foreground">
                                         조회된 내역이 없습니다.
                                     </TableCell>
                                 </TableRow>
@@ -176,11 +186,13 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                     const config = statusConfig[order.status]
                                     return (
                                         <TableRow key={order.id} className="group hover:bg-muted/20 transition-colors cursor-pointer">
-                                            <TableCell>
-                                                <Badge variant="outline" className={config.color}>
-                                                    {config.label}
-                                                </Badge>
-                                            </TableCell>
+                                            {viewMode === 'default' && (
+                                                <TableCell>
+                                                    <Badge variant="outline" className={config.color}>
+                                                        {config.label}
+                                                    </Badge>
+                                                </TableCell>
+                                            )}
                                             <TableCell className="text-center font-mono opacity-80 text-sm">
                                                 {order.po_number || '-'}
                                             </TableCell>
@@ -189,9 +201,9 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                                     <span className="font-medium text-foreground">
                                                         {order.clients?.company_name || '알 수 없음'}
                                                     </span>
-                                                    {order.warehouse && (
+                                                    {(order.receiving_destination || '').length > 0 && (
                                                         <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                                            <span className="opacity-50">↳</span> 입고처: {order.warehouse}
+                                                            <span className="opacity-50">↳</span> 입고처: {order.receiving_destination}
                                                         </span>
                                                     )}
                                                 </div>
@@ -201,6 +213,12 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                                     <span className="font-semibold text-foreground">
                                                         {order.order_items?.[0]?.products?.name || '제품 없음'}
                                                     </span>
+                                                    {/* 업체측 제품명 추가 */}
+                                                    {(order.order_items?.[0] as any)?.client_product_name && (
+                                                        <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                                            <span className="opacity-50">↳</span> 고객사명칭: {(order.order_items?.[0] as any).client_product_name}
+                                                        </span>
+                                                    )}
                                                     {(order.order_items?.length || 0) > 1 && (
                                                         <span className="text-[10px] text-muted-foreground mt-0.5">
                                                             외 {order.order_items!.length - 1}건
@@ -218,49 +236,53 @@ export function OrderList({ orders, userRole, tabType = 'order' }: { orders: Ord
                                                 {/* Line connection effect for recent items */}
                                                 <div className="absolute left-0 top-0 bottom-0 w-px bg-border/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 <div className="pl-3">
-                                                    {format(new Date(order.order_date), 'yyyy-MM-dd', { locale: ko })}
+                                                    {order.order_date ? format(new Date(order.order_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
-                                                {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <div className="flex items-center justify-center gap-1 transition-opacity">
-                                                    {tabType === 'order' ? (
-                                                        <>
+                                            {viewMode === 'default' && (
+                                                <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
+                                                    {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
+                                                </TableCell>
+                                            )}
+                                            {viewMode === 'default' && (
+                                                <TableCell className="text-center">
+                                                    <div className="flex items-center justify-center gap-1 transition-opacity">
+                                                        {tabType === 'order' ? (
+                                                            <>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setSelectedOrder(order)
+                                                                        setIsDetailModalOpen(true)
+                                                                    }}
+                                                                >
+                                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </>
+                                                        ) : (
                                                             <Button
-                                                                size="icon"
+                                                                size="sm"
                                                                 variant="ghost"
-                                                                className="h-8 w-8"
+                                                                className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-300 hover:text-slate-100"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
-                                                                    setSelectedOrder(order)
-                                                                    setIsDetailModalOpen(true)
+                                                                    setOrderToCancel(order)
+                                                                    setCancelReason('')
+                                                                    setCancelModalOpen(true)
                                                                 }}
                                                             >
-                                                                <Edit2 className="h-3.5 w-3.5" />
+                                                                <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
                                                             </Button>
-                                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                        </>
-                                                    ) : (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-300 hover:text-slate-100"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                setOrderToCancel(order)
-                                                                setCancelReason('')
-                                                                setCancelModalOpen(true)
-                                                            }}
-                                                        >
-                                                            <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </TableCell>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     )
                                 })

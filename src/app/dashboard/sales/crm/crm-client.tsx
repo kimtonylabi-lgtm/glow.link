@@ -122,7 +122,7 @@ export function CrmClient({ initialData }: CrmClientProps) {
             {/* Left Panel: Master List */}
             <div className={cn(
                 "flex-col bg-card/20 backdrop-blur-xl border border-border/40 rounded-3xl overflow-hidden shadow-sm flex",
-                "w-full md:w-[350px] lg:w-[400px]",
+                "w-full md:w-[320px] lg:w-[350px]",
                 selectedId ? "hidden md:flex" : "flex"
             )}>
                 {/* Search & Header */}
