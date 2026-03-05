@@ -39,10 +39,12 @@ export function OrderDetailModal({
     // Form States
     const [poNumber, setPoNumber] = useState('')
     const [orderDate, setOrderDate] = useState('')
+    const [orderDateOpen, setOrderDateOpen] = useState(false)
     const [clientName, setClientName] = useState('')
     const [exportType, setExportType] = useState<'내수' | '수출'>('내수')
     const [orderQuantity, setOrderQuantity] = useState('')
     const [expectedShipDate, setExpectedShipDate] = useState('')
+    const [expectedShipDateOpen, setExpectedShipDateOpen] = useState(false)
     const [taeSungProductName, setTaeSungProductName] = useState('')
     const [clientProductName, setClientProductName] = useState('')
     const [warehouse, setWarehouse] = useState('')
@@ -164,7 +166,7 @@ export function OrderDetailModal({
                             </div>
                             <div className="flex border-r border-b border-slate-700 h-10">
                                 <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">발주일</div>
-                                <Popover>
+                                <Popover open={orderDateOpen} onOpenChange={setOrderDateOpen}>
                                     <PopoverTrigger asChild>
                                         <Button variant={"ghost"} className="flex-1 h-full justify-between font-mono font-normal hover:bg-slate-800 focus-visible:ring-0 px-3 rounded-none hover:text-slate-100 text-slate-100 data-[state=open]:bg-slate-800">
                                             {orderDate ? orderDate : <span className="text-slate-600">yyyy-mm-dd</span>}
@@ -175,7 +177,12 @@ export function OrderDetailModal({
                                         <Calendar
                                             mode="single"
                                             selected={orderDate ? new Date(orderDate) : undefined}
-                                            onSelect={(date) => date && setOrderDate(format(date, 'yyyy-MM-dd'))}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setOrderDate(format(date, 'yyyy-MM-dd'))
+                                                    setOrderDateOpen(false)
+                                                }
+                                            }}
                                             initialFocus
                                         />
                                     </PopoverContent>
@@ -183,7 +190,7 @@ export function OrderDetailModal({
                             </div>
                             <div className="flex border-r border-b border-slate-700 h-10 bg-slate-900/50">
                                 <div className="w-[85px] bg-slate-800 text-slate-300 flex items-center justify-center text-[12px] font-semibold flex-shrink-0 border-r border-slate-700">출고예정일</div>
-                                <Popover>
+                                <Popover open={expectedShipDateOpen} onOpenChange={setExpectedShipDateOpen}>
                                     <PopoverTrigger asChild>
                                         <Button variant={"ghost"} className="flex-1 h-full justify-between font-mono font-normal hover:bg-slate-800 focus-visible:ring-0 px-3 rounded-none hover:text-slate-100 text-slate-100 data-[state=open]:bg-slate-800">
                                             {expectedShipDate ? expectedShipDate : <span className="text-slate-600">yyyy-mm-dd</span>}
@@ -194,7 +201,12 @@ export function OrderDetailModal({
                                         <Calendar
                                             mode="single"
                                             selected={expectedShipDate ? new Date(expectedShipDate) : undefined}
-                                            onSelect={(date) => date && setExpectedShipDate(format(date, 'yyyy-MM-dd'))}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setExpectedShipDate(format(date, 'yyyy-MM-dd'))
+                                                    setExpectedShipDateOpen(false)
+                                                }
+                                            }}
                                             initialFocus
                                         />
                                     </PopoverContent>
