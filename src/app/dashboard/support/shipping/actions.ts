@@ -42,7 +42,8 @@ export async function getPendingShippingOrders() {
             ...order,
             client_name: order.clients?.company_name || '알 수 없음',
             product_name: order.order_items?.[0]?.products?.name || '제품 없음',
-            client_product_name: order.order_items?.[0]?.client_product_name || null,
+            // [최적화] 직접 저장된 명칭이 있으면 쓰고, 없으면 관계 테이블에서 시도 (마이그레이션 후에는 관계 조인 가능)
+            client_product_name: order.order_items?.[0]?.client_product_name || (order.order_items?.[0]?.client_products as any)?.name || null,
             total_ordered_quantity: order.total_quantity || totalOrderedQuantity,
             total_shipped_quantity: totalShippedQuantity,
             is_fully_shipped: isFullyShipped,

@@ -99,11 +99,13 @@ export async function createShipment(payload: {
             order_id: payload.orderId,
             shipped_quantity: payload.shippedQuantity,
             shipping_date: payload.shippingDate,
-            delivery_address: payload.deliveryAddress || null,
+            delivery_address: payload.deliveryAddress || '',
             shipping_method: payload.shippingMethod,
-            shipping_memo: payload.shippingMemo || null,
+            shipping_memo: payload.shippingMemo || '',
             handler_id: userId,
             status: 'shipped',
+            // [방어] 사장님 지시로 UI에선 제거되었으나 DB NOT NULL 제약조건이 남아있을 경우 대비
+            tracking_number: '',
         })
 
     if (insertErr) {
