@@ -19,7 +19,7 @@ export async function getPendingShippingOrders() {
             due_date,
             total_quantity,
             clients ( company_name ),
-            order_items ( quantity, products ( name ), client_product_name, client_products ( name ) ),
+            order_items ( quantity, products ( name ), client_product_name ),
             shipping_orders ( id, shipped_quantity, status, tracking_number, shipping_date )
         `)
         .in('status', ['confirmed', 'production', 'shipped', 'partially_shipped'] as any[])
@@ -42,7 +42,7 @@ export async function getPendingShippingOrders() {
             ...order,
             client_name: order.clients?.company_name || '알 수 없음',
             product_name: order.order_items?.[0]?.products?.name || '제품 없음',
-            client_product_name: order.order_items?.[0]?.client_product_name || order.order_items?.[0]?.client_products?.name || null,
+            client_product_name: order.order_items?.[0]?.client_product_name || null,
             total_ordered_quantity: order.total_quantity || totalOrderedQuantity,
             total_shipped_quantity: totalShippedQuantity,
             is_fully_shipped: isFullyShipped,
