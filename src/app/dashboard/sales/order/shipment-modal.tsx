@@ -29,6 +29,9 @@ interface ShipmentModalProps {
         id: string
         po_number?: string
         total_quantity?: number
+        total_ordered_quantity?: number
+        total_shipped_quantity?: number
+        product_name?: string
         clients?: { company_name: string } | null
         order_items?: { products?: { name: string } | null }[]
         receiving_destination?: string | null
@@ -67,15 +70,12 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
             getShipmentsWithSummary(order.id).then((res) => {
                 if (res.success && res.data) {
                     setSummary(res.data)
-                    // [보완 4] 잔량 자동 입력 - 0 이하면 0으로
                     const remaining = res.data.remainingQty
                     setShippedQuantity(remaining > 0 ? String(remaining) : '0')
-                    // 도착지 자동 채우기
                     setDeliveryAddress(res.data.order?.receiving_destination || '')
                 }
                 setIsLoadingData(false)
             })
-            // 오늘 날짜 기본값
             setShippingDate(format(new Date(), 'yyyy-MM-dd'))
         } else {
             setSummary(null)
@@ -89,7 +89,6 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
     const handleSubmit = async () => {
         const qty = parseInt(shippedQuantity.replace(/,/g, ''))
-
         if (isNaN(qty) || qty <= 0) {
             toast.error('출하 수량은 1 이상이어야 합니다.')
             return
@@ -98,7 +97,6 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
             toast.error('출하일자를 선택해주세요.')
             return
         }
-
         if (!deliveryAddress.trim()) {
             toast.error('도착지(입고처)를 입력해주세요.')
             return
@@ -118,7 +116,6 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
             if (res.success) {
                 toast.success('출하 등록이 완료되었습니다.')
-                // 데이터 새로고침
                 const refreshed = await getShipmentsWithSummary(order!.id)
                 if (refreshed.success && refreshed.data) {
                     setSummary(refreshed.data)
@@ -157,19 +154,18 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
     if (!order) return null
 
     const companyName = order.clients?.company_name || '알 수 없음'
-    const productName = order.order_items?.[0]?.products?.name || '-'
-    const totalQty = summary?.totalOrderQty ?? order.total_quantity ?? 0
-    const totalShipped = summary?.totalShipped ?? 0
-    const remainingQty = summary?.remainingQty ?? totalQty
+    const productName = order.order_items?.[0]?.products?.name || order.product_name || '-'
+    const totalQty = summary?.totalOrderQty ?? order.total_quantity ?? order.total_ordered_quantity ?? 0
+    const totalShipped = summary?.totalShipped ?? order.total_shipped_quantity ?? 0
+    const remainingQty = summary?.remainingQty ?? Math.max(0, totalQty - totalShipped)
     const isFullyShipped = totalQty > 0 && totalShipped >= totalQty
-
     const progressPct = totalQty > 0 ? Math.min(100, Math.round((totalShipped / totalQty) * 100)) : 0
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-950 border-border/40 p-0">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-slate-950 border-border/40 p-0 flex flex-col">
                 {/* 헤더 */}
-                <DialogHeader className="sticky top-0 z-10 bg-slate-900 border-b border-border/40 px-6 py-4">
+                <DialogHeader className="sticky top-0 z-10 bg-slate-900 border-b border-border/40 px-6 py-4 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
                             <Truck className="w-5 h-5 text-amber-400" />
@@ -185,132 +181,131 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                     </div>
                 </DialogHeader>
 
-                <div className="p-6 space-y-6">
-                    {/* 수량 현황 카드 */}
-                    <div className="rounded-xl border border-border/40 bg-slate-900/60 p-4 space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <Package className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">발주 총수량</span>
+                {/* 본문: 가로 2단 분리 (좌: 현황+히스토리 / 우: 입력폼) */}
+                <div className="flex-1 flex overflow-hidden">
+
+                    {/* 좌측 영역 */}
+                    <div className="w-1/2 p-5 flex flex-col gap-4 overflow-y-auto pr-3">
+                        {/* 수량 현황 카드 */}
+                        <div className="rounded-xl border border-border/40 bg-slate-900/60 p-4 space-y-3 shrink-0">
+                            <div className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Package className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-muted-foreground">발주 총수량</span>
+                                </div>
+                                <span className="font-bold font-mono text-slate-200">{totalQty.toLocaleString()} EA</span>
                             </div>
-                            <span className="font-bold font-mono">{totalQty.toLocaleString()} EA</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                <span className="text-muted-foreground">누적 출하</span>
+                            <div className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                    <span className="text-muted-foreground">누적 출하</span>
+                                </div>
+                                <span className="font-bold font-mono text-emerald-400">{totalShipped.toLocaleString()} EA</span>
                             </div>
-                            <span className="font-bold font-mono text-emerald-400">{totalShipped.toLocaleString()} EA</span>
+
+                            {/* 진행 바 */}
+                            <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${isFullyShipped ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                    style={{ width: `${progressPct}%` }}
+                                />
+                            </div>
+
+                            {/* 잔량 배지 */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">{progressPct}% 출하 완료</span>
+                                {isFullyShipped ? (
+                                    <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs">
+                                        <CheckCircle2 className="w-3 h-3 mr-1" /> 완료
+                                    </Badge>
+                                ) : (
+                                    <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-xs font-mono">
+                                        잔량 {remainingQty.toLocaleString()} EA
+                                    </Badge>
+                                )}
+                            </div>
                         </div>
 
-                        {/* 진행 바 */}
-                        <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all duration-500 ${isFullyShipped ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                                style={{ width: `${progressPct}%` }}
-                            />
-                        </div>
+                        {/* 출하 히스토리 */}
+                        <div className="flex-1 flex flex-col min-h-0 rounded-xl border border-border/40 overflow-hidden">
+                            <div className="flex items-center gap-2 p-3 bg-slate-800/60 border-b border-border/40 shrink-0">
+                                <History className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm font-semibold text-slate-200">출하 이력</span>
+                            </div>
 
-                        {/* 잔량 배지 */}
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">{progressPct}% 출하 완료</span>
-                            {isFullyShipped ? (
-                                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs">
-                                    <CheckCircle2 className="w-3 h-3 mr-1" /> 출하 완료
-                                </Badge>
+                            {isLoadingData ? (
+                                <div className="flex-1 flex items-center justify-center py-6">
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : !summary?.shipments.length ? (
+                                <div className="flex-1 flex items-center justify-center p-6 text-sm text-muted-foreground bg-slate-900/40">
+                                    출하 내역이 없습니다.
+                                </div>
                             ) : (
-                                <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-xs font-mono">
-                                    잔량 {remainingQty.toLocaleString()} EA
-                                </Badge>
+                                <div className="overflow-y-auto flex-1">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-slate-800/40 text-slate-400 text-xs sticky top-0 backdrop-blur z-10">
+                                            <tr>
+                                                <th className="px-3 py-2 text-left font-medium">일자</th>
+                                                <th className="px-3 py-2 text-right font-medium">수량</th>
+                                                <th className="px-3 py-2 text-left font-medium">방식</th>
+                                                <th className="px-3 py-2 text-center font-medium w-10">삭제</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/20">
+                                            {summary.shipments.map((s) => (
+                                                <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
+                                                    <td className="px-3 py-2 font-mono text-xs text-slate-300">
+                                                        {s.shipping_date ? format(new Date(s.shipping_date), 'MM-dd') : '-'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-right font-mono font-bold text-emerald-400 text-xs">
+                                                        {(s.shipped_quantity || 0).toLocaleString()}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-[11px] text-muted-foreground">
+                                                        {s.shipping_method || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center">
+                                                        <button
+                                                            onClick={() => handleDelete(s.id)}
+                                                            className="p-1 rounded hover:bg-red-500/10 text-slate-500 hover:text-red-400"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    {/* 출하 히스토리 */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <History className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm font-semibold text-slate-200">출하 히스토리</span>
-                        </div>
-
-                        {isLoadingData ? (
-                            <div className="flex justify-center py-6">
-                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : !summary?.shipments.length ? (
-                            <div className="text-center py-6 text-sm text-muted-foreground border border-border/30 rounded-lg bg-slate-900/40">
-                                아직 출하 내역이 없습니다.
-                            </div>
-                        ) : (
-                            <div className="rounded-lg border border-border/40 overflow-hidden">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-slate-800/60 text-slate-400 text-xs">
-                                        <tr>
-                                            <th className="px-3 py-2 text-left">출하일</th>
-                                            <th className="px-3 py-2 text-right">수량</th>
-                                            <th className="px-3 py-2 text-left">도착지</th>
-                                            <th className="px-3 py-2 text-left">출고 방식</th>
-                                            <th className="px-3 py-2 text-center w-10">삭제</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border/20">
-                                        {summary.shipments.map((s) => (
-                                            <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
-                                                <td className="px-3 py-2.5 font-mono text-xs text-slate-300">
-                                                    {s.shipping_date ? format(new Date(s.shipping_date), 'yyyy-MM-dd') : '-'}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right font-mono font-bold text-emerald-400">
-                                                    {(s.shipped_quantity || 0).toLocaleString()} EA
-                                                </td>
-                                                <td className="px-3 py-2.5 text-xs text-muted-foreground truncate max-w-[120px]">
-                                                    {s.delivery_address || '-'}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                                                    {s.shipping_method || '-'}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-center">
-                                                    <button
-                                                        onClick={() => handleDelete(s.id)}
-                                                        className="p-1 rounded hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
-                                                        title="출하 취소"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-
-                    <Separator className="bg-border/30" />
-
-                    {/* 신규 출하 등록 폼 */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-4 justify-between">
+                    {/* 우측 영역 (구분선 포함) */}
+                    <div className="w-1/2 p-5 border-l border-border/30 flex flex-col bg-slate-900/20 overflow-y-auto">
+                        <div className="flex items-center gap-2 mb-4 justify-between shrink-0">
                             <div className="flex items-center gap-2">
                                 <Plus className="w-4 h-4 text-amber-400" />
-                                <span className="text-sm font-semibold text-slate-200">이번 출하 등록</span>
+                                <span className="text-sm font-semibold text-slate-200">신규 출하 폼</span>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 bg-slate-900 px-2 py-1.5 rounded-md border border-border/50">
                                 <Checkbox
                                     id="forceComplete"
                                     checked={forceComplete}
                                     onCheckedChange={(checked) => setForceComplete(checked as boolean)}
-                                    className="border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:text-amber-950"
+                                    className="border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:text-amber-950 w-3.5 h-3.5"
                                 />
                                 <label
                                     htmlFor="forceComplete"
-                                    className="text-xs font-medium leading-none text-slate-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    className="text-[11px] font-medium leading-none text-slate-300 cursor-pointer"
                                 >
-                                    잔량 상관없이 강제 완료(종결) 처리
+                                    잔량 상관없이 완료
                                 </label>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* 입력 폼 래퍼 (가로 2단. 우측영역 안에서 또 2단) */}
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                             {/* 출하일자 */}
                             <div className="space-y-1.5 col-span-1">
                                 <Label className="text-xs text-slate-400">출하일자 *</Label>
@@ -318,9 +313,9 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
-                                            className="w-full justify-between font-mono text-sm h-10 bg-slate-900 border-border/50 text-slate-100 hover:bg-slate-800"
+                                            className="w-full justify-between font-mono text-xs h-9 bg-slate-900 border-border/50 text-slate-100 px-3"
                                         >
-                                            {shippingDate || <span className="text-slate-500">날짜 선택</span>}
+                                            {shippingDate || <span className="text-slate-500">선택</span>}
                                             <CalendarIcon className="w-4 h-4 text-slate-500" />
                                         </Button>
                                     </PopoverTrigger>
@@ -340,92 +335,91 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                                 </Popover>
                             </div>
 
-                            {/* 출하 수량 - 잔량 자동입력 */}
+                            {/* 수량 */}
                             <div className="space-y-1.5 col-span-1">
-                                <Label className="text-xs text-slate-400 flex items-center gap-1">
-                                    출하 수량 * <span className="text-amber-400/60 font-normal">(잔량 자동입력)</span>
+                                <Label className="text-xs text-slate-400 flex justify-between">
+                                    <span>수량 * </span>
+                                    <span className="text-amber-400/60 font-normal">잔량입력됨</span>
                                 </Label>
                                 <Input
                                     type="number"
                                     min="1"
                                     value={shippedQuantity}
-                                    onChange={(e) => {
-                                        setShippedQuantity(e.target.value)
-                                    }}
-                                    className="h-10 bg-slate-900 border-border/50 text-slate-100 font-mono text-right focus-visible:ring-amber-500/30"
-                                    placeholder="수량 입력"
+                                    onChange={(e) => setShippedQuantity(e.target.value)}
+                                    className="h-9 bg-slate-900 border-border/50 text-slate-100 font-mono text-right text-sm"
+                                    placeholder="입력"
                                 />
                             </div>
 
-                            {/* 출고 방식 라디오/토글 */}
-                            <div className="space-y-1.5 col-span-1">
+                            {/* 도착지 */}
+                            <div className="space-y-1.5 col-span-2">
+                                <Label className="text-xs text-slate-400">도착지 (입고처) *</Label>
+                                <Input
+                                    value={deliveryAddress}
+                                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                                    className="h-9 bg-slate-900 border-border/50 text-slate-100 text-sm"
+                                    placeholder="도달지/창고/업체명"
+                                />
+                            </div>
+
+                            {/* 방식 토글 */}
+                            <div className="space-y-1.5 col-span-2">
                                 <Label className="text-xs text-slate-400">출고 방식 *</Label>
-                                <div className="grid grid-cols-3 gap-1.5">
+                                <div className="grid grid-cols-3 gap-2">
                                     <div
                                         onClick={() => setShippingMethod('택배 발송')}
-                                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '택배 발송' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '택배 발송' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400'}`}
                                     >
                                         <Package className="w-4 h-4" />
-                                        <span className="text-[11px] font-semibold whitespace-nowrap tracking-tighter">택배 발송</span>
+                                        <span className="text-[11px] font-semibold">택배 발송</span>
                                     </div>
                                     <div
                                         onClick={() => setShippingMethod('컨테이너 출고')}
-                                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '컨테이너 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '컨테이너 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400'}`}
                                     >
                                         <Archive className="w-4 h-4" />
-                                        <span className="text-[11px] font-semibold whitespace-nowrap tracking-tighter">컨테이너</span>
+                                        <span className="text-[11px] font-semibold">컨테이너</span>
                                     </div>
                                     <div
                                         onClick={() => setShippingMethod('납품차량 출고')}
-                                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '납품차량 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '납품차량 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400'}`}
                                     >
                                         <Car className="w-4 h-4" />
-                                        <span className="text-[11px] font-semibold whitespace-nowrap tracking-tighter">납품차량</span>
+                                        <span className="text-[11px] font-semibold">납품차량</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 도착지 */}
-                            <div className="space-y-1.5 col-span-1">
-                                <Label className="text-xs text-slate-400">입고처 (도착지) *</Label>
-                                <Input
-                                    value={deliveryAddress}
-                                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                                    className="h-10 bg-slate-900 border-border/50 text-slate-100 focus-visible:ring-amber-500/30"
-                                    placeholder="도달지/창고/회사명 입력"
-                                />
-                            </div>
-
                             {/* 메모 */}
-                            <div className="space-y-1.5 col-span-1">
+                            <div className="space-y-1.5 col-span-2">
                                 <Label className="text-xs text-slate-400">메모</Label>
                                 <Input
                                     value={shippingMemo}
                                     onChange={(e) => setShippingMemo(e.target.value)}
-                                    className="h-10 bg-slate-900 border-border/50 text-slate-100 focus-visible:ring-amber-500/30"
-                                    placeholder="특이사항 (선택)"
+                                    className="h-9 bg-slate-900 border-border/50 text-slate-100 text-sm"
+                                    placeholder="특이사항"
                                 />
                             </div>
                         </div>
 
-                        {/* 버튼 영역 */}
-                        <div className="flex justify-end gap-3 mt-6">
+                        {/* 버튼 (우측 패널 최하단) */}
+                        <div className="flex justify-end gap-2 mt-auto pt-6">
                             <Button
                                 variant="outline"
                                 onClick={() => onOpenChange(false)}
-                                className="bg-slate-900 border-border/50 text-slate-300 hover:bg-slate-800"
+                                className="bg-slate-900 border-border/50 text-slate-300 h-9 px-4"
                             >
                                 닫기
                             </Button>
                             <Button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || isLoadingData}
-                                className={`font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-900/20`}
+                                className={`font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 h-9`}
                             >
                                 {isSubmitting ? (
-                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
                                 ) : (
-                                    <Truck className="w-4 h-4 mr-2" />
+                                    <Truck className="w-4 h-4 mr-1.5" />
                                 )}
                                 출하 등록
                             </Button>

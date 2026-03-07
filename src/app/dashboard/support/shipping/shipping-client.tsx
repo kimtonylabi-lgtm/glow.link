@@ -226,8 +226,17 @@ export function ShippingClient() {
                                                 <TableCell className="font-semibold text-foreground truncate text-sm">
                                                     {order.client_name}
                                                 </TableCell>
-                                                <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                    {order.product_name}
+                                                <TableCell className="max-w-[200px]">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-sm font-semibold text-foreground truncate" title={order.product_name}>
+                                                            {order.product_name}
+                                                        </span>
+                                                        {order.order_items?.[0]?.client_product_name && (
+                                                            <span className="text-[11px] text-muted-foreground truncate" title={order.order_items[0].client_product_name}>
+                                                                {order.order_items[0].client_product_name}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-sm">
                                                     {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd') : '-'}
