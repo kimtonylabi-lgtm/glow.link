@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner'
 import { getPendingShippingOrders } from './actions'
 import { format } from 'date-fns'
-import { Loader2, Truck, CheckCircle2, ChevronRight } from 'lucide-react'
+import { Loader2, Truck, CheckCircle2, ChevronRight, Search, Calendar as CalendarIcon } from 'lucide-react'
 import { ShipmentModal } from '@/app/dashboard/sales/order/shipment-modal'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
 
 // Basic layout config for table to adapt cleanly
 export function ShippingClient() {
@@ -19,6 +21,12 @@ export function ShippingClient() {
     const [isLoading, setIsLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+    // Filter states
+    const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined })
+    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'partial' | 'completed'>('all')
+    const [searchQuery, setSearchQuery] = useState('')
+    const [calendarOpen, setCalendarOpen] = useState(false)
 
     const fetchData = async () => {
         setIsLoading(true)
@@ -49,6 +57,45 @@ export function ShippingClient() {
         setIsDialogOpen(true)
     }
 
+    // Derived Counts
+    const counts = {
+        total: orders.length,
+        pending: orders.filter((o) => !o.is_fully_shipped && o.total_shipped_quantity === 0).length,
+        partial: orders.filter((o) => !o.is_fully_shipped && o.total_shipped_quantity > 0).length,
+        completed: orders.filter((o) => o.is_fully_shipped).length,
+    }
+
+    // Filter Logic
+    const filteredOrders = orders.filter((order) => {
+        // Status
+        if (statusFilter === 'pending' && (order.is_fully_shipped || order.total_shipped_quantity > 0)) return false
+        if (statusFilter === 'partial' && (order.is_fully_shipped || order.total_shipped_quantity === 0)) return false
+        if (statusFilter === 'completed' && !order.is_fully_shipped) return false
+
+        // Search
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase()
+            const matchPo = order.po_number?.toLowerCase().includes(query)
+            const matchClient = order.client_name?.toLowerCase().includes(query)
+            const matchProduct = order.product_name?.toLowerCase().includes(query)
+            if (!matchPo && !matchClient && !matchProduct) return false
+        }
+
+        // Date Range
+        if (dateRange.from || dateRange.to) {
+            if (!order.due_date) return false
+            const due = new Date(order.due_date)
+            due.setHours(0, 0, 0, 0)
+            if (dateRange.from && due < dateRange.from) return false
+            if (dateRange.to) {
+                const toDate = new Date(dateRange.to)
+                toDate.setHours(23, 59, 59, 999)
+                if (due > toDate) return false
+            }
+        }
+        return true
+    })
+
     return (
         <div className="space-y-6 max-w-6xl mx-auto pb-10">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-card/40 backdrop-blur-xl border border-border/40 p-4 rounded-xl">
@@ -57,6 +104,89 @@ export function ShippingClient() {
                         출하 지시 (Shipping Instructions)
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">확정된 수주의 출하 및 분할 납품을 관리합니다.</p>
+                </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex flex-col md:flex-row gap-3 bg-card/40 border border-border/40 p-3 rounded-xl items-center justify-between">
+                <div className="flex flex-1 items-center gap-3 w-full overflow-x-auto">
+                    {/* Date Picker */}
+                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className={`h-10 justify-start text-left font-normal bg-slate-900 border-border/50 text-slate-300 w-[240px] shrink-0 ${!dateRange.from && !dateRange.to && 'text-muted-foreground'}`}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dateRange.from ? (
+                                    dateRange.to ? (
+                                        <>
+                                            {format(dateRange.from, 'yyyy.MM.dd')} - {format(dateRange.to, 'yyyy.MM.dd')}
+                                        </>
+                                    ) : (
+                                        format(dateRange.from, 'yyyy.MM.dd')
+                                    )
+                                ) : (
+                                    <span>기간 선택</span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                            <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={dateRange?.from}
+                                selected={{ from: dateRange?.from, to: dateRange?.to }}
+                                onSelect={(range) => {
+                                    setDateRange({ from: range?.from, to: range?.to })
+                                }}
+                                numberOfMonths={2}
+                            />
+                        </PopoverContent>
+                    </Popover>
+
+                    {/* Status Toggles */}
+                    <div className="flex bg-slate-900 p-1 rounded-lg border border-border/50 shrink-0 h-10 items-center">
+                        <Button
+                            onClick={() => setStatusFilter('all')}
+                            variant={statusFilter === 'all' ? 'default' : 'ghost'}
+                            className={`h-8 rounded-md px-3 text-sm transition-all ${statusFilter === 'all' ? 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            전체 <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-black/20 text-[10px]">{counts.total}</span>
+                        </Button>
+                        <Button
+                            onClick={() => setStatusFilter('pending')}
+                            variant={statusFilter === 'pending' ? 'default' : 'ghost'}
+                            className={`h-8 rounded-md px-3 text-sm transition-all ${statusFilter === 'pending' ? 'bg-indigo-500 hover:bg-indigo-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            미출고 <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-black/20 text-[10px]">{counts.pending}</span>
+                        </Button>
+                        <Button
+                            onClick={() => setStatusFilter('partial')}
+                            variant={statusFilter === 'partial' ? 'default' : 'ghost'}
+                            className={`h-8 rounded-md px-3 text-sm transition-all ${statusFilter === 'partial' ? 'bg-amber-500 hover:bg-amber-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            파샬출고 <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-black/20 text-[10px]">{counts.partial}</span>
+                        </Button>
+                        <Button
+                            onClick={() => setStatusFilter('completed')}
+                            variant={statusFilter === 'completed' ? 'default' : 'ghost'}
+                            className={`h-8 rounded-md px-3 text-sm transition-all ${statusFilter === 'completed' ? 'bg-slate-600 hover:bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            출고완료 <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-black/20 text-[10px]">{counts.completed}</span>
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Search Input */}
+                <div className="relative w-full md:w-72 shrink-0">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="발주번호, 거래처, 제품명..."
+                        className="h-10 pl-9 bg-slate-900 border-border/50 text-slate-100 focus-visible:ring-emerald-500/30"
+                    />
                 </div>
             </div>
 
@@ -79,7 +209,8 @@ export function ShippingClient() {
                                 <TableHeader className="bg-muted/50">
                                     <TableRow>
                                         <TableHead className="w-[120px]">발주번호(PO)</TableHead>
-                                        <TableHead>고객사 & 제품명</TableHead>
+                                        <TableHead>고객사</TableHead>
+                                        <TableHead>제품명</TableHead>
                                         <TableHead className="w-[100px]">납기일</TableHead>
                                         <TableHead className="w-[150px]">수량현황(출하/발주)</TableHead>
                                         <TableHead className="w-[150px]">입고처</TableHead>
@@ -88,19 +219,15 @@ export function ShippingClient() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {orders.map((order) => {
+                                    {filteredOrders.map((order) => {
                                         return (
                                             <TableRow key={order.id} className="cursor-default hover:bg-muted/30">
                                                 <TableCell className="font-mono text-xs">{order.po_number || '-'}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex flex-col min-w-0 leading-tight">
-                                                        <span className="font-semibold text-foreground truncate text-sm">
-                                                            {order.client_name}
-                                                        </span>
-                                                        <span className="text-xs text-muted-foreground mt-0.5 truncate">
-                                                            {order.product_name}
-                                                        </span>
-                                                    </div>
+                                                <TableCell className="font-semibold text-foreground truncate text-sm">
+                                                    {order.client_name}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                    {order.product_name}
                                                 </TableCell>
                                                 <TableCell className="text-sm">
                                                     {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd') : '-'}

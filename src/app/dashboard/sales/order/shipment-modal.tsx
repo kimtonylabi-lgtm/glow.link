@@ -358,29 +358,29 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                             </div>
 
                             {/* 출고 방식 라디오/토글 */}
-                            <div className="space-y-1.5 col-span-2">
+                            <div className="space-y-1.5 col-span-1">
                                 <Label className="text-xs text-slate-400">출고 방식 *</Label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-3 gap-1.5">
                                     <div
                                         onClick={() => setShippingMethod('택배 발송')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${shippingMethod === '택배 발송' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '택배 발송' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
                                     >
                                         <Package className="w-4 h-4" />
-                                        <span className="text-sm font-semibold">택배 발송</span>
+                                        <span className="text-[11px] font-semibold whitespace-nowrap tracking-tighter">택배 발송</span>
                                     </div>
                                     <div
                                         onClick={() => setShippingMethod('컨테이너 출고')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${shippingMethod === '컨테이너 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '컨테이너 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
                                     >
                                         <Archive className="w-4 h-4" />
-                                        <span className="text-sm font-semibold">컨테이너 출고</span>
+                                        <span className="text-[11px] font-semibold whitespace-nowrap tracking-tighter">컨테이너</span>
                                     </div>
                                     <div
                                         onClick={() => setShippingMethod('납품차량 출고')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${shippingMethod === '납품차량 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                        className={`flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg border cursor-pointer transition-all ${shippingMethod === '납품차량 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
                                     >
                                         <Car className="w-4 h-4" />
-                                        <span className="text-sm font-semibold">납품차량 출고</span>
+                                        <span className="text-[11px] font-semibold whitespace-nowrap tracking-tighter">납품차량</span>
                                     </div>
                                 </div>
                             </div>
