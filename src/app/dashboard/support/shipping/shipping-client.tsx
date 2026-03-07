@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -96,8 +97,20 @@ export function ShippingClient() {
         return true
     })
 
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const isDueSoon = (dueDateStr: string | null, isFullyShipped: boolean) => {
+        if (!dueDateStr || isFullyShipped) return false
+        const dueDate = new Date(dueDateStr)
+        dueDate.setHours(0, 0, 0, 0)
+        const diffTime = dueDate.getTime() - today.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        return diffDays >= 0 && diffDays <= 7
+    }
+
     return (
-        <div className="space-y-6 max-w-6xl mx-auto pb-10">
+        <div className="space-y-6 max-w-7xl mx-auto pb-10">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-card/40 backdrop-blur-xl border border-border/40 p-4 rounded-xl">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
@@ -220,26 +233,43 @@ export function ShippingClient() {
                                 </TableHeader>
                                 <TableBody>
                                     {filteredOrders.map((order) => {
+                                        const dueSoon = isDueSoon(order.due_date, order.is_fully_shipped)
                                         return (
-                                            <TableRow key={order.id} className="cursor-default hover:bg-muted/30">
-                                                <TableCell className="font-mono text-xs">{order.po_number || '-'}</TableCell>
+                                            <TableRow key={order.id} className={cn(
+                                                "cursor-default transition-colors",
+                                                dueSoon ? "bg-red-500/5 hover:bg-red-500/10" : "hover:bg-muted/30"
+                                            )}>
+                                                <TableCell className={cn(
+                                                    "font-mono text-xs",
+                                                    dueSoon && "text-red-400 font-bold"
+                                                )}>{order.po_number || '-'}</TableCell>
                                                 <TableCell className="font-semibold text-foreground truncate text-sm">
                                                     {order.client_name}
                                                 </TableCell>
-                                                <TableCell className="max-w-[200px]">
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span className="text-sm font-semibold text-foreground truncate" title={order.product_name}>
+                                                <TableCell className="max-w-[250px] py-4">
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <span className="text-[14px] font-bold text-slate-100 leading-snug break-all" title={order.product_name}>
                                                             {order.product_name}
                                                         </span>
-                                                        {order.client_product_name && (
-                                                            <span className="text-[11px] text-muted-foreground truncate" title={order.client_product_name}>
-                                                                {order.client_product_name}
+                                                        {(order.client_product_name || order.order_items?.[0]?.client_product_name) && (
+                                                            <span className="text-[12px] text-slate-400 font-medium leading-tight py-0.5 px-1.5 bg-slate-800/50 rounded border border-slate-700/30 break-all" title={order.client_product_name || order.order_items?.[0]?.client_product_name}>
+                                                                {order.client_product_name || order.order_items?.[0]?.client_product_name}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-sm">
-                                                    {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd') : '-'}
+                                                <TableCell className={cn(
+                                                    "text-sm",
+                                                    dueSoon && "text-red-400 font-bold"
+                                                )}>
+                                                    <div className="flex flex-col gap-1">
+                                                        {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd') : '-'}
+                                                        {dueSoon && (
+                                                            <Badge variant="outline" className="w-fit bg-red-500/10 text-red-500 border-red-500/30 text-[10px] px-1 h-4 animate-pulse">
+                                                                🚨 임박
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="font-mono text-sm">

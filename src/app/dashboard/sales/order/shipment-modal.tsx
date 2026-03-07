@@ -163,7 +163,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="w-full max-w-[1000px] max-h-[90vh] overflow-hidden bg-slate-950 border-border/40 p-0 flex flex-col">
+            <DialogContent className="!max-w-none !w-[1000px] !min-w-[1000px] max-h-[95vh] overflow-hidden bg-slate-950 border-border/40 p-0 flex flex-col">
                 {/* 헤더 */}
                 <DialogHeader className="sticky top-0 z-10 bg-slate-900 border-b border-border/40 px-6 py-4 shrink-0">
                     <div className="flex items-center gap-3">

@@ -104,13 +104,16 @@ export async function createShipment(payload: {
             shipping_memo: payload.shippingMemo || '',
             handler_id: userId,
             status: 'shipped',
-            // [방어] 사장님 지시로 UI에선 제거되었으나 DB NOT NULL 제약조건이 남아있을 경우 대비
+            // [방어] carrier_name/contact 등 존재하지 않는 컬럼 제거하여 500 에러 해결
             tracking_number: '',
         })
 
     if (insertErr) {
         console.error('[createShipment] DB Error:', insertErr)
-        return { success: false, error: '출하 등록에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+        return {
+            success: false,
+            error: `출하 등록 실패: ${insertErr.message} (${insertErr.details || 'no details'})`
+        }
     }
 
     // [강제 종료] 잔량이 남아도 forceComplete 옵션이 true 라면 상태를 'shipped' 로 강제로 오버라이드.
