@@ -138,6 +138,7 @@ export async function addOrder(data: OrderFormValues) {
                 order_id: orderData.id,
                 product_id: productId,
                 client_product_id: clientProductId,
+                client_product_name: item.client_product_name || null,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
                 subtotal: item.quantity * item.unit_price

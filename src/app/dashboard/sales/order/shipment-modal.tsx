@@ -163,7 +163,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-slate-950 border-border/40 p-0 flex flex-col">
+            <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-hidden bg-slate-950 border-border/40 p-0 flex flex-col">
                 {/* 헤더 */}
                 <DialogHeader className="sticky top-0 z-10 bg-slate-900 border-b border-border/40 px-6 py-4 shrink-0">
                     <div className="flex items-center gap-3">
@@ -286,7 +286,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                         <div className="flex items-center gap-2 mb-4 justify-between shrink-0">
                             <div className="flex items-center gap-2">
                                 <Plus className="w-4 h-4 text-amber-400" />
-                                <span className="text-sm font-semibold text-slate-200">신규 출하 폼</span>
+                                <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">신규 출하 폼</span>
                             </div>
                             <div className="flex items-center space-x-2 bg-slate-900 px-2 py-1.5 rounded-md border border-border/50">
                                 <Checkbox
@@ -297,7 +297,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                                 />
                                 <label
                                     htmlFor="forceComplete"
-                                    className="text-[11px] font-medium leading-none text-slate-300 cursor-pointer"
+                                    className="text-[11px] font-medium leading-none text-slate-300 cursor-pointer whitespace-nowrap"
                                 >
                                     잔량 상관없이 완료
                                 </label>
@@ -337,7 +337,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
                             {/* 수량 */}
                             <div className="space-y-1.5 col-span-1">
-                                <Label className="text-xs text-slate-400 flex justify-between">
+                                <Label className="text-xs text-slate-400 flex justify-between whitespace-nowrap">
                                     <span>수량 * </span>
                                     <span className="text-amber-400/60 font-normal">잔량입력됨</span>
                                 </Label>

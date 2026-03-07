@@ -231,9 +231,9 @@ export function ShippingClient() {
                                                         <span className="text-sm font-semibold text-foreground truncate" title={order.product_name}>
                                                             {order.product_name}
                                                         </span>
-                                                        {order.order_items?.[0]?.client_product_name && (
-                                                            <span className="text-[11px] text-muted-foreground truncate" title={order.order_items[0].client_product_name}>
-                                                                {order.order_items[0].client_product_name}
+                                                        {order.client_product_name && (
+                                                            <span className="text-[11px] text-muted-foreground truncate" title={order.client_product_name}>
+                                                                {order.client_product_name}
                                                             </span>
                                                         )}
                                                     </div>

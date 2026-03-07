@@ -19,7 +19,9 @@ export async function getShipmentsWithSummary(orderId: string) {
 
         supabase
             .from('orders')
-            .select('id, total_quantity, status, po_number, receiving_destination, clients(company_name), order_items(quantity, products(name))') as any
+            .select('id, total_quantity, status, po_number, receiving_destination, clients(company_name), order_items(quantity, products(name))')
+            .eq('id', orderId)
+            .single() as any
     ])
 
     if ((orderRes as any).error) {
@@ -29,7 +31,7 @@ export async function getShipmentsWithSummary(orderId: string) {
     const order = (orderRes as any).data as any
     const shipments = shipmentsRes.data || []
 
-    const totalOrderQty: number = order.total_quantity || 0
+    const totalOrderQty: number = order.total_quantity || order.order_items?.reduce((s: number, i: any) => s + (i.quantity || 0), 0) || 0
     const totalShipped: number = shipments.reduce((acc: number, s: any) => acc + (s.shipped_quantity || 0), 0)
     const remainingQty: number = totalOrderQty - totalShipped
 
