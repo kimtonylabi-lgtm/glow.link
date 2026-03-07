@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { getPendingShippingOrders, processShipping } from './actions'
+import { getPendingShippingOrders } from './actions'
 import { format } from 'date-fns'
-import { Loader2, Truck, CheckCircle2, ChevronRight, PackageCheck } from 'lucide-react'
+import { Loader2, Truck, CheckCircle2, ChevronRight } from 'lucide-react'
+import { ShipmentModal } from '@/app/dashboard/sales/order/shipment-modal'
 
 // Basic layout config for table to adapt cleanly
 export function ShippingClient() {
@@ -19,12 +19,6 @@ export function ShippingClient() {
     const [isLoading, setIsLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-
-    // Form states
-    const [shipQuantity, setShipQuantity] = useState<string>('')
-    const [trackingNumber, setTrackingNumber] = useState<string>('')
-    const [shippingMemo, setShippingMemo] = useState<string>('')
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const fetchData = async () => {
         setIsLoading(true)
@@ -43,40 +37,16 @@ export function ShippingClient() {
         fetchData()
     }, [])
 
+    // 모달 닫힐 때 데이터 새로고침
+    useEffect(() => {
+        if (!isDialogOpen) {
+            fetchData()
+        }
+    }, [isDialogOpen])
+
     const handleOpenDialog = (order: any) => {
         setSelectedOrder(order)
-        const remaining = order.total_ordered_quantity - order.total_shipped_quantity
-        setShipQuantity(remaining > 0 ? remaining.toString() : '0')
-        setTrackingNumber('')
-        setShippingMemo('')
         setIsDialogOpen(true)
-    }
-
-    const handleSubmitShipping = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!selectedOrder) return
-
-        const qty = parseInt(shipQuantity)
-        if (isNaN(qty) || qty <= 0) {
-            toast.error('유효한 출하 수량을 입력해주세요.')
-            return
-        }
-
-        setIsSubmitting(true)
-        try {
-            const res = await processShipping(selectedOrder.id, qty, trackingNumber, shippingMemo)
-            if (res.success) {
-                toast.success('성공적으로 출하 지시가 등록되었습니다.')
-                setIsDialogOpen(false)
-                fetchData()
-            } else {
-                toast.error(res.error || '출하 등록 실패')
-            }
-        } catch (error) {
-            toast.error('시스템 오류가 발생했습니다.')
-        } finally {
-            setIsSubmitting(false)
-        }
     }
 
     return (
@@ -108,47 +78,64 @@ export function ShippingClient() {
                             <Table>
                                 <TableHeader className="bg-muted/50">
                                     <TableRow>
-                                        <TableHead>수주 번호</TableHead>
-                                        <TableHead>고객사</TableHead>
-                                        <TableHead>납기일</TableHead>
-                                        <TableHead>수량 현황</TableHead>
-                                        <TableHead>상태</TableHead>
-                                        <TableHead className="text-right">액션</TableHead>
+                                        <TableHead className="w-[120px]">발주번호(PO)</TableHead>
+                                        <TableHead>고객사 & 제품명</TableHead>
+                                        <TableHead className="w-[100px]">납기일</TableHead>
+                                        <TableHead className="w-[150px]">수량현황(출하/발주)</TableHead>
+                                        <TableHead className="w-[150px]">입고처</TableHead>
+                                        <TableHead className="w-[100px]">상태</TableHead>
+                                        <TableHead className="w-[120px] text-right">관리</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {orders.map((order) => {
-                                        const remaining = order.total_ordered_quantity - order.total_shipped_quantity
-
                                         return (
                                             <TableRow key={order.id} className="cursor-default hover:bg-muted/30">
-                                                <TableCell className="font-mono text-xs">{order.id.split('-')[0]}</TableCell>
-                                                <TableCell className="font-medium">{order.client_name}</TableCell>
-                                                <TableCell>{order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd') : '-'}</TableCell>
+                                                <TableCell className="font-mono text-xs">{order.po_number || '-'}</TableCell>
                                                 <TableCell>
-                                                    <div className="flex flex-col text-sm">
-                                                        <span>발주: <b>{order.total_ordered_quantity.toLocaleString()}</b> EA</span>
-                                                        <span className="text-muted-foreground">출하완료: {order.total_shipped_quantity.toLocaleString()} EA</span>
-                                                        {remaining > 0 && <span className="text-destructive font-semibold">미출하: {remaining.toLocaleString()} EA</span>}
+                                                    <div className="flex flex-col min-w-0 leading-tight">
+                                                        <span className="font-semibold text-foreground truncate text-sm">
+                                                            {order.client_name}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground mt-0.5 truncate">
+                                                            {order.product_name}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-sm">
+                                                    {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd') : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="font-mono text-sm">
+                                                        <span className="text-emerald-500 font-bold">{order.total_shipped_quantity.toLocaleString()}</span>
+                                                        <span className="text-muted-foreground mx-1">/</span>
+                                                        <span className="text-foreground">{order.total_ordered_quantity.toLocaleString()}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-xs text-muted-foreground truncate max-w-[150px]" title={order.receiving_destination || '-'}>
+                                                        {order.receiving_destination || '-'}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     {order.is_fully_shipped ? (
                                                         <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                                                            <CheckCircle2 className="w-3 h-3 mr-1" /> 출하완료
+                                                            출하 완료
                                                         </Badge>
                                                     ) : order.total_shipped_quantity > 0 ? (
-                                                        <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">부분출하 (진행중)</Badge>
+                                                        <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 whitespace-nowrap">
+                                                            부분 출하
+                                                        </Badge>
                                                     ) : (
-                                                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">출하 대기</Badge>
+                                                        <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20 whitespace-nowrap">
+                                                            출하 대기
+                                                        </Badge>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    {!order.is_fully_shipped && (
-                                                        <Button size="sm" onClick={() => handleOpenDialog(order)}>
-                                                            출하 지시 <ChevronRight className="w-4 h-4 ml-1" />
-                                                        </Button>
-                                                    )}
+                                                    <Button size="sm" onClick={() => handleOpenDialog(order)} className="bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-xs h-8">
+                                                        <Truck className="w-3.5 h-3.5 mr-1.5" /> 출하 지시
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         )
@@ -160,72 +147,11 @@ export function ShippingClient() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>출하 지시서 작성</DialogTitle>
-                        <DialogDescription>
-                            실제 현장에서 출하된 수량과 물류 정보를 입력해주세요.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedOrder && (
-                        <form onSubmit={handleSubmitShipping}>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>대상 오더 요약</Label>
-                                    <div className="text-sm p-3 bg-muted/50 rounded-md border border-border/50">
-                                        <p>고객사: {selectedOrder.client_name}</p>
-                                        <p className="text-destructive font-medium mt-1">
-                                            미출하 잔여 수량: {(selectedOrder.total_ordered_quantity - selectedOrder.total_shipped_quantity).toLocaleString()} EA
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="quantity">금번 출하 수량 (EA)</Label>
-                                    <Input
-                                        id="quantity"
-                                        type="number"
-                                        min="1"
-                                        max={selectedOrder.total_ordered_quantity - selectedOrder.total_shipped_quantity}
-                                        value={shipQuantity}
-                                        onChange={(e) => setShipQuantity(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="tracking">송장 번호 (Tracking Number)</Label>
-                                    <Input
-                                        id="tracking"
-                                        placeholder="운송장 번호를 입력하세요"
-                                        value={trackingNumber}
-                                        onChange={(e) => setTrackingNumber(e.target.value)}
-                                        autoComplete="off"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="memo">비고 (선택)</Label>
-                                    <Input
-                                        id="memo"
-                                        placeholder="특이사항 메모"
-                                        value={shippingMemo}
-                                        onChange={(e) => setShippingMemo(e.target.value)}
-                                        autoComplete="off"
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>취소</Button>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                    <PackageCheck className="w-4 h-4 mr-2" />
-                                    지시 완료
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    )}
-                </DialogContent>
-            </Dialog>
-
+            <ShipmentModal
+                order={selectedOrder}
+                isOpen={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+            />
         </div>
     )
 }

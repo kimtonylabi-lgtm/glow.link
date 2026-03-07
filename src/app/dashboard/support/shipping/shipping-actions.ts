@@ -13,7 +13,7 @@ export async function getShipmentsWithSummary(orderId: string) {
     const [shipmentsRes, orderRes] = await Promise.all([
         supabase
             .from('shipping_orders')
-            .select('id, shipping_date, shipped_quantity, delivery_address, tracking_number, shipping_memo, status, created_at')
+            .select('id, shipping_date, shipped_quantity, delivery_address, shipping_method, shipping_memo, status, created_at')
             .eq('order_id', orderId)
             .order('shipping_date', { ascending: true }),
 
@@ -53,8 +53,9 @@ export async function createShipment(payload: {
     shippedQuantity: number
     shippingDate: string
     deliveryAddress?: string
-    trackingNumber?: string
+    shippingMethod: string
     shippingMemo?: string
+    forceComplete?: boolean
 }) {
     // [보안] 서버 액션은 DB 직접 조회로 최신 권한 확인
     const { authorized, userId } = await verifyRoleForAction(['admin', 'head', 'support', 'sales'])
@@ -90,14 +91,6 @@ export async function createShipment(payload: {
     )
     const newTotal = totalAlreadyShipped + payload.shippedQuantity
 
-    // [프론트 1차 방어] 발주수량의 150% 초과 시 서버에서도 거부 (명백한 입력 오류 차단)
-    if (order.total_quantity > 0 && newTotal > order.total_quantity * 1.5) {
-        return {
-            success: false,
-            error: `발주수량(${order.total_quantity.toLocaleString()}EA)의 150%를 초과합니다. 확인 후 다시 시도하세요.`
-        }
-    }
-
     const { error: insertErr } = await supabase
         .from('shipping_orders')
         .insert({
@@ -105,7 +98,7 @@ export async function createShipment(payload: {
             shipped_quantity: payload.shippedQuantity,
             shipping_date: payload.shippingDate,
             delivery_address: payload.deliveryAddress || null,
-            tracking_number: payload.trackingNumber || null,
+            shipping_method: payload.shippingMethod,
             shipping_memo: payload.shippingMemo || null,
             handler_id: userId,
             status: 'shipped',
@@ -114,6 +107,15 @@ export async function createShipment(payload: {
     if (insertErr) {
         console.error('[createShipment] DB Error:', insertErr)
         return { success: false, error: '출하 등록에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+    }
+
+    // [강제 종료] 잔량이 남아도 forceComplete 옵션이 true 라면 상태를 'shipped' 로 강제로 오버라이드.
+    // 트리거가 수행된 직후에 강제로 덮어씌움.
+    if (payload.forceComplete) {
+        await supabase
+            .from('orders')
+            .update({ status: 'shipped' })
+            .eq('id', payload.orderId)
     }
 
     // DB 트리거가 orders.status를 자동으로 갱신함

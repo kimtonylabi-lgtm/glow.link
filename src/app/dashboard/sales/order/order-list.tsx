@@ -20,9 +20,15 @@ import { Edit2, Trash2, Search, Undo2, Loader2, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { OrderDetailModal } from "./order-detail-modal"
-import { ShipmentModal } from "./shipment-modal"
 import { cancelOrderConfirmation } from "./order-actions"
 import { toast } from 'sonner'
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command"
 import {
     Dialog,
     DialogContent,
@@ -73,8 +79,6 @@ export function OrderList({
     const canManage = ['admin', 'head', 'support'].includes(userRole)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-    const [shipmentOrder, setShipmentOrder] = useState<Order | null>(null)
-    const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false)
 
     const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '')
     const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -142,6 +146,23 @@ export function OrderList({
         'shipped': { label: '출하 완료', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_10px_theme(colors.emerald.500)/20]' }
     }
 
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // D-7 계산 함수
+    const isDueSoon = (dueDateStr: string | null, status: string) => {
+        if (!dueDateStr) return false
+        if (status === 'shipped') return false // 이미 출하완료면 임박 아님
+
+        const dueDate = new Date(dueDateStr)
+        dueDate.setHours(0, 0, 0, 0)
+
+        const diffTime = dueDate.getTime() - today.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        return diffDays >= 0 && diffDays <= 7
+    }
+
     return (
         <div className="space-y-4">
             {/* Search Bar - Moved OUTSIDE Card to match quotation-list.tsx exactly */}
@@ -195,16 +216,34 @@ export function OrderList({
                             ) : (
                                 orders.map((order) => {
                                     const config = statusConfig[order.status]
+                                    const dueSoon = isDueSoon(order.due_date, order.status)
+
                                     return (
-                                        <TableRow key={order.id} className="group hover:bg-muted/20 transition-colors cursor-pointer">
+                                        <TableRow
+                                            key={order.id}
+                                            className={cn(
+                                                "group hover:bg-muted/20 transition-colors cursor-pointer",
+                                                dueSoon && "bg-red-500/5 hover:bg-red-500/10"
+                                            )}
+                                        >
                                             {viewMode === 'default' && (
                                                 <TableCell>
-                                                    <Badge variant="outline" className={config.color}>
-                                                        {config.label}
-                                                    </Badge>
+                                                    <div className="flex flex-col gap-1.5 items-start">
+                                                        <Badge variant="outline" className={config.color}>
+                                                            {config.label}
+                                                        </Badge>
+                                                        {dueSoon && (
+                                                            <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30 text-[10px] animate-pulse">
+                                                                🚨 납기 임박
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             )}
-                                            <TableCell className="text-center font-mono opacity-80 text-xs py-2 px-3 truncate" title={order.po_number || ''}>
+                                            <TableCell className={cn(
+                                                "text-center font-mono opacity-80 text-xs py-2 px-3 truncate",
+                                                dueSoon && "text-red-400"
+                                            )} title={order.po_number || ''}>
                                                 {order.po_number || '-'}
                                             </TableCell>
                                             <TableCell className="group-hover:text-primary transition-colors py-2 px-3">
@@ -245,7 +284,10 @@ export function OrderList({
                                                 </div>
                                             </TableCell>
                                             {viewMode === 'default' && (
-                                                <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
+                                                <TableCell className={cn(
+                                                    "whitespace-nowrap text-sm",
+                                                    dueSoon ? "text-red-400 font-bold" : "text-muted-foreground"
+                                                )}>
                                                     {order.due_date ? format(new Date(order.due_date), 'yyyy-MM-dd', { locale: ko }) : '-'}
                                                 </TableCell>
                                             )}
@@ -271,20 +313,8 @@ export function OrderList({
                                                                 </Button>
                                                             </>
                                                         ) : (
-                                                            // 납기 탭: 출하 등록 버튼 + 확정 취소
+                                                            // 납기 탭: 확정 취소
                                                             <div className="flex items-center gap-1.5">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-8 text-[11px] font-bold px-2 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 text-amber-400 hover:text-amber-300"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        setShipmentOrder(order)
-                                                                        setIsShipmentModalOpen(true)
-                                                                    }}
-                                                                >
-                                                                    <Truck className="h-3 w-3 mr-1" /> 출하 등록
-                                                                </Button>
                                                                 <Button
                                                                     size="sm"
                                                                     variant="ghost"
@@ -316,12 +346,6 @@ export function OrderList({
                     onOpenChange={setIsDetailModalOpen}
                     order={selectedOrder}
                     readOnly={tabType === 'delivery'}
-                />
-
-                <ShipmentModal
-                    isOpen={isShipmentModalOpen}
-                    onOpenChange={setIsShipmentModalOpen}
-                    order={shipmentOrder}
                 />
 
                 <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>

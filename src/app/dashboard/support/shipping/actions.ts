@@ -11,15 +11,18 @@ export async function getPendingShippingOrders() {
         .from('orders')
         .select(`
             id,
+            po_number,
+            receiving_destination,
             total_amount,
             status,
             order_date,
             due_date,
+            total_quantity,
             clients ( company_name ),
-            order_items ( quantity ),
+            order_items ( quantity, products ( name ), client_product_name ),
             shipping_orders ( id, shipped_quantity, status, tracking_number, shipping_date )
         `)
-        .in('status', ['confirmed', 'production', 'shipped'])
+        .in('status', ['confirmed', 'production', 'shipped', 'partially_shipped'] as any[])
         .order('order_date', { ascending: false })
 
     if (ordersError) {
@@ -38,7 +41,8 @@ export async function getPendingShippingOrders() {
         return {
             ...order,
             client_name: order.clients?.company_name || '알 수 없음',
-            total_ordered_quantity: totalOrderedQuantity,
+            product_name: order.order_items?.[0]?.products?.name || '제품 없음',
+            total_ordered_quantity: order.total_quantity || totalOrderedQuantity,
             total_shipped_quantity: totalShippedQuantity,
             is_fully_shipped: isFullyShipped,
             shipping_log: order.shipping_orders || []

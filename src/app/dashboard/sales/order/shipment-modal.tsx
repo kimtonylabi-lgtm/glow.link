@@ -16,9 +16,10 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
     Truck, Package, History, Plus, Trash2,
-    Loader2, AlertTriangle, CheckCircle2, CalendarIcon
+    Loader2, AlertTriangle, CheckCircle2, CalendarIcon, Archive, Car
 } from 'lucide-react'
 import { getShipmentsWithSummary, createShipment, deleteShipment } from '@/app/dashboard/support/shipping/shipping-actions'
 import { useRouter } from 'next/navigation'
@@ -54,10 +55,10 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
     const [shippingDate, setShippingDate] = useState('')
     const [calendarOpen, setCalendarOpen] = useState(false)
     const [deliveryAddress, setDeliveryAddress] = useState('')
-    const [trackingNumber, setTrackingNumber] = useState('')
     const [shippingMemo, setShippingMemo] = useState('')
+    const [shippingMethod, setShippingMethod] = useState('택배 발송')
+    const [forceComplete, setForceComplete] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [showOvershootWarning, setShowOvershootWarning] = useState(false)
 
     // 모달 열릴 때 데이터 로드 + 잔량 자동입력
     useEffect(() => {
@@ -80,9 +81,9 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
             setSummary(null)
             setShippedQuantity('')
             setDeliveryAddress('')
-            setTrackingNumber('')
             setShippingMemo('')
-            setShowOvershootWarning(false)
+            setShippingMethod('택배 발송')
+            setForceComplete(false)
         }
     }, [isOpen, order])
 
@@ -98,24 +99,21 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
             return
         }
 
-        const remaining = summary?.remainingQty ?? 0
-
-        // [초과 출하] 잔량보다 많이 입력 시 → 경고 팝업으로 처리 (로스분 허용)
-        if (qty > remaining && remaining >= 0 && !showOvershootWarning) {
-            setShowOvershootWarning(true)
+        if (!deliveryAddress.trim()) {
+            toast.error('도착지(입고처)를 입력해주세요.')
             return
         }
 
         setIsSubmitting(true)
-        setShowOvershootWarning(false)
         try {
             const res = await createShipment({
                 orderId: order!.id,
                 shippedQuantity: qty,
                 shippingDate,
-                deliveryAddress: deliveryAddress || undefined,
-                trackingNumber: trackingNumber || undefined,
+                deliveryAddress: deliveryAddress.trim() || undefined,
+                shippingMethod,
                 shippingMemo: shippingMemo || undefined,
+                forceComplete
             })
 
             if (res.success) {
@@ -125,8 +123,8 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                 if (refreshed.success && refreshed.data) {
                     setSummary(refreshed.data)
                     setShippedQuantity(String(Math.max(0, refreshed.data.remainingQty)))
+                    setForceComplete(false)
                 }
-                setTrackingNumber('')
                 setShippingMemo('')
                 startTransition(() => router.refresh())
             } else {
@@ -251,7 +249,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                                             <th className="px-3 py-2 text-left">출하일</th>
                                             <th className="px-3 py-2 text-right">수량</th>
                                             <th className="px-3 py-2 text-left">도착지</th>
-                                            <th className="px-3 py-2 text-left">운송장</th>
+                                            <th className="px-3 py-2 text-left">출고 방식</th>
                                             <th className="px-3 py-2 text-center w-10">삭제</th>
                                         </tr>
                                     </thead>
@@ -267,8 +265,8 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                                                 <td className="px-3 py-2.5 text-xs text-muted-foreground truncate max-w-[120px]">
                                                     {s.delivery_address || '-'}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">
-                                                    {s.tracking_number || '-'}
+                                                <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                                                    {s.shipping_method || '-'}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center">
                                                     <button
@@ -291,21 +289,26 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
                     {/* 신규 출하 등록 폼 */}
                     <div>
-                        <div className="flex items-center gap-2 mb-4">
-                            <Plus className="w-4 h-4 text-amber-400" />
-                            <span className="text-sm font-semibold text-slate-200">이번 출하 등록</span>
-                        </div>
-
-                        {/* 초과 출하 경고 */}
-                        {showOvershootWarning && (
-                            <div className="mb-4 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
-                                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                                <div className="text-xs text-amber-300 space-y-1">
-                                    <p className="font-semibold">발주 잔량({remainingQty.toLocaleString()} EA) 초과 입력되었습니다.</p>
-                                    <p className="text-amber-400/70">로스분 또는 고객사 협의로 초과 출하하는 경우, 아래 [출하 등록 확정] 버튼을 다시 눌러 진행하세요.</p>
-                                </div>
+                        <div className="flex items-center gap-2 mb-4 justify-between">
+                            <div className="flex items-center gap-2">
+                                <Plus className="w-4 h-4 text-amber-400" />
+                                <span className="text-sm font-semibold text-slate-200">이번 출하 등록</span>
                             </div>
-                        )}
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="forceComplete"
+                                    checked={forceComplete}
+                                    onCheckedChange={(checked) => setForceComplete(checked as boolean)}
+                                    className="border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:text-amber-950"
+                                />
+                                <label
+                                    htmlFor="forceComplete"
+                                    className="text-xs font-medium leading-none text-slate-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                    잔량 상관없이 강제 완료(종결) 처리
+                                </label>
+                            </div>
+                        </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             {/* 출하일자 */}
@@ -348,32 +351,48 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                                     value={shippedQuantity}
                                     onChange={(e) => {
                                         setShippedQuantity(e.target.value)
-                                        setShowOvershootWarning(false)
                                     }}
                                     className="h-10 bg-slate-900 border-border/50 text-slate-100 font-mono text-right focus-visible:ring-amber-500/30"
                                     placeholder="수량 입력"
                                 />
                             </div>
 
-                            {/* 도착지 */}
+                            {/* 출고 방식 라디오/토글 */}
                             <div className="space-y-1.5 col-span-2">
-                                <Label className="text-xs text-slate-400">도착지 (입고처)</Label>
+                                <Label className="text-xs text-slate-400">출고 방식 *</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div
+                                        onClick={() => setShippingMethod('택배 발송')}
+                                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${shippingMethod === '택배 발송' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                    >
+                                        <Package className="w-4 h-4" />
+                                        <span className="text-sm font-semibold">택배 발송</span>
+                                    </div>
+                                    <div
+                                        onClick={() => setShippingMethod('컨테이너 출고')}
+                                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${shippingMethod === '컨테이너 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                    >
+                                        <Archive className="w-4 h-4" />
+                                        <span className="text-sm font-semibold">컨테이너 출고</span>
+                                    </div>
+                                    <div
+                                        onClick={() => setShippingMethod('납품차량 출고')}
+                                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${shippingMethod === '납품차량 출고' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-slate-900 border-border/50 text-slate-400 hover:bg-slate-800'}`}
+                                    >
+                                        <Car className="w-4 h-4" />
+                                        <span className="text-sm font-semibold">납품차량 출고</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 도착지 */}
+                            <div className="space-y-1.5 col-span-1">
+                                <Label className="text-xs text-slate-400">입고처 (도착지) *</Label>
                                 <Input
                                     value={deliveryAddress}
                                     onChange={(e) => setDeliveryAddress(e.target.value)}
                                     className="h-10 bg-slate-900 border-border/50 text-slate-100 focus-visible:ring-amber-500/30"
-                                    placeholder="배송 도착지를 입력하세요"
-                                />
-                            </div>
-
-                            {/* 운송장 번호 */}
-                            <div className="space-y-1.5 col-span-1">
-                                <Label className="text-xs text-slate-400">운송장 번호</Label>
-                                <Input
-                                    value={trackingNumber}
-                                    onChange={(e) => setTrackingNumber(e.target.value)}
-                                    className="h-10 bg-slate-900 border-border/50 text-slate-100 font-mono focus-visible:ring-amber-500/30"
-                                    placeholder="운송장 번호 (선택)"
+                                    placeholder="도달지/창고/회사명 입력"
                                 />
                             </div>
 
@@ -401,17 +420,14 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
                             <Button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || isLoadingData}
-                                className={`font-bold ${showOvershootWarning
-                                    ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/30'
-                                    : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-900/20'
-                                    } shadow-lg`}
+                                className={`font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-900/20`}
                             >
                                 {isSubmitting ? (
                                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                                 ) : (
                                     <Truck className="w-4 h-4 mr-2" />
                                 )}
-                                {showOvershootWarning ? '초과 출하 확정' : '출하 등록'}
+                                출하 등록
                             </Button>
                         </div>
                     </div>
