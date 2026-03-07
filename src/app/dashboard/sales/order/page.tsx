@@ -4,8 +4,9 @@ import { QuotationList } from './quotation-list'
 import { OrderList } from './order-list'
 import { Truck } from 'lucide-react'
 import { OrderPageClient } from './order-page-client'
+import { getCurrentUser, getProfile } from '@/lib/supabase/queries'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거 - Supabase auth 사용으로 Next.js가 자동 dynamic 처리
 
 export default async function OrderPage(props: { searchParams: Promise<{ tab?: string; q?: string }> }) {
     const searchParams = await props.searchParams
@@ -129,10 +130,11 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
     const products: any[] = []
     const clientProducts: any[] = []
 
-    const user = authRes.data?.user
+    // [핵심 최적화] layout.tsx와 동일 요청 → cache()로 DB 재조회 없이 즉시 반환
+    const user = await getCurrentUser()
     let userRole = 'sales'
     if (user?.id) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        const profile = await getProfile(user.id)
         if (profile?.role) userRole = profile.role
     }
 

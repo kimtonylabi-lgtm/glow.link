@@ -3,7 +3,7 @@ import { SampleRequestWithRelations } from '@/types/crm'
 import { KanbanBoard } from './kanban-board'
 import { Package } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거 - Supabase 호출로 자동 dynamic 처리
 
 export default async function SampleTeamPage() {
     const supabase = await createClient()

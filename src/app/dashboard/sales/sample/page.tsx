@@ -2,14 +2,15 @@ import { createClient } from '@/lib/supabase/server'
 import { Client, SampleRequestWithRelations } from '@/types/crm'
 import { SampleForm } from './sample-form'
 import { SampleList } from './sample-list'
+import { getCurrentUser } from '@/lib/supabase/queries'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거 - Supabase 호출로 자동 dynamic 처리
 
 export default async function SamplePage() {
     const supabase = await createClient()
 
-    // Authentication check for RLS to pass correctly in rendering
-    const { data: { user } } = await supabase.auth.getUser()
+    // [최적화] layout.tsx와 동일 요청 → cache()로 DB 재조회 없이 즉시 반환
+    const user = await getCurrentUser()
 
     // Fetch Clients for the Combobox (Auto-fill address needed)
     const { data: clientsData } = await supabase

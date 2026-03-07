@@ -1,16 +1,16 @@
+import { getCurrentUser } from '@/lib/supabase/queries'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sparkles, Calendar, TrendingUp } from 'lucide-react'
 import { DemandPredictionAlert } from '@/components/sales/DemandPredictionAlert'
 
 export default async function DashboardHome() {
+    // [최적화] layout.tsx와 동일 요청 → cache()로 DB 재조회 없이 캐시에서 즉시 반환
+    const user = await getCurrentUser()
     const supabase = await createClient()
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
     const name = user?.user_metadata?.full_name || '사용자'
+
 
     // Fetch demand prediction data
     const { data: predictions } = await supabase

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ReportsClient } from './reports-client'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거 - Supabase 호출로 자동 dynamic 처리
 
 export default async function ReportsPage() {
     const supabase = await createClient()

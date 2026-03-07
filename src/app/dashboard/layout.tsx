@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { Header } from '@/components/dashboard/Header'
 import { Profile } from '@/types/auth'
@@ -7,30 +6,22 @@ import { RealtimeListener } from '@/components/dashboard/realtime-listener'
 import { DashboardMain } from '@/components/dashboard/dashboard-main'
 import { SidebarProvider } from '@/components/dashboard/SidebarContext'
 import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
+import { getCurrentUserWithProfile } from '@/lib/supabase/queries'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거: cookies() 사용으로 Next.js가 자동으로 dynamic 처리
+// React cache()를 적용한 getCurrentUserWithProfile로 DB 중복 호출 차단
 
 export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const supabase = await createClient()
-
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    // [핵심 최적화] 동일 요청 내 getUser() + getProfile() 이중 DB 왕복 → 캐시로 1번으로 통합
+    const { user, profile } = await getCurrentUserWithProfile()
 
     if (!user) {
         redirect('/login')
     }
-
-    // Fetch user profile to determine role
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
 
     // Redirect to pending if no profile (race condition defense) or if role is pending
     if (!profile || profile.role === 'pending') {

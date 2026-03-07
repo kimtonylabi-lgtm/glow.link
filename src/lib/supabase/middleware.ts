@@ -16,7 +16,7 @@ export async function updateSession(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
                     supabaseResponse = NextResponse.next({
                         request,
                     })
@@ -37,7 +37,10 @@ export async function updateSession(request: NextRequest) {
     const pathname = url.pathname
 
     // 0. Bypass specific paths (Logout, API, etc.)
-    const isAuthAction = pathname.startsWith('/auth') || pathname.includes('logout') || pathname.startsWith('/api/')
+    const isAuthAction =
+        pathname.startsWith('/auth') ||
+        pathname.includes('logout') ||
+        pathname.startsWith('/api/')
     if (isAuthAction) {
         return supabaseResponse
     }
@@ -45,30 +48,46 @@ export async function updateSession(request: NextRequest) {
     // 1. Role-based protection for authenticated users
     if (user) {
         try {
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('role, email')
-                .eq('id', user.id)
-                .single()
+            // ─── [성능 최적화] ──────────────────────────────────────────────────────
+            // JWT의 app_metadata에서 role을 읽어 DB 왕복을 제거합니다.
+            //
+            // [보안 설계]
+            // - app_metadata는 서버만 쓸 수 있어 클라이언트 위변조 불가 (안전)
+            // - 단, JWT는 세션 갱신(로그인/로그아웃) 전까지 오래된 값을 가질 수 있음
+            // - 따라서 미들웨어는 가벼운 라우팅 가드 용도로만 사용
+            // - 발주 확정 등 핵심 서버 액션은 verifyRoleForAction() → DB 재검증 필수
+            // ────────────────────────────────────────────────────────────────────────
+            const jwtRole = user.app_metadata?.role as string | undefined
+            const userEmail = user.email
 
             // ADMIN BYPASS: Never block the main admin account
-            if (user.email === 'admin@glow.link') {
+            if (userEmail === 'admin@glow.link') {
                 return supabaseResponse
             }
 
-            // If profile doesn't exist yet (race condition with trigger), treat as pending
-            if (error || !profile) {
-                if (pathname === '/pending') return supabaseResponse
-                url.pathname = '/pending'
-                return NextResponse.redirect(url)
+            // JWT에 role이 없는 경우(예: 초기 가입 직후 트리거 미실행) DB fallback 조회
+            let resolvedRole: string | null = jwtRole ?? null
+
+            if (!resolvedRole) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single()
+
+                if (error || !profile) {
+                    if (pathname === '/pending') return supabaseResponse
+                    url.pathname = '/pending'
+                    return NextResponse.redirect(url)
+                }
+                resolvedRole = profile.role
             }
 
-            if (profile.role === 'inactive') {
+            if (resolvedRole === 'inactive') {
                 await supabase.auth.signOut()
                 url.pathname = '/login'
                 url.searchParams.set('error', 'account_deactivated')
                 const response = NextResponse.redirect(url)
-                // Transfer cookies to ensure session clearing is reflected
                 supabaseResponse.cookies.getAll().forEach((cookie) => {
                     response.cookies.set(cookie.name, cookie.value)
                 })
@@ -76,17 +95,12 @@ export async function updateSession(request: NextRequest) {
             }
 
             // PENDING ROLE DEFENSE
-            const userRole = profile.role as string
-            if (userRole === 'pending') {
-                // [CRITICAL] Early return if already on /pending to prevent Redirect Loop
+            if (resolvedRole === 'pending') {
                 if (pathname === '/pending') {
                     return supabaseResponse
                 }
-
-                // Redirect anyone with pending role to /pending room
                 url.pathname = '/pending'
                 const response = NextResponse.redirect(url)
-                // Copy cookies to maintain session
                 supabaseResponse.cookies.getAll().forEach((cookie) => {
                     response.cookies.set(cookie.name, cookie.value)
                 })
@@ -94,8 +108,7 @@ export async function updateSession(request: NextRequest) {
             }
 
             // AUTHORIZED ROLE DEFENSE
-            // If user is NOT pending but stays on /pending page, move them to dashboard
-            if (userRole !== 'pending' && pathname === '/pending') {
+            if (resolvedRole !== 'pending' && pathname === '/pending') {
                 url.pathname = '/dashboard'
                 return NextResponse.redirect(url)
             }

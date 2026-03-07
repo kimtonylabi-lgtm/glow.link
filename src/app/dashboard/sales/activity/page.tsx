@@ -3,7 +3,7 @@ import { Client, Product, ClientProduct } from '@/types/crm'
 import { ActivityWithRelations } from '@/types/crm'
 import { ActivityContainer } from './activity-container'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거 - Supabase 호출로 자동 dynamic 처리
 
 interface Props {
     searchParams: Promise<{ client?: string }>

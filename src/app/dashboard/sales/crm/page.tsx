@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CrmClient } from './crm-client'
 import { ClientWithProfile } from '@/types/crm'
 
-export const dynamic = 'force-dynamic'
+// [최적화] force-dynamic 제거 - Supabase 호출로 자동 dynamic 처리
 
 export default async function CrmPage() {
     const supabase = await createClient()
