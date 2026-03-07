@@ -116,13 +116,7 @@ export function ShipmentModal({ order, isOpen, onOpenChange }: ShipmentModalProp
 
             if (res.success) {
                 toast.success('출하 등록이 완료되었습니다.')
-                const refreshed = await getShipmentsWithSummary(order!.id)
-                if (refreshed.success && refreshed.data) {
-                    setSummary(refreshed.data)
-                    setShippedQuantity(String(Math.max(0, refreshed.data.remainingQty)))
-                    setForceComplete(false)
-                }
-                setShippingMemo('')
+                onOpenChange(false) // [추가] 등록 성공 시 모달 자동 닫기
                 startTransition(() => router.refresh())
             } else {
                 toast.error(res.error || '출하 등록에 실패했습니다.')
