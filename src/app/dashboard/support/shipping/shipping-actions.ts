@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyRoleForAction } from '@/lib/supabase/queries'
 import { revalidatePath } from 'next/cache'
 
@@ -117,9 +118,10 @@ export async function createShipment(payload: {
     }
 
     // [강제 종료] 잔량이 남아도 forceComplete 옵션이 true 라면 상태를 'shipped' 로 강제로 오버라이드.
-    // 트리거가 수행된 직후에 강제로 덮어씌움.
+    // 일반 계정은 orders 테이블 업데이트 권한(RLS)이 제한될 수 있으므로 Admin 클라이언트 사용.
     if (payload.forceComplete) {
-        await supabase
+        const adminSupabase = createAdminClient()
+        await adminSupabase
             .from('orders')
             .update({ status: 'shipped' })
             .eq('id', payload.orderId)

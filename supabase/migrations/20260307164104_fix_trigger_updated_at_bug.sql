@@ -18,13 +18,19 @@ BEGIN
     SELECT COALESCE(SUM(shipped_quantity), 0) INTO v_shipped_qty
     FROM public.shipping_orders WHERE order_id = v_order_id;
 
-    -- 자동 상태 전환 (updated_at 제거)
+    -- 자동 상태 전환
+    -- [보강] 이미 'shipped' 상태인 경우(강제 완료 등), 다시 'partially_shipped'로 전환되지 않도록 방어.
     IF v_order_qty > 0 AND v_shipped_qty >= v_order_qty THEN
         UPDATE public.orders SET status = 'shipped' WHERE id = v_order_id AND status != 'shipped';
     ELSIF v_shipped_qty > 0 THEN
-        UPDATE public.orders SET status = 'partially_shipped' WHERE id = v_order_id AND status NOT IN ('shipped', 'partially_shipped');
+        UPDATE public.orders SET status = 'partially_shipped' 
+        WHERE id = v_order_id 
+        AND status NOT IN ('shipped', 'partially_shipped');
     ELSE
-        UPDATE public.orders SET status = 'production' WHERE id = v_order_id AND status IN ('partially_shipped');
+        -- 출하 내역이 모두 삭제된 경우에만 'production' 등으로 복구
+        UPDATE public.orders SET status = 'production' 
+        WHERE id = v_order_id 
+        AND status IN ('partially_shipped', 'shipped');
     END IF;
 
     RETURN COALESCE(NEW, OLD);
