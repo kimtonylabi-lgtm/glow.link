@@ -1,0 +1,169 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { verifyRoleForAction } from '@/lib/supabase/queries'
+import { revalidatePath } from 'next/cache'
+
+// ─────────────────────────────────────────────────────────────
+// 수주 1건의 누적 출하 현황 조회 (히스토리 + 잔량 계산)
+// ─────────────────────────────────────────────────────────────
+export async function getShipmentsWithSummary(orderId: string) {
+    const supabase = await createClient()
+
+    const [shipmentsRes, orderRes] = await Promise.all([
+        supabase
+            .from('shipping_orders')
+            .select('id, shipping_date, shipped_quantity, delivery_address, tracking_number, shipping_memo, status, created_at')
+            .eq('order_id', orderId)
+            .order('shipping_date', { ascending: true }),
+
+        supabase
+            .from('orders')
+            .select('id, total_quantity, status, po_number, receiving_destination, clients(company_name), order_items(quantity, products(name))') as any
+    ])
+
+    if ((orderRes as any).error) {
+        return { success: false, error: '수주 정보를 불러올 수 없습니다.' }
+    }
+
+    const order = (orderRes as any).data as any
+    const shipments = shipmentsRes.data || []
+
+    const totalOrderQty: number = order.total_quantity || 0
+    const totalShipped: number = shipments.reduce((acc: number, s: any) => acc + (s.shipped_quantity || 0), 0)
+    const remainingQty: number = totalOrderQty - totalShipped
+
+    return {
+        success: true,
+        data: {
+            order,
+            shipments,
+            totalOrderQty,
+            totalShipped,
+            remainingQty,
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 신규 출하 등록
+// ─────────────────────────────────────────────────────────────
+export async function createShipment(payload: {
+    orderId: string
+    shippedQuantity: number
+    shippingDate: string
+    deliveryAddress?: string
+    trackingNumber?: string
+    shippingMemo?: string
+}) {
+    // [보안] 서버 액션은 DB 직접 조회로 최신 권한 확인
+    const { authorized, userId } = await verifyRoleForAction(['admin', 'head', 'support', 'sales'])
+    if (!authorized) {
+        return { success: false, error: '권한이 없습니다.' }
+    }
+
+    if (!payload.shippedQuantity || payload.shippedQuantity <= 0) {
+        return { success: false, error: '출하 수량은 1 이상이어야 합니다.' }
+    }
+
+    const supabase = await createClient()
+
+    // [정공법] orders.total_quantity 직접 참조 (단, 마이그레이션 적용 전까지는 any 캐스팅)
+    const { data: order, error: orderErr } = await supabase
+        .from('orders')
+        .select('total_quantity, status')
+        .eq('id', payload.orderId)
+        .single() as any
+
+    if (orderErr || !order) {
+        return { success: false, error: '수주 정보를 찾을 수 없습니다.' }
+    }
+
+    // 누적 출하량 계산
+    const { data: existShipments } = await supabase
+        .from('shipping_orders')
+        .select('shipped_quantity')
+        .eq('order_id', payload.orderId)
+
+    const totalAlreadyShipped = (existShipments || []).reduce(
+        (acc: number, s: any) => acc + (s.shipped_quantity || 0), 0
+    )
+    const newTotal = totalAlreadyShipped + payload.shippedQuantity
+
+    // [프론트 1차 방어] 발주수량의 150% 초과 시 서버에서도 거부 (명백한 입력 오류 차단)
+    if (order.total_quantity > 0 && newTotal > order.total_quantity * 1.5) {
+        return {
+            success: false,
+            error: `발주수량(${order.total_quantity.toLocaleString()}EA)의 150%를 초과합니다. 확인 후 다시 시도하세요.`
+        }
+    }
+
+    const { error: insertErr } = await supabase
+        .from('shipping_orders')
+        .insert({
+            order_id: payload.orderId,
+            shipped_quantity: payload.shippedQuantity,
+            shipping_date: payload.shippingDate,
+            delivery_address: payload.deliveryAddress || null,
+            tracking_number: payload.trackingNumber || null,
+            shipping_memo: payload.shippingMemo || null,
+            handler_id: userId,
+            status: 'shipped',
+        })
+
+    if (insertErr) {
+        console.error('[createShipment] DB Error:', insertErr)
+        return { success: false, error: '출하 등록에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+    }
+
+    // DB 트리거가 orders.status를 자동으로 갱신함
+    revalidatePath('/dashboard/sales/order')
+    revalidatePath('/dashboard/support/shipping')
+
+    return { success: true }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 출하 내역 삭제 (취소)
+// DB 트리거가 자동으로 orders.status를 롤백함
+// ─────────────────────────────────────────────────────────────
+export async function deleteShipment(shipmentId: string) {
+    const { authorized } = await verifyRoleForAction(['admin', 'head', 'support'])
+    if (!authorized) {
+        return { success: false, error: '출하 취소 권한이 없습니다. (지원팀/관리자만 가능)' }
+    }
+
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('shipping_orders')
+        .delete()
+        .eq('id', shipmentId)
+
+    if (error) {
+        return { success: false, error: '출하 취소에 실패했습니다.' }
+    }
+
+    revalidatePath('/dashboard/sales/order')
+    revalidatePath('/dashboard/support/shipping')
+
+    return { success: true }
+}
+
+// ─────────────────────────────────────────────────────────────
+// orders.total_quantity 업데이트 (발주 확정 시 호출)
+// 기존 confirmOrderToDelivery 액션에서 함께 호출해 주세요
+// ─────────────────────────────────────────────────────────────
+export async function updateOrderTotalQuantity(orderId: string, totalQuantity: number) {
+    const supabase = await createClient()
+    const { error } = await (supabase as any)
+        .from('orders')
+        .update({ total_quantity: totalQuantity })
+        .eq('id', orderId)
+
+    if (error) {
+        console.error('[updateOrderTotalQuantity] Error:', error)
+        return { success: false }
+    }
+    return { success: true }
+}

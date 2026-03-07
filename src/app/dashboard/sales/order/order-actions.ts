@@ -135,13 +135,20 @@ export async function confirmOrderToDelivery(
             reason: '발주 확정 및 납기 이관'
         }
 
+        const { data: items } = await (supabase.from('order_items') as any)
+            .select('quantity')
+            .eq('order_id', orderId)
+
+        const totalQuantity = (items || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
+
         const updatePayload: any = {
             po_number: poNumber,
             order_date: orderDate,
             due_date: expectedShipDate ? expectedShipDate : null,
             receiving_destination: receiving_destination ? receiving_destination : null,
             status: 'production',
-            status_history: [...history, newLog]
+            status_history: [...history, newLog],
+            total_quantity: totalQuantity
         }
 
         const { error } = await supabase

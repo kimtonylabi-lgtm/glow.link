@@ -16,10 +16,11 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
-import { Edit2, Trash2, Search, Undo2, Loader2 } from "lucide-react"
+import { Edit2, Trash2, Search, Undo2, Loader2, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { OrderDetailModal } from "./order-detail-modal"
+import { ShipmentModal } from "./shipment-modal"
 import { cancelOrderConfirmation } from "./order-actions"
 import { toast } from 'sonner'
 import {
@@ -38,7 +39,7 @@ type Order = {
     order_date: string
     due_date: string | null
     total_amount: number
-    status: 'draft' | 'confirmed' | 'production' | 'shipped'
+    status: 'draft' | 'confirmed' | 'production' | 'partially_shipped' | 'shipped'
     po_number?: string
     memo: string | null
     receiving_destination: string | null
@@ -72,6 +73,8 @@ export function OrderList({
     const canManage = ['admin', 'head', 'support'].includes(userRole)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+    const [shipmentOrder, setShipmentOrder] = useState<Order | null>(null)
+    const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false)
 
     const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '')
     const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -131,10 +134,11 @@ export function OrderList({
         })
     }, [debouncedSearchTerm, pathname, router, searchParams])
 
-    const statusConfig = {
+    const statusConfig: Record<string, { label: string; color: string }> = {
         'draft': { label: '수주 대기', color: 'bg-muted/50 text-muted-foreground border-border/50' },
         'confirmed': { label: '수주 확정', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_10px_theme(colors.blue.500)/20]' },
         'production': { label: '생산 진행', color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20 shadow-[0_0_10px_theme(colors.indigo.500)/20]' },
+        'partially_shipped': { label: '부분 출하', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_10px_theme(colors.amber.500)/20]' },
         'shipped': { label: '출하 완료', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_10px_theme(colors.emerald.500)/20]' }
     }
 
@@ -267,19 +271,34 @@ export function OrderList({
                                                                 </Button>
                                                             </>
                                                         ) : (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-300 hover:text-slate-100"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    setOrderToCancel(order)
-                                                                    setCancelReason('')
-                                                                    setCancelModalOpen(true)
-                                                                }}
-                                                            >
-                                                                <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
-                                                            </Button>
+                                                            // 납기 탭: 출하 등록 버튼 + 확정 취소
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 text-[11px] font-bold px-2 border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 text-amber-400 hover:text-amber-300"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setShipmentOrder(order)
+                                                                        setIsShipmentModalOpen(true)
+                                                                    }}
+                                                                >
+                                                                    <Truck className="h-3 w-3 mr-1" /> 출하 등록
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 text-[11px] font-semibold px-2 border border-slate-700/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setOrderToCancel(order)
+                                                                        setCancelReason('')
+                                                                        setCancelModalOpen(true)
+                                                                    }}
+                                                                >
+                                                                    <Undo2 className="h-3 w-3 mr-1" /> 확정 취소
+                                                                </Button>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </TableCell>
@@ -297,6 +316,12 @@ export function OrderList({
                     onOpenChange={setIsDetailModalOpen}
                     order={selectedOrder}
                     readOnly={tabType === 'delivery'}
+                />
+
+                <ShipmentModal
+                    isOpen={isShipmentModalOpen}
+                    onOpenChange={setIsShipmentModalOpen}
+                    order={shipmentOrder}
                 />
 
                 <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
