@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner'
 import { getPendingShippingOrders } from './actions'
 import { format } from 'date-fns'
-import { Loader2, Truck, CheckCircle2, ChevronRight, Search, Calendar as CalendarIcon } from 'lucide-react'
+import { Loader2, Truck, CheckCircle2, ChevronRight, Search, Calendar as CalendarIcon, CornerDownRight } from 'lucide-react'
 import { ShipmentModal } from '@/app/dashboard/sales/order/shipment-modal'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
@@ -246,15 +246,21 @@ export function ShippingClient() {
                                                 <TableCell className="font-semibold text-foreground truncate text-sm">
                                                     {order.client_name}
                                                 </TableCell>
-                                                <TableCell className="max-w-[250px] py-4">
+                                                <TableCell className="max-w-[280px] py-4">
                                                     <div className="flex flex-col items-start gap-1">
-                                                        <span className="text-[14px] font-bold text-slate-100 leading-snug break-all" title={order.product_name}>
+                                                        <span className="text-[15px] font-bold text-slate-50 leading-snug break-all px-1" title={order.product_name}>
                                                             {order.product_name}
                                                         </span>
                                                         {(order.client_product_name || order.order_items?.[0]?.client_product_name) && (
-                                                            <span className="text-[12px] text-slate-400 font-medium leading-tight py-0.5 px-1.5 bg-slate-800/50 rounded border border-slate-700/30 break-all" title={order.client_product_name || order.order_items?.[0]?.client_product_name}>
-                                                                {order.client_product_name || order.order_items?.[0]?.client_product_name}
-                                                            </span>
+                                                            <div className="flex items-start gap-1.5 pl-1.5 opacity-85">
+                                                                <CornerDownRight className="w-3.5 h-3.5 mt-0.5 text-slate-500 shrink-0" />
+                                                                <span
+                                                                    className="text-[13px] text-slate-400 font-medium leading-tight break-all"
+                                                                    title={order.client_product_name || order.order_items?.[0]?.client_product_name}
+                                                                >
+                                                                    {order.client_product_name || order.order_items?.[0]?.client_product_name}
+                                                                </span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </TableCell>
