@@ -18,12 +18,15 @@ import {
     Info,
     LayoutTemplate,
     AlertCircle,
+    AlertCircle as AlertIcon,
     ArrowRight,
     FileText,
     Users,
     Zap,
     PieChart,
-    LayoutDashboard
+    LayoutDashboard,
+    Phone,
+    Crown,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -40,6 +43,9 @@ import { SalesKanban } from '@/components/sales/SalesKanban'
 
 interface Props {
     activities: ActivityWithRelations[]
+    opportunities?: any[]
+    churnRiskClients?: any[]
+    vipClients?: any[]
 }
 
 import {
@@ -50,7 +56,7 @@ import {
 } from 'recharts'
 import { MonthlyGoalModal } from './MonthlyGoalModal'
 
-export function PlanningClient({ activities: initialActivities }: Props) {
+export function PlanningClient({ activities: initialActivities, opportunities = [], churnRiskClients = [], vipClients = [] }: Props) {
     // KST Time Logic
     const getKSTNow = () => {
         const now = new Date()
@@ -335,6 +341,75 @@ export function PlanningClient({ activities: initialActivities }: Props) {
 
                     <div className="bg-card/20 backdrop-blur-3xl rounded-[3rem] border border-border/40 p-1 shadow-2xl overflow-hidden min-h-[600px]">
                         <SalesKanban initialActivities={initialActivities} />
+                    </div>
+                </div>
+
+                {/* ── 하단 패널: 이탈위험 + VIP ABC ── */}
+                <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                    {/* 이탈 위험 거래처 */}
+                    <div className="bg-card/40 backdrop-blur-xl border border-border/40 rounded-[2rem] overflow-hidden shadow-xl">
+                        <div className="flex items-center gap-3 px-6 py-4 bg-orange-500/5 border-b border-orange-500/10">
+                            <AlertIcon className="w-5 h-5 text-orange-500" />
+                            <div>
+                                <h3 className="font-black text-sm text-orange-500 uppercase tracking-wide">🚨 이탈 위험 거래처</h3>
+                                <p className="text-[10px] text-muted-foreground/60 font-medium mt-0.5">최근 3개월 미발주</p>
+                            </div>
+                            <span className="ml-auto text-xs font-black bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-1 rounded-full">{churnRiskClients.length}개사</span>
+                        </div>
+                        <div className="divide-y divide-border/20 max-h-[360px] overflow-y-auto">
+                            {churnRiskClients.length === 0 ? (
+                                <div className="flex flex-col items-center py-10 text-muted-foreground">
+                                    <p className="text-sm">이탈 위험 거래처가 없습니다 🎉</p>
+                                </div>
+                            ) : churnRiskClients.map((c: any) => (
+                                <div key={c.id} className="flex items-center px-5 py-3.5 group hover:bg-muted/20 transition-colors">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-sm text-slate-200 truncate">{c.company_name}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{c.contact_person || '담당자 없음'} · {c.phone || '-'}</p>
+                                    </div>
+                                    <button
+                                        className="shrink-0 ml-3 flex items-center gap-1.5 text-[11px] font-black px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+                                        onClick={() => window.location.href = `/dashboard/sales/activity?client_id=${c.id}`}
+                                    >
+                                        <Phone className="w-3 h-3" /> 영업활동 기록
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* VIP ABC 분석표 */}
+                    <div className="bg-card/40 backdrop-blur-xl border border-border/40 rounded-[2rem] overflow-hidden shadow-xl">
+                        <div className="flex items-center gap-3 px-6 py-4 bg-amber-500/5 border-b border-amber-500/10">
+                            <Crown className="w-5 h-5 text-amber-400" />
+                            <div>
+                                <h3 className="font-black text-sm text-amber-400 uppercase tracking-wide">👑 VIP ABC 분석표</h3>
+                                <p className="text-[10px] text-muted-foreground/60 font-medium mt-0.5">최근 1년 누적 매출 기준</p>
+                            </div>
+                            <span className="ml-auto text-xs font-black bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full">TOP {vipClients.length}</span>
+                        </div>
+                        <div className="divide-y divide-border/20 max-h-[360px] overflow-y-auto">
+                            {vipClients.length === 0 ? (
+                                <div className="flex flex-col items-center py-10 text-muted-foreground">
+                                    <TrendingUp className="w-8 h-8 mb-2 opacity-20" />
+                                    <p className="text-sm">최근 1년 수주 데이터가 없습니다</p>
+                                </div>
+                            ) : vipClients.map((c: any, idx: number) => {
+                                const tier = idx < 3 ? { label: 'S', color: 'bg-yellow-400/20 text-yellow-400 border-yellow-400/30' }
+                                    : idx < Math.ceil(vipClients.length * 0.2) ? { label: 'A', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
+                                        : idx < Math.ceil(vipClients.length * 0.5) ? { label: 'B', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' }
+                                            : { label: 'C', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' }
+                                return (
+                                    <div key={c.id} className="flex items-center px-5 py-3 hover:bg-muted/20 transition-colors">
+                                        <span className="text-xs font-black text-muted-foreground/40 w-6 shrink-0">{idx + 1}</span>
+                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded border mx-3 shrink-0 ${tier.color}`}>{tier.label}</span>
+                                        <p className="font-bold text-sm text-slate-200 flex-1 truncate">{c.company_name}</p>
+                                        <p className="text-xs font-mono font-bold text-amber-400 shrink-0 ml-2">₩{c.annual_revenue.toLocaleString()}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>

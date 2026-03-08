@@ -1,74 +1,75 @@
-import { getCurrentUser } from '@/lib/supabase/queries'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Calendar, TrendingUp } from 'lucide-react'
-import { DemandPredictionAlert } from '@/components/sales/DemandPredictionAlert'
+import { getCurrentUser } from '@/lib/supabase/queries'
+import { HomeActionBoard } from './home-action-board'
 
 export default async function DashboardHome() {
-    // [최적화] layout.tsx와 동일 요청 → cache()로 DB 재조회 없이 캐시에서 즉시 반환
     const user = await getCurrentUser()
     const supabase = await createClient()
-
     const name = user?.user_metadata?.full_name || '사용자'
 
+    // ─────────────────────────────────────────────────────────────
+    // 3종 실무 데이터 병렬 로드 (RLS 자동 적용 — 추가 필터 불필요)
+    // ─────────────────────────────────────────────────────────────
+    const today = new Date()
+    const sevenDaysLater = new Date(today)
+    sevenDaysLater.setDate(today.getDate() + 7)
 
-    // Fetch demand prediction data
-    const { data: predictions } = await supabase
-        .from('v_sales_analysis' as any)
-        .select('client_id, company_name, predicted_interval, last_order_date')
-        .limit(10)
+    const todayStr = today.toISOString()
+    const sevenDaysLaterStr = sevenDaysLater.toISOString()
+
+    const [urgentOrdersRes, pendingShippingRes, draftQuotationsRes] = await Promise.all([
+        // ① D-7 납기임박 수주 리스트
+        supabase
+            .from('orders')
+            .select(`
+                id, po_number, due_date, status,
+                clients ( company_name ),
+                order_items ( quantity, products ( name ) )
+            `)
+            .in('status', ['confirmed', 'production'] as any[])
+            .gte('due_date', todayStr)
+            .lte('due_date', sevenDaysLaterStr)
+            .order('due_date', { ascending: true })
+            .limit(10),
+
+        // ② 출하 대기: production/confirmed 상태이면서 출하 이력이 없거나 미출하인 건
+        supabase
+            .from('orders')
+            .select(`
+                id, po_number, due_date, status, total_quantity,
+                clients ( company_name ),
+                order_items ( quantity, products ( name ) ),
+                shipping_orders ( shipped_quantity, status )
+            `)
+            .in('status', ['confirmed', 'production', 'partially_shipped'] as any[])
+            .order('due_date', { ascending: true })
+            .limit(15),
+
+        // ③ 미승인 견적 건수
+        (supabase.from('quotations' as any) as any)
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'draft')
+            .eq('is_current', true),
+    ])
+
+    const urgentOrders = urgentOrdersRes.data || []
+
+    // 출하 대기: is_fully_shipped 아닌 것만
+    const pendingShipping = (pendingShippingRes.data || []).filter((o: any) => {
+        const totalOrdered = o.total_quantity || o.order_items?.reduce((s: number, i: any) => s + (i.quantity || 0), 0) || 0
+        const totalShipped = o.shipping_orders?.reduce((s: number, sh: any) => s + (sh.shipped_quantity || 0), 0) || 0
+        return o.status !== 'shipped' && totalShipped < totalOrdered
+    })
+
+    const draftQuotationCount = draftQuotationsRes.count || 0
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">환영합니다, {name}님! 👋</h1>
-                <p className="text-muted-foreground">
-                    GlowLink 대시보드에 오신 것을 환영합니다. 좌측 메뉴를 통해 업무를 시작해 보세요.
-                </p>
-            </div>
-
-            {predictions && predictions.length > 0 && (
-                <DemandPredictionAlert predictions={predictions as any} />
-            )}
-
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card className="bg-card/40 backdrop-blur-xl border-border/40">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">오늘의 일정</CardTitle>
-                        <Calendar className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">0건</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            예정된 미팅 및 업무
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-card/40 backdrop-blur-xl border-border/40">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">진행 중인 프로젝트</CardTitle>
-                        <Sparkles className="h-4 w-4 text-accent" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">0건</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            현재 활성화된 항목
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-card/40 backdrop-blur-xl border-border/40">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">최근 알림</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">새로운 알림 없음</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            시스템 및 업무 업데이트
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+        <HomeActionBoard
+            name={name}
+            urgentOrders={urgentOrders as any[]}
+            pendingShipping={pendingShipping as any[]}
+            draftQuotationCount={draftQuotationCount}
+        />
     )
 }
