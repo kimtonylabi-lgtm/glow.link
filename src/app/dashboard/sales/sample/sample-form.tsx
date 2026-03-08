@@ -58,7 +58,6 @@ interface SampleFormProps {
 export function SampleForm({ clients, onSuccess }: SampleFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
-    const [sampleNo, setSampleNo] = useState('[등록 시 자동 부여]')
 
     const form = useForm<SampleRequestFormValues>({
         resolver: zodResolver(sampleRequestSchema) as any,
@@ -201,7 +200,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         name="sample_no"
                                         render={({ field }) => (
                                             <Input
-                                                value={sampleNo}
+                                                value="[등록 시 자동 부여]"
                                                 readOnly
                                                 className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-2 text-primary font-mono font-bold text-[11px]"
                                             />
