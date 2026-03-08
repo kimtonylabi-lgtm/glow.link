@@ -78,18 +78,18 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
         },
     })
 
+    const sampleType = form.watch('sample_type')
+
     useEffect(() => {
         const fetchNextNo = async () => {
-            const result = await getNextSampleNo()
+            const result = await getNextSampleNo(sampleType)
             if (result.success) {
                 setSampleNo(result.nextNo)
                 form.setValue('sample_no', result.nextNo)
             }
         }
         fetchNextNo()
-    }, [form])
-
-    const sampleType = form.watch('sample_type')
+    }, [form, sampleType])
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -164,68 +164,98 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                         {/* 2. Dynamic Grid Layout - REFACTORED TO USER SPEC */}
                         <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm flex flex-col font-sans shadow-xl">
 
-                            {/* [Row 1 (4 Columns)]: 샘플번호 | 고객사 | 담당자 | 요청수량 */}
-                            <div className="w-full grid grid-cols-1 md:grid-cols-4">
-                                <div className="flex border-r border-b border-slate-700 h-11 bg-slate-900/50">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">샘플번호</div>
+                            {/* [Row 1]: 샘플번호 | 고객사 | 담당자 | 요청수량 - ADJUSTED RATIOS */}
+                            <div className="w-full flex flex-col md:flex-row border-b border-slate-700">
+                                <div className="flex-none w-full md:w-[150px] flex border-r border-slate-700 h-11 bg-slate-900/50">
+                                    <div className="w-[65px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">번호</div>
                                     <FormField
                                         control={form.control}
                                         name="sample_no"
                                         render={({ field }) => (
-                                            <Input {...field} readOnly className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-3 text-primary font-mono font-bold text-[13px]" />
+                                            <Input {...field} readOnly className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-2 text-primary font-mono font-bold text-[12px]" />
                                         )}
                                     />
                                 </div>
-                                <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">고객사</div>
+                                <div className="flex-1 flex border-r border-slate-700 h-11">
+                                    <div className="w-[75px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
                                     <FormField
                                         control={form.control}
                                         name="client_id"
-                                        render={({ field }) => (
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
-                                                        {field.value ? clients.find(c => c.id === field.value)?.company_name : "고객사 선택"}
-                                                        <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-[300px] p-0 bg-slate-900 border-slate-700 shadow-2xl">
-                                                    <Command className="bg-transparent">
-                                                        <CommandInput placeholder="검색..." className="h-10 border-0 focus-visible:ring-0" />
-                                                        <CommandList className="max-h-[300px]">
-                                                            <CommandEmpty>결과 없음</CommandEmpty>
-                                                            <CommandGroup>
-                                                                {clients.map(c => (
-                                                                    <CommandItem key={c.id} onSelect={() => { form.setValue('client_id', c.id); }} className="hover:bg-slate-800 text-slate-300">
-                                                                        <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100 text-primary" : "opacity-0")} />
-                                                                        {c.company_name}
-                                                                    </CommandItem>
-                                                                ))}
-                                                            </CommandGroup>
-                                                        </CommandList>
-                                                    </Command>
-                                                </PopoverContent>
-                                            </Popover>
-                                        )}
+                                        render={({ field }) => {
+                                            const [open, setOpen] = useState(false);
+                                            const [query, setQuery] = useState("");
+
+                                            return (
+                                                <Popover open={open} onOpenChange={setOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
+                                                            {field.value ? (clients.find(c => c.id === field.value)?.company_name || field.value) : "고객사 검색 또는 입력"}
+                                                            <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0 ml-2" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[400px] p-0 bg-slate-950 border-slate-700 shadow-2xl z-[100]">
+                                                        <Command className="bg-transparent">
+                                                            <CommandInput
+                                                                placeholder="고객사명 검색..."
+                                                                value={query}
+                                                                onValueChange={setQuery}
+                                                                className="h-10 border-0 focus-visible:ring-0"
+                                                            />
+                                                            <CommandList className="max-h-[300px]">
+                                                                <CommandEmpty className="p-2">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        className="w-full justify-start text-primary font-bold hover:bg-primary/10"
+                                                                        onClick={() => {
+                                                                            field.onChange(query);
+                                                                            setOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        <Plus className="w-4 h-4 mr-2" />
+                                                                        &quot;{query}&quot; (신규 등록)
+                                                                    </Button>
+                                                                </CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {clients.map(c => (
+                                                                        <CommandItem
+                                                                            key={c.id}
+                                                                            value={c.company_name}
+                                                                            onSelect={() => {
+                                                                                field.onChange(c.id);
+                                                                                setOpen(false);
+                                                                            }}
+                                                                            className="hover:bg-slate-800 text-slate-300"
+                                                                        >
+                                                                            <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100 text-primary" : "opacity-0")} />
+                                                                            {c.company_name}
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
+                                            )
+                                        }}
                                     />
                                 </div>
-                                <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
+                                <div className="flex-none w-full md:w-[150px] flex border-r border-slate-700 h-11">
+                                    <div className="w-[65px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
                                     <FormField
                                         control={form.control}
                                         name="contact_person"
                                         render={({ field }) => (
-                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-100 font-medium placeholder:text-slate-600 text-[13px]" placeholder="이름" />
+                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-100 font-medium placeholder:text-slate-600 text-[12px]" placeholder="이름" />
                                         )}
                                     />
                                 </div>
-                                <div className="flex border-b border-slate-700 h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">요청수량</div>
+                                <div className="flex-none w-full md:w-[100px] flex h-11">
+                                    <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
                                     <FormField
                                         control={form.control}
                                         name="quantity"
                                         render={({ field }) => (
-                                            <Input type="number" min={1} {...field} onChange={e => field.onChange(parseInt(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 font-mono text-[15px]" />
+                                            <Input type="number" min={1} {...field} onChange={e => field.onChange(parseInt(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 font-mono text-[14px] px-1" />
                                         )}
                                     />
                                 </div>
