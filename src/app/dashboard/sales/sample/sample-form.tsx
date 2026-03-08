@@ -74,7 +74,15 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
             has_laba: false,
             shipping_address: '',
             special_instructions: '',
-            design_specs: [{ part_name: '', injection_material: '', injection_color: '', coating: '', printing: '' }]
+            design_specs: [
+                {
+                    part_name: '',
+                    injection_material: '',
+                    injection_color: '',
+                    coating: '',
+                    printing: ''
+                }
+            ] as any
         },
     })
 

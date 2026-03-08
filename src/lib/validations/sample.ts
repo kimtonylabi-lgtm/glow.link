@@ -15,14 +15,14 @@ export const sampleRequestSchema = z.object({
     contact_person: z.string().min(1, { message: '담당자 성함을 입력해주세요.' }),
     sample_no: z.string().optional(),
     cat_no: z.string().optional(),
-    has_sample: z.boolean().default(false),
-    has_film: z.boolean().default(false),
-    has_laba: z.boolean().default(false),
+    has_sample: z.boolean().optional(),
+    has_film: z.boolean().optional(),
+    has_laba: z.boolean().optional(),
     shipping_address: z.string().optional(),
     special_instructions: z.string().optional(),
     sample_type: z.enum(['random', 'ct', 'design']),
     completion_date: z.date().optional(),
-    design_specs: z.array(designSpecSchema),
+    design_specs: z.array(designSpecSchema).optional(),
 }).superRefine((data, ctx) => {
     if (data.sample_type === 'design') {
         if (!data.completion_date) {
