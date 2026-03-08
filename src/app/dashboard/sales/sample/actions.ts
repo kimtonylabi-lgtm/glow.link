@@ -37,8 +37,37 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             design_specs
         } = parsedData.data
 
+        let final_client_id = client_id
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+        // client_id가 UUID가 아니면(직접 입력한 사명인 경우) 처리
+        if (!uuidRegex.test(client_id)) {
+            // 동일 이름의 기존 업체가 있는지 확인
+            const { data: existingClient } = await supabase
+                .from('clients')
+                .select('id')
+                .eq('company_name', client_id)
+                .maybeSingle()
+
+            if (existingClient) {
+                final_client_id = existingClient.id
+            } else {
+                // 새로운 업체 등록
+                const { data: newClient, error: clientError } = await supabase
+                    .from('clients')
+                    .insert({ company_name: client_id })
+                    .select('id')
+                    .single()
+
+                if (clientError) {
+                    return { error: `신규 업체 등록 실패: ${clientError.message}` }
+                }
+                final_client_id = newClient.id
+            }
+        }
+
         const insertPayload: any = {
-            client_id,
+            client_id: final_client_id,
             product_name,
             quantity,
             contact_person,
@@ -112,15 +141,16 @@ export async function updateSampleStatus(id: string, newStatus: string, imageUrl
     }
 }
 
-export async function getNextSampleNo() {
+export async function getNextSampleNo(sampleType: string) {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).rpc('get_next_sample_seq')
+    const { data, error } = await (supabase as any).rpc('get_next_sample_seq_v2', { p_type: sampleType })
 
     if (error) {
         console.error('Error fetching next sequence:', error)
-        return { success: false, nextNo: 'D-AUTO' }
+        return { success: false, nextNo: `${sampleType[0].toUpperCase()}-AUTO` }
     }
 
     const nextVal = (data || 0) + 1
-    return { success: true, nextNo: `D${String(nextVal).padStart(6, '0')}` }
+    const prefix = sampleType === 'random' ? 'R' : sampleType === 'ct' ? 'C' : 'D'
+    return { success: true, nextNo: `${prefix}${String(nextVal).padStart(6, '0')}` }
 }
