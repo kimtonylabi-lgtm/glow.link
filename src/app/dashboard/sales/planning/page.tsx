@@ -15,7 +15,7 @@ export default async function SalesPlanningPage() {
     const oneYearAgo = new Date()
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
 
-    const [activitiesRes, opportunitiesRes, churnRiskClientsRes, vipClientsRes, clientsRes] = await Promise.all([
+    const [activitiesRes, churnRiskClientsRes, vipClientsRes] = await Promise.all([
         // 1. 기존 activities (SalesKanban에서 사용)
         supabase
             .from('activities')
@@ -28,16 +28,7 @@ export default async function SalesPlanningPage() {
             `)
             .order('activity_date', { ascending: false }),
 
-        // 2. opportunities (신규 칸반 데이터)
-        (supabase.from('opportunities' as any) as any)
-            .select(`
-                id, title, stage, expected_amount, probability, expected_close_date, memo, created_at,
-                clients ( id, company_name ),
-                profiles ( id, full_name )
-            `)
-            .order('created_at', { ascending: false }),
-
-        // 3. 이탈 위험 거래처: 최근 90일 수주 없는 담당 거래처
+        // 2. 이탈 위험 거래처: 최근 90일 수주 없는 담당 거래처
         supabase
             .from('clients')
             .select(`
@@ -47,20 +38,13 @@ export default async function SalesPlanningPage() {
             .eq('status', 'active')
             .order('company_name'),
 
-        // 4. VIP ABC 분석: 최근 1년 누적 매출 기준
+        // 3. VIP ABC 분석: 최근 1년 누적 매출 기준
         supabase
             .from('clients')
             .select(`
                 id, company_name, tier,
                 orders ( id, total_amount, order_date )
             `)
-            .eq('status', 'active')
-            .order('company_name'),
-
-        // 5. 담당 거래처 목록 (OpportunitiesKanban 추가 모달용)
-        supabase
-            .from('clients')
-            .select('id, company_name')
             .eq('status', 'active')
             .order('company_name'),
     ])
@@ -89,10 +73,8 @@ export default async function SalesPlanningPage() {
         <div className="animate-in fade-in duration-500">
             <PlanningClient
                 activities={(activitiesRes.data as any) || []}
-                opportunities={(opportunitiesRes.data as any) || []}
                 churnRiskClients={churnRiskClients as any[]}
                 vipClients={vipClients as any[]}
-                clients={(clientsRes.data as any) || []}
             />
         </div>
     )

@@ -40,14 +40,11 @@ import Link from 'next/link'
 
 import { ActivityWithRelations } from '@/types/crm'
 import { SalesKanban } from '@/components/sales/SalesKanban'
-import { OpportunitiesKanban } from '@/components/sales/OpportunitiesKanban'
 
 interface Props {
     activities: ActivityWithRelations[]
-    opportunities?: any[]
     churnRiskClients?: any[]
     vipClients?: any[]
-    clients?: { id: string; company_name: string }[]
 }
 
 import {
@@ -58,7 +55,7 @@ import {
 } from 'recharts'
 import { MonthlyGoalModal } from './MonthlyGoalModal'
 
-export function PlanningClient({ activities: initialActivities, opportunities = [], churnRiskClients = [], vipClients = [], clients = [] }: Props) {
+export function PlanningClient({ activities: initialActivities, churnRiskClients = [], vipClients = [] }: Props) {
     // KST Time Logic
     const getKSTNow = () => {
         const now = new Date()
@@ -286,10 +283,20 @@ export function PlanningClient({ activities: initialActivities, opportunities = 
                     </div>
                 </div>
 
-                {/* 칸반: 수주 기회 파이프라인 (Opportunities 기반) */}
-                <div className="lg:col-span-12">
-                    <div className="bg-card/20 backdrop-blur-3xl rounded-3xl border border-border/40 p-5 shadow-xl overflow-hidden">
-                        <OpportunitiesKanban opportunities={opportunities} clients={clients} />
+                {/* 복구된 Sales Pipeline Kanban */}
+                <div className="lg:col-span-12 pt-2">
+                    <div className="flex items-center justify-between mb-4 px-4">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-black tracking-tighter uppercase italic flex items-center gap-3">
+                                <div className="w-2 h-8 bg-primary rounded-full" />
+                                Sales Pipeline Kanban
+                            </h2>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">영업 활동 기반의 파이프라인 단계별 현황</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-card/20 backdrop-blur-3xl rounded-[3rem] border border-border/40 p-1 shadow-2xl overflow-hidden min-h-[600px]">
+                        <SalesKanban initialActivities={initialActivities} />
                     </div>
                 </div>
 
