@@ -114,7 +114,7 @@ export async function updateSampleStatus(id: string, newStatus: string, imageUrl
 
 export async function getNextSampleNo() {
     const supabase = await createClient()
-    const { data, error } = await supabase.rpc('get_next_sample_seq')
+    const { data, error } = await (supabase as any).rpc('get_next_sample_seq')
 
     if (error) {
         console.error('Error fetching next sequence:', error)
