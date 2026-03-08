@@ -65,7 +65,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
             sample_type: 'random',
             client_id: '',
             product_name: '',
-            quantity: 1,
+            quantity: undefined as any,
             contact_person: '',
             sample_no: '',
             cat_no: '',
@@ -99,17 +99,23 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
     // Removed auto-reset of fields to keep data enabled for all types
 
     async function onSubmit(data: SampleRequestFormValues) {
-        setIsLoading(true)
-        const result = await addSampleRequest(data)
+        setIsLoading(true);
+        console.log("Submitting Data:", data);
+        const result = await addSampleRequest(data);
 
         if (result.error) {
-            toast.error('요청 실패', { description: result.error })
+            toast.error('요청 실패', { description: result.error });
+            console.error("Submission Error:", result.error);
         } else {
-            toast.success('요청 완료', { description: '샘플실로 요청이 전달되었습니다.' })
-            form.reset()
-            onSuccess?.()
+            toast.success('샘플 요청이 등록되었습니다', {
+                description: '샘플실로 요청이 정상적으로 전달되었습니다.',
+                position: 'top-center'
+            });
+            form.reset();
+            onSuccess?.();
+            window.location.reload(); // Refresh to show new data if needed, or rely on revalidatePath
         }
-        setIsLoading(false)
+        setIsLoading(false);
     }
 
     return (
@@ -178,86 +184,103 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 </div>
                                 <div className="flex-1 flex border-r border-slate-700 h-11">
                                     <div className="w-[75px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="client_id"
-                                        render={({ field }) => {
-                                            const [open, setOpen] = useState(false);
-                                            const [query, setQuery] = useState("");
+                                    <FormItem className="flex-1 h-full relative">
+                                        <FormField
+                                            control={form.control}
+                                            name="client_id"
+                                            render={({ field }) => {
+                                                const [open, setOpen] = useState(false);
+                                                const [query, setQuery] = useState("");
 
-                                            return (
-                                                <Popover open={open} onOpenChange={setOpen}>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
-                                                            {field.value ? (clients.find(c => c.id === field.value)?.company_name || field.value) : "고객사 검색 또는 입력"}
-                                                            <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0 ml-2" />
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-[400px] p-0 bg-slate-950 border-slate-700 shadow-2xl z-[100]">
-                                                        <Command className="bg-transparent">
-                                                            <CommandInput
-                                                                placeholder="고객사명 검색..."
-                                                                value={query}
-                                                                onValueChange={setQuery}
-                                                                className="h-10 border-0 focus-visible:ring-0"
-                                                            />
-                                                            <CommandList className="max-h-[300px]">
-                                                                <CommandEmpty className="p-2">
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        className="w-full justify-start text-primary font-bold hover:bg-primary/10"
-                                                                        onClick={() => {
-                                                                            field.onChange(query);
-                                                                            setOpen(false);
-                                                                        }}
-                                                                    >
-                                                                        <Plus className="w-4 h-4 mr-2" />
-                                                                        &quot;{query}&quot; (신규 등록)
-                                                                    </Button>
-                                                                </CommandEmpty>
-                                                                <CommandGroup>
-                                                                    {clients.map(c => (
-                                                                        <CommandItem
-                                                                            key={c.id}
-                                                                            value={c.company_name}
-                                                                            onSelect={() => {
-                                                                                field.onChange(c.id);
+                                                return (
+                                                    <Popover open={open} onOpenChange={setOpen}>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
+                                                                {field.value ? (clients.find(c => c.id === field.value)?.company_name || field.value) : "고객사 검색 또는 입력"}
+                                                                <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0 ml-2" />
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-[400px] p-0 bg-slate-950 border-slate-700 shadow-2xl z-[100]">
+                                                            <Command className="bg-transparent">
+                                                                <CommandInput
+                                                                    placeholder="고객사명 검색..."
+                                                                    value={query}
+                                                                    onValueChange={setQuery}
+                                                                    className="h-10 border-0 focus-visible:ring-0"
+                                                                />
+                                                                <CommandList className="max-h-[300px]">
+                                                                    <CommandEmpty className="p-2">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            className="w-full justify-start text-primary font-bold hover:bg-primary/10"
+                                                                            onClick={() => {
+                                                                                field.onChange(query);
                                                                                 setOpen(false);
                                                                             }}
-                                                                            className="hover:bg-slate-800 text-slate-300"
                                                                         >
-                                                                            <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100 text-primary" : "opacity-0")} />
-                                                                            {c.company_name}
-                                                                        </CommandItem>
-                                                                    ))}
-                                                                </CommandGroup>
-                                                            </CommandList>
-                                                        </Command>
-                                                    </PopoverContent>
-                                                </Popover>
-                                            )
-                                        }}
-                                    />
+                                                                            <Plus className="w-4 h-4 mr-2" />
+                                                                            &quot;{query}&quot; (신규 등록)
+                                                                        </Button>
+                                                                    </CommandEmpty>
+                                                                    <CommandGroup>
+                                                                        {clients.map(c => (
+                                                                            <CommandItem
+                                                                                key={c.id}
+                                                                                value={c.company_name}
+                                                                                onSelect={() => {
+                                                                                    field.onChange(c.id);
+                                                                                    setOpen(false);
+                                                                                }}
+                                                                                className="hover:bg-slate-800 text-slate-300"
+                                                                            >
+                                                                                <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100 text-primary" : "opacity-0")} />
+                                                                                {c.company_name}
+                                                                            </CommandItem>
+                                                                        ))}
+                                                                    </CommandGroup>
+                                                                </CommandList>
+                                                            </Command>
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                )
+                                            }}
+                                        />
+                                        <FormMessage className="absolute -bottom-5 left-2 text-[10px]" />
+                                    </FormItem>
                                 </div>
-                                <div className="flex-none w-full md:w-[150px] flex border-r border-slate-700 h-11">
+                                <div className="flex-none w-full md:w-[120px] flex border-r border-slate-700 h-11">
                                     <div className="w-[65px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="contact_person"
-                                        render={({ field }) => (
-                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-100 font-medium placeholder:text-slate-600 text-[12px]" placeholder="이름" />
-                                        )}
-                                    />
+                                    <FormItem className="flex-1 h-full relative">
+                                        <FormField
+                                            control={form.control}
+                                            name="contact_person"
+                                            render={({ field }) => (
+                                                <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-100 font-medium placeholder:text-slate-600 text-[12px]" placeholder="이름" />
+                                            )}
+                                        />
+                                        <FormMessage className="absolute -bottom-5 left-0 text-[9px] bg-slate-900 px-1 z-10" />
+                                    </FormItem>
                                 </div>
-                                <div className="flex-none w-full md:w-[100px] flex h-11">
+                                <div className="flex-none w-full md:w-[180px] flex h-11 bg-primary/5">
                                     <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="quantity"
-                                        render={({ field }) => (
-                                            <Input type="number" min={1} {...field} onChange={e => field.onChange(parseInt(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 font-mono text-[14px] px-1" />
-                                        )}
-                                    />
+                                    <FormItem className="flex-1 h-full relative">
+                                        <FormField
+                                            control={form.control}
+                                            name="quantity"
+                                            render={({ field }) => (
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                    onChange={e => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
+                                                    className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-primary font-bold text-[16px] px-1"
+                                                    placeholder="숫자 입력"
+                                                />
+                                            )}
+                                        />
+                                        <FormMessage className="absolute -bottom-5 right-0 text-[10px] font-bold text-red-400 bg-slate-950 px-1 z-10 whitespace-nowrap" />
+                                    </FormItem>
                                 </div>
                             </div>
 
@@ -265,33 +288,39 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                             <div className="w-full grid grid-cols-1 md:grid-cols-3">
                                 <div className="md:col-span-2 flex border-r border-b border-slate-700 h-11">
                                     <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">제품명</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="product_name"
-                                        render={({ field }) => (
-                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-4 text-slate-100 font-bold placeholder:text-slate-600 text-[14px]" placeholder="제품명을 상세히 입력하세요" />
-                                        )}
-                                    />
+                                    <FormItem className="flex-1 h-full relative">
+                                        <FormField
+                                            control={form.control}
+                                            name="product_name"
+                                            render={({ field }) => (
+                                                <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-4 text-slate-100 font-bold placeholder:text-slate-600 text-[14px]" placeholder="제품명을 상세히 입력하세요" />
+                                            )}
+                                        />
+                                        <FormMessage className="absolute -bottom-5 left-4 text-[10px]" />
+                                    </FormItem>
                                 </div>
                                 <div className="flex border-b border-slate-700 h-11">
                                     <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">완료요청일</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="completion_date"
-                                        render={({ field }) => (
-                                            <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="ghost" className="flex-1 h-full flex justify-between px-4 rounded-none hover:bg-slate-800 text-slate-100 focus-visible:ring-0">
-                                                        {field.value ? format(field.value, 'yyyy-MM-dd') : <span className="text-slate-600">날짜 선택</span>}
-                                                        <CalendarIcon className="w-4 h-4 opacity-50" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0 z-[9999] border-slate-700">
-                                                    <Calendar mode="single" selected={field.value} onSelect={(d) => { if (d) { field.onChange(d); setIsDatePopoverOpen(false); } }} />
-                                                </PopoverContent>
-                                            </Popover>
-                                        )}
-                                    />
+                                    <FormItem className="flex-1 h-full relative">
+                                        <FormField
+                                            control={form.control}
+                                            name="completion_date"
+                                            render={({ field }) => (
+                                                <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" className="w-full h-full flex justify-between px-4 rounded-none hover:bg-slate-800 text-slate-100 focus-visible:ring-0">
+                                                            {field.value ? format(field.value, 'yyyy-MM-dd') : <span className="text-slate-600">날짜 선택</span>}
+                                                            <CalendarIcon className="w-4 h-4 opacity-50" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0 z-[9999] border-slate-700">
+                                                        <Calendar mode="single" selected={field.value} onSelect={(d) => { if (d) { field.onChange(d); setIsDatePopoverOpen(false); } }} />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            )}
+                                        />
+                                        <FormMessage className="absolute -bottom-5 right-4 text-[10px]" />
+                                    </FormItem>
                                 </div>
                             </div>
 
@@ -300,13 +329,16 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 <div className="w-full grid grid-cols-1 md:grid-cols-4 border-t border-slate-700">
                                     <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
                                         <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">CAT NO.</div>
-                                        <FormField
-                                            control={form.control}
-                                            name="cat_no"
-                                            render={({ field }) => (
-                                                <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 text-[13px]" placeholder="카탈로그 번호" />
-                                            )}
-                                        />
+                                        <FormItem className="flex-1 h-full relative">
+                                            <FormField
+                                                control={form.control}
+                                                name="cat_no"
+                                                render={({ field }) => (
+                                                    <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 text-[13px]" placeholder="카탈로그 번호" />
+                                                )}
+                                            />
+                                            <FormMessage className="absolute -bottom-5 left-0 text-[9px]" />
+                                        </FormItem>
                                     </div>
                                     <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
                                         <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">견본유무</div>
@@ -410,17 +442,20 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                         {/* Special Instructions */}
                         <div className="space-y-3">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">특이사항 (메모)</label>
-                            <FormField
-                                control={form.control}
-                                name="special_instructions"
-                                render={({ field }) => (
-                                    <Textarea
-                                        {...field}
-                                        placeholder="요구사항이나 배송지, 특기사항 등 (필요 시 작성)"
-                                        className="w-full h-28 bg-slate-900 border border-slate-700 rounded-md p-4 text-slate-100 text-[14px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-slate-600 resize-none shadow-inner"
-                                    />
-                                )}
-                            />
+                            <FormItem className="space-y-1">
+                                <FormField
+                                    control={form.control}
+                                    name="special_instructions"
+                                    render={({ field }) => (
+                                        <Textarea
+                                            {...field}
+                                            placeholder="요구사항이나 배송지, 특기사항 등 (필요 시 작성)"
+                                            className="w-full h-28 bg-slate-900 border border-slate-700 rounded-md p-4 text-slate-100 text-[14px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-slate-600 resize-none shadow-inner"
+                                        />
+                                    )}
+                                />
+                                <FormMessage />
+                            </FormItem>
                         </div>
 
                         {/* Submit Actions */}
