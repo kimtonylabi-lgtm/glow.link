@@ -144,6 +144,16 @@ export interface Database {
                     sales_person_id: string
                     product_name: string
                     quantity: number
+                    sample_no: string
+                    sample_type: string | null
+                    cat_no: string | null
+                    contact_person: string | null
+                    special_instructions: string | null
+                    completion_date: string | null
+                    design_specs: Json | null
+                    has_sample: boolean
+                    has_film: boolean
+                    has_laba: boolean
                     status: 'pending' | 'processing' | 'shipped'
                     shipping_address: string | null
                     completion_image_url: string | null
@@ -156,6 +166,16 @@ export interface Database {
                     sales_person_id: string
                     product_name: string
                     quantity?: number
+                    sample_no?: string
+                    sample_type?: string | null
+                    cat_no?: string | null
+                    contact_person?: string | null
+                    special_instructions?: string | null
+                    completion_date?: string | null
+                    design_specs?: Json | null
+                    has_sample?: boolean
+                    has_film?: boolean
+                    has_laba?: boolean
                     status?: 'pending' | 'processing' | 'shipped'
                     shipping_address?: string | null
                     completion_image_url?: string | null
@@ -168,6 +188,16 @@ export interface Database {
                     sales_person_id?: string
                     product_name?: string
                     quantity?: number
+                    sample_no?: string
+                    sample_type?: string | null
+                    cat_no?: string | null
+                    contact_person?: string | null
+                    special_instructions?: string | null
+                    completion_date?: string | null
+                    design_specs?: Json | null
+                    has_sample?: boolean
+                    has_film?: boolean
+                    has_laba?: boolean
                     status?: 'pending' | 'processing' | 'shipped'
                     shipping_address?: string | null
                     completion_image_url?: string | null
