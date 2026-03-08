@@ -60,7 +60,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
     const [sampleNo, setSampleNo] = useState('D......')
 
     const form = useForm<SampleRequestFormValues>({
-        resolver: zodResolver(sampleRequestSchema),
+        resolver: zodResolver(sampleRequestSchema) as any,
         defaultValues: {
             sample_type: 'random',
             client_id: '',
@@ -88,16 +88,18 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
     const sampleType = form.watch('sample_type')
 
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
     useEffect(() => {
-        const fetchNextNo = async () => {
-            const result = await getNextSampleNo(sampleType)
-            if (result.success) {
-                setSampleNo(result.nextNo)
-                form.setValue('sample_no', result.nextNo)
+        async function fetchNo() {
+            const res = await getNextSampleNo(sampleType);
+            if (res.success && res.nextNo) {
+                setSampleNo(res.nextNo);
+                form.setValue('sample_no', res.nextNo);
             }
         }
-        fetchNextNo()
-    }, [form, sampleType])
+        fetchNo();
+    }, [sampleType, form, refreshTrigger]);
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -119,17 +121,34 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                 description: '샘플실로 요청이 정상적으로 전달되었습니다.',
                 position: 'top-center'
             });
-            form.reset();
+            form.reset({
+                ...form.getValues(),
+                product_name: '',
+                quantity: undefined,
+                cat_no: '',
+                special_instructions: '',
+                has_sample: false,
+                has_film: false,
+                has_laba: false,
+            });
+            setRefreshTrigger(prev => prev + 1);
             onSuccess?.();
-            window.location.reload();
+            // window.location.reload(); // Removed to allow smooth next entry
         }
         setIsLoading(false);
     }
 
     function onError(errors: any) {
         console.error("Form Validation Errors:", errors);
+
+        // 상세 에러 메시지 추출
+        let errorMsg = '필수 항목을 모두 정확히 입력해주세요.';
+        if (errors.completion_date) errorMsg = errors.completion_date.message;
+        else if (errors.design_specs) errorMsg = errors.design_specs.message;
+        else if (errors.product_name) errorMsg = errors.product_name.message;
+
         toast.error('입력 오류', {
-            description: '필수 항목을 모두 정확히 입력해주세요.',
+            description: errorMsg,
             position: 'top-right'
         });
     }

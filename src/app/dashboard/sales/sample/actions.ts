@@ -66,12 +66,18 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             }
         }
 
+        // [SERVER-SIDE NUMBERING] - Generate the actual number right before insert to avoid duplicates
+        const { success: seqSuccess, nextNo: finalSampleNo } = await getNextSampleNo(sample_type);
+        if (!seqSuccess) {
+            return { error: '샘플 번호 생성 실패' };
+        }
+
         const insertPayload: any = {
             client_id: final_client_id,
             product_name,
             quantity,
             contact_person,
-            sample_no,
+            sample_no: finalSampleNo, // Use the server-side generated number
             cat_no,
             has_sample,
             has_film,
