@@ -15,7 +15,7 @@ export default async function SalesPlanningPage() {
     const oneYearAgo = new Date()
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
 
-    const [activitiesRes, opportunitiesRes, churnRiskClientsRes, vipClientsRes] = await Promise.all([
+    const [activitiesRes, opportunitiesRes, churnRiskClientsRes, vipClientsRes, clientsRes] = await Promise.all([
         // 1. 기존 activities (SalesKanban에서 사용)
         supabase
             .from('activities')
@@ -56,6 +56,13 @@ export default async function SalesPlanningPage() {
             `)
             .eq('status', 'active')
             .order('company_name'),
+
+        // 5. 담당 거래처 목록 (OpportunitiesKanban 추가 모달용)
+        supabase
+            .from('clients')
+            .select('id, company_name')
+            .eq('status', 'active')
+            .order('company_name'),
     ])
 
     // 이탈 위험: 최근 90일 수주가 없는 거래처
@@ -85,6 +92,7 @@ export default async function SalesPlanningPage() {
                 opportunities={(opportunitiesRes.data as any) || []}
                 churnRiskClients={churnRiskClients as any[]}
                 vipClients={vipClients as any[]}
+                clients={(clientsRes.data as any) || []}
             />
         </div>
     )

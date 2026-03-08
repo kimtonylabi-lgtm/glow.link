@@ -40,12 +40,14 @@ import Link from 'next/link'
 
 import { ActivityWithRelations } from '@/types/crm'
 import { SalesKanban } from '@/components/sales/SalesKanban'
+import { OpportunitiesKanban } from '@/components/sales/OpportunitiesKanban'
 
 interface Props {
     activities: ActivityWithRelations[]
     opportunities?: any[]
     churnRiskClients?: any[]
     vipClients?: any[]
+    clients?: { id: string; company_name: string }[]
 }
 
 import {
@@ -56,7 +58,7 @@ import {
 } from 'recharts'
 import { MonthlyGoalModal } from './MonthlyGoalModal'
 
-export function PlanningClient({ activities: initialActivities, opportunities = [], churnRiskClients = [], vipClients = [] }: Props) {
+export function PlanningClient({ activities: initialActivities, opportunities = [], churnRiskClients = [], vipClients = [], clients = [] }: Props) {
     // KST Time Logic
     const getKSTNow = () => {
         const now = new Date()
@@ -324,7 +326,14 @@ export function PlanningClient({ activities: initialActivities, opportunities = 
                     </div>
                 </div>
 
-                {/* 3. Full Width Kanban Section */}
+                {/* 3-A. 수주 기회 파이프라인 (Opportunities 기반) */}
+                <div className="lg:col-span-12 pt-4">
+                    <div className="bg-card/20 backdrop-blur-3xl rounded-[3rem] border border-border/40 p-6 shadow-2xl overflow-hidden">
+                        <OpportunitiesKanban opportunities={opportunities} clients={clients} />
+                    </div>
+                </div>
+
+                {/* 3-B. Full Width Activity Kanban (기존 SalesKanban — View Only) */}
                 <div className="lg:col-span-12 pt-4">
                     <div className="flex items-center justify-between mb-8 px-4">
                         <div className="space-y-1">
