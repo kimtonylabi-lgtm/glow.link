@@ -9,7 +9,7 @@ export const designSpecSchema = z.object({
 });
 
 const baseSchema = z.object({
-    client_id: z.string().uuid({ message: '고객사를 선택해주세요.' }),
+    client_id: z.string().min(1, { message: '고객사를 선택해주세요.' }),
     product_name: z.string().min(2, { message: '제품명을 상세히 입력해주세요. (최소 2자)' }),
     quantity: z.number().min(1, { message: '수량을 입력해주세요.' }),
     contact_person: z.string().min(1, { message: '담당자 성함을 입력해주세요.' }),
@@ -21,21 +21,21 @@ const baseSchema = z.object({
 export const sampleRequestSchema = z.discriminatedUnion('sample_type', [
     baseSchema.extend({
         sample_type: z.literal('random'),
-        cat_no: z.string().optional(),
+        cat_no: z.any().optional(),
         has_sample: z.boolean().optional(),
         has_film: z.boolean().optional(),
         has_laba: z.boolean().optional(),
-        completion_date: z.date().optional(),
-        design_specs: z.array(designSpecSchema).optional(),
+        completion_date: z.any().optional(),
+        design_specs: z.any().optional(),
     }),
     baseSchema.extend({
         sample_type: z.literal('ct'),
-        cat_no: z.string().optional(),
+        cat_no: z.any().optional(),
         has_sample: z.boolean().optional(),
         has_film: z.boolean().optional(),
         has_laba: z.boolean().optional(),
-        completion_date: z.date().optional(),
-        design_specs: z.array(designSpecSchema).optional(),
+        completion_date: z.any().optional(),
+        design_specs: z.any().optional(),
     }),
     baseSchema.extend({
         sample_type: z.literal('design'),

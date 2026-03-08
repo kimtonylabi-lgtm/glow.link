@@ -72,12 +72,14 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             return { error: '샘플 번호 생성 실패' };
         }
 
+        console.log(`[actions.ts] Overwriting sample_no from "${sample_no}" to "${freshSampleNo}"`);
+
         const insertPayload: any = {
             client_id: final_client_id,
             product_name,
             quantity,
             contact_person,
-            sample_no: freshSampleNo, // 서버에서 딴 새 번호 강제 할당
+            sample_no: freshSampleNo, // 서버에서 딴 새 번호로 강제 덮어쓰기
             cat_no: (sample_type === 'design') ? cat_no : null,
             has_sample: has_sample ?? false,
             has_film: has_film ?? false,
@@ -93,6 +95,8 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             insertPayload.completion_date = new Date(completion_date).toISOString().split('T')[0]
         }
 
+        console.log("[actions.ts] Final Payload for Insert:", JSON.stringify(insertPayload, null, 2));
+
         const { data: insertedData, error: insertError } = await supabase
             .from('sample_requests')
             .insert(insertPayload)
@@ -100,7 +104,7 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             .single()
 
         if (insertError) {
-            console.error("DB Insert Error:", insertError);
+            console.error("[actions.ts] DB Insert Error:", insertError);
             return { error: `등록 실패: ${insertError.message}` }
         }
 

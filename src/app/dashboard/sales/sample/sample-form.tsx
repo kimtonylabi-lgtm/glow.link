@@ -110,17 +110,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
     async function onSubmit(data: SampleRequestFormValues) {
         setIsLoading(true);
-
-        // [해결책 1] 랜덤/CT일 경우 불필요한 필드 명시적 제거 (Zod 필터링 우회 방지)
-        const payload = { ...data };
-        if (payload.sample_type === 'random' || payload.sample_type === 'ct') {
-            delete (payload as any).cat_no;
-            delete (payload as any).design_specs;
-            delete (payload as any).completion_date;
-        }
-
-        console.log("Submitting Payload:", payload);
-        const result = await addSampleRequest(payload as SampleRequestFormValues);
+        console.log("Submitting Data:", data);
+        const result = await addSampleRequest(data);
 
         if (result.error) {
             toast.error('요청 실패', { description: result.error });
@@ -130,8 +121,6 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                 description: '샘플실로 요청이 정상적으로 전달되었습니다.',
                 position: 'top-center'
             });
-
-            // [해결책 2] 성공 시 폼 초기화 및 모달 닫기
             form.reset();
             onSuccess?.();
         }
@@ -209,7 +198,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                             <div className="w-full grid grid-cols-1 md:grid-cols-12 border-b border-slate-700">
                                 {/* 번호 (2/12) */}
                                 <div className="md:col-span-2 flex border-r border-slate-700 h-11 bg-slate-900/50">
-                                    <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">번호</div>
+                                    <div className="w-[45px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">번호</div>
                                     <FormField
                                         control={form.control}
                                         name="sample_no"
@@ -221,7 +210,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
                                 {/* 고객사 (4/12) */}
                                 <div className="md:col-span-4 flex border-r border-slate-700 h-11">
-                                    <div className="w-[70px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
+                                    <div className="w-[50px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -289,7 +278,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
                                 {/* 담당자 (3/12) */}
                                 <div className="md:col-span-3 flex border-r border-slate-700 h-11">
-                                    <div className="w-[70px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
+                                    <div className="w-[50px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -304,7 +293,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
                                 {/* 수량 (3/12) */}
                                 <div className="md:col-span-3 flex h-11 bg-primary/5">
-                                    <div className="w-[70px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
+                                    <div className="w-[50px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
