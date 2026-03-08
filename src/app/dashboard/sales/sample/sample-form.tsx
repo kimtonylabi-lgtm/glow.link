@@ -193,8 +193,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                             {/* [Row 1]: 고객사 | 담당자 | 요청수량 - PERFECT ALIGNMENT */}
                             <div className="w-full grid grid-cols-1 md:grid-cols-12 border-b border-slate-700">
                                 {/* 고객사 (6/12) */}
-                                <div className="md:col-span-6 flex flex-col md:flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
-                                    <div className="w-full md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter text-center py-2 md:py-0">고객사</div>
+                                <div className="md:col-span-6 flex flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
+                                    <div className="w-[85px] md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center py-2 md:py-0">고객사</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -261,9 +261,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 </div>
 
                                 <div className="md:col-span-6 grid grid-cols-2 md:flex md:flex-row h-auto md:h-11">
-                                    {/* 담당자 (3/12 in PC, 1/2 in Mobile half) */}
-                                    <div className="md:col-span-3 flex flex-col md:flex-row border-r border-slate-700 h-auto md:h-11">
-                                        <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">담당자</div>
+                                    {/* 담당자 (PC: 3/12, Mobile: 1/2 of Row) */}
+                                    <div className="flex flex-row border-r border-slate-700 h-auto md:h-11 md:flex-1">
+                                        <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">담당자</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
                                                 control={form.control}
@@ -276,9 +276,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         </FormItem>
                                     </div>
 
-                                    {/* 수량 (3/12 in PC, 1/2 in Mobile half) */}
-                                    <div className="md:col-span-3 flex flex-col md:flex-row h-auto md:h-11 bg-primary/5">
-                                        <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">수량</div>
+                                    {/* 수량 (PC: 3/12, Mobile: 1/2 of Row) */}
+                                    <div className="flex flex-row h-auto md:h-11 bg-primary/5 md:flex-1">
+                                        <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">수량</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
                                                 control={form.control}
@@ -303,8 +303,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
                             {/* [Row 2 (2 Columns, 9:3 ratio)]: 제품명 | 완료요청일 + CAT (Mobile) */}
                             <div className="w-full grid grid-cols-1 md:grid-cols-12 border-b border-slate-700">
-                                <div className="md:col-span-9 flex flex-col md:flex-row border-b md:border-b-0 h-auto md:h-11 md:border-r border-slate-700">
-                                    <div className="w-full md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">제품명</div>
+                                <div className="md:col-span-9 flex flex-row border-b md:border-b-0 h-auto md:h-11 md:border-r border-slate-700">
+                                    <div className="w-[85px] md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">제품명</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -316,9 +316,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         <FormMessage className="absolute -bottom-5 left-4 text-[10px]" />
                                     </FormItem>
                                 </div>
-                                <div className="md:col-span-3 grid grid-cols-1 md:block">
-                                    <div className={`flex flex-col md:flex-row ${sampleType === 'design' ? 'grid grid-cols-2 md:flex' : ''} h-auto md:h-11`}>
-                                        <div className="w-full md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 tracking-tighter py-2 md:py-0">완료요청일</div>
+                                <div className="md:col-span-3 grid grid-cols-1 md:block bg-primary/5">
+                                    <div className={`flex flex-row ${sampleType === 'design' ? 'grid grid-cols-2 md:flex' : ''} h-auto md:h-11`}>
+                                        <div className="w-[85px] md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter py-2 md:py-0">완료요청일</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
                                                 control={form.control}
@@ -340,15 +340,15 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                             <FormMessage className="absolute -bottom-5 right-4 text-[10px]" />
                                         </FormItem>
 
-                                        {/* Mobile Only CAT NO layout when Date is shown half-width */}
+                                        {/* Mobile Only CAT NO layout (Date & CAT 50/50 in Mobile) */}
                                         {sampleType === 'design' && (
-                                            <div className="md:hidden flex flex-col border-l border-slate-700 h-auto">
-                                                <div className="w-full bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b border-slate-700 text-center px-1 tracking-tighter py-2">CAT NO.</div>
+                                            <div className="md:hidden flex flex-row border-l border-slate-700 h-auto">
+                                                <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter py-2">CAT</div>
                                                 <FormField
                                                     control={form.control}
                                                     name="cat_no"
                                                     render={({ field }) => (
-                                                        <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-300 text-[12px] min-h-[30px]" placeholder="카탈로그" />
+                                                        <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-300 text-[12px] min-h-[30px]" placeholder="번호" />
                                                     )}
                                                 />
                                             </div>
@@ -357,7 +357,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 </div>
                             </div>
 
-                            {/* [Row 3 (4 Columns)]: PC ONLY CAT NO | 견본유무 | 필름유무 | 라바유무 - DESIGN ONLY */}
+                            {/* [Row 3 (4 Columns)]: PC ONLY CAT NO | 견본 | 필름 | 라바 - PERFECT 1:1:1:1 RATIO */}
                             {sampleType === 'design' && (
                                 <div className="w-full grid grid-cols-1 md:grid-cols-12 border-t border-slate-700">
                                     <div className="hidden md:flex md:col-span-3 border-r border-slate-700 h-11">
@@ -373,8 +373,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                             <FormMessage className="absolute -bottom-5 left-0 text-[9px]" />
                                         </FormItem>
                                     </div>
-                                    <div className="md:col-span-9 grid grid-cols-3 md:flex md:flex-row h-auto md:h-11">
-                                        <div className="flex flex-col md:flex-row border-r border-slate-700 h-auto md:h-11">
+                                    <div className="md:col-span-9 grid grid-cols-3 h-auto md:h-11">
+                                        {/* 견본 (PC: 3/12, Mobile: 1/3 of Row) */}
+                                        <div className="flex flex-col md:flex-row border-r border-slate-700 h-auto md:h-11 md:flex-1">
                                             <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 py-1.5 md:py-0">견본</div>
                                             <FormField
                                                 control={form.control}
@@ -387,7 +388,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                                 )}
                                             />
                                         </div>
-                                        <div className="flex flex-col md:flex-row border-r border-slate-700 h-auto md:h-11">
+                                        {/* 필름 (PC: 3/12, Mobile: 1/3 of Row) */}
+                                        <div className="flex flex-col md:flex-row border-r border-slate-700 h-auto md:h-11 md:flex-1">
                                             <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 py-1.5 md:py-0">필름</div>
                                             <FormField
                                                 control={form.control}
@@ -400,7 +402,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                                 )}
                                             />
                                         </div>
-                                        <div className="flex flex-col md:flex-row h-auto md:h-11">
+                                        {/* 라바 (PC: 3/12, Mobile: 1/3 of Row) */}
+                                        <div className="flex flex-col md:flex-row h-auto md:h-11 md:flex-1">
                                             <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 py-1.5 md:py-0">라바</div>
                                             <FormField
                                                 control={form.control}
