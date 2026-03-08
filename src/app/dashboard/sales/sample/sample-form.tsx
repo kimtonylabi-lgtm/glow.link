@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { sampleRequestSchema, SampleRequestFormValues } from '@/lib/validations/sample'
-import { addSampleRequest, getNextSampleNo } from './actions'
+import { addSampleRequest } from './actions'
 import { Client } from '@/types/crm'
 import { Button } from '@/components/ui/button'
 import {
@@ -58,7 +58,7 @@ interface SampleFormProps {
 export function SampleForm({ clients, onSuccess }: SampleFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
-    const [sampleNo, setSampleNo] = useState('D......')
+    const [sampleNo, setSampleNo] = useState('[등록 시 자동 부여]')
 
     const form = useForm<SampleRequestFormValues>({
         resolver: zodResolver(sampleRequestSchema) as any,
@@ -89,18 +89,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
     const sampleType = form.watch('sample_type')
 
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-    useEffect(() => {
-        async function fetchNo() {
-            const res = await getNextSampleNo(sampleType);
-            if (res.success && res.nextNo) {
-                setSampleNo(res.nextNo);
-                form.setValue('sample_no', res.nextNo);
-            }
-        }
-        fetchNo();
-    }, [sampleType, form, refreshTrigger]);
+    // 채번은 이제 DB 트리거가 INSERT 시점에 처리하므로 useEffect 제거
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -120,16 +109,14 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
             toast.error('요청 실패', { description: result.error });
             console.error("Submission Error:", result.error);
         } else {
-            toast.success('샘플 요청이 등록되었습니다', {
-                description: '샘플실로 요청이 정상적으로 전달되었습니다.',
+            const actualNo = (result.data as any)?.sample_no || '번호 미확인';
+            toast.success('샘플 요청 등록 완료', {
+                description: `샘플 요청 (${actualNo})이 정상적으로 전달되었습니다.`,
                 position: 'top-center'
             });
 
-            // [해결책 1] 서버 데이터 동기화 및 캐시 날리기
+            // [해결책] 서버 데이터 동기화 및 캐시 날리기
             router.refresh();
-
-            // [해결책 2] 다음 번호 즉시 새로고침 (Trigger)
-            setRefreshTrigger(prev => prev + 1);
 
             form.reset();
             onSuccess?.();
@@ -213,7 +200,11 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         control={form.control}
                                         name="sample_no"
                                         render={({ field }) => (
-                                            <Input {...field} readOnly className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-2 text-primary font-mono font-bold text-[12px]" />
+                                            <Input
+                                                value={sampleNo}
+                                                readOnly
+                                                className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-2 text-primary font-mono font-bold text-[11px]"
+                                            />
                                         )}
                                     />
                                 </div>
