@@ -66,9 +66,9 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             }
         }
 
-        // [SERVER-SIDE NUMBERING] - Generate the actual number right before insert to avoid duplicates
-        const { success: seqSuccess, nextNo: finalSampleNo } = await getNextSampleNo(sample_type);
-        if (!seqSuccess) {
+        // [해결책 2] 서버단 무조건 재채번 - 프론트엔드 번호는 무시하고 최신 번호로 덮어씀
+        const { success: seqSuccess, nextNo: freshSampleNo } = await getNextSampleNo(sample_type);
+        if (!seqSuccess || !freshSampleNo) {
             return { error: '샘플 번호 생성 실패' };
         }
 
@@ -77,33 +77,36 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             product_name,
             quantity,
             contact_person,
-            sample_no: finalSampleNo, // Use the server-side generated number
-            cat_no,
-            has_sample,
-            has_film,
-            has_laba,
+            sample_no: freshSampleNo, // 서버에서 딴 새 번호 강제 할당
+            cat_no: (sample_type === 'design') ? cat_no : null,
+            has_sample: has_sample ?? false,
+            has_film: has_film ?? false,
+            has_laba: has_laba ?? false,
             shipping_address,
             special_instructions,
             sample_type,
             sales_person_id: user.id,
-            design_specs: (sample_type === 'design' && design_specs && design_specs.length > 0) ? design_specs : null
+            design_specs: (sample_type === 'design') ? (design_specs || []) : null
         }
 
         if (sample_type === 'design' && completion_date) {
             insertPayload.completion_date = new Date(completion_date).toISOString().split('T')[0]
         }
 
-        const { error: insertError } = await supabase
+        const { data: insertedData, error: insertError } = await supabase
             .from('sample_requests')
             .insert(insertPayload)
+            .select()
+            .single()
 
         if (insertError) {
-            return { error: insertError.message }
+            console.error("DB Insert Error:", insertError);
+            return { error: `등록 실패: ${insertError.message}` }
         }
 
         revalidatePath('/dashboard/sales/sample')
         revalidatePath('/dashboard/sample_team')
-        return { success: true }
+        return { success: true, data: insertedData }
     } catch (err: unknown) {
         if (err instanceof Error) {
             return { error: err.message }

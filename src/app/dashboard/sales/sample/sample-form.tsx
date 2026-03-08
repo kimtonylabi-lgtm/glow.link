@@ -110,8 +110,17 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
     async function onSubmit(data: SampleRequestFormValues) {
         setIsLoading(true);
-        console.log("Submitting Data:", data);
-        const result = await addSampleRequest(data);
+
+        // [해결책 1] 랜덤/CT일 경우 불필요한 필드 명시적 제거 (Zod 필터링 우회 방지)
+        const payload = { ...data };
+        if (payload.sample_type === 'random' || payload.sample_type === 'ct') {
+            delete (payload as any).cat_no;
+            delete (payload as any).design_specs;
+            delete (payload as any).completion_date;
+        }
+
+        console.log("Submitting Payload:", payload);
+        const result = await addSampleRequest(payload as SampleRequestFormValues);
 
         if (result.error) {
             toast.error('요청 실패', { description: result.error });
@@ -121,19 +130,10 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                 description: '샘플실로 요청이 정상적으로 전달되었습니다.',
                 position: 'top-center'
             });
-            form.reset({
-                ...form.getValues(),
-                product_name: '',
-                quantity: undefined,
-                cat_no: '',
-                special_instructions: '',
-                has_sample: false,
-                has_film: false,
-                has_laba: false,
-            });
-            setRefreshTrigger(prev => prev + 1);
+
+            // [해결책 2] 성공 시 폼 초기화 및 모달 닫기
+            form.reset();
             onSuccess?.();
-            // window.location.reload(); // Removed to allow smooth next entry
         }
         setIsLoading(false);
     }
