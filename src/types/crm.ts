@@ -97,8 +97,9 @@ export interface SampleRequest {
     design_specs: any | null; // JSONB
     completion_date: string | null; // DATE
     cat_no: string | null;
-    film_color: string | null;
-    rubber_color: string | null;
+    has_sample: boolean;
+    has_film: boolean;
+    has_laba: boolean;
     sample_type: 'random' | 'ct' | 'design';
     contact_person?: string | null;
     special_instructions?: string | null;

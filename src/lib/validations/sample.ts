@@ -12,15 +12,16 @@ export const sampleRequestSchema = z.object({
     client_id: z.string().uuid({ message: '고객사를 선택해주세요.' }),
     product_name: z.string().min(2, { message: '제품명을 상세히 입력해주세요. (최소 2자)' }),
     quantity: z.number().min(1, { message: '수량은 1개 이상이어야 합니다.' }),
-    shipping_address: z.string().optional(),
-    contact_person: z.string().min(2, { message: '고객사 담당자명을 입력해주세요.' }),
-    special_instructions: z.string().optional(),
+    contact_person: z.string().min(1, { message: '담당자 성함을 입력해주세요.' }),
+    cat_no: z.string(),
+    has_sample: z.boolean(),
+    has_film: z.boolean(),
+    has_laba: z.boolean(),
+    shipping_address: z.string(),
+    special_instructions: z.string(),
     sample_type: z.enum(['random', 'ct', 'design']),
     completion_date: z.date().optional(),
-    cat_no: z.string().optional(),
-    film_color: z.string().optional(),
-    rubber_color: z.string().optional(),
-    design_specs: z.array(designSpecSchema).optional(),
+    design_specs: z.array(designSpecSchema),
 }).superRefine((data, ctx) => {
     if (data.sample_type === 'design') {
         if (!data.completion_date) {

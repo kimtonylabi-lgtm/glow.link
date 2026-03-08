@@ -20,19 +20,40 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             return { error: '입력값이 올바르지 않습니다.' }
         }
 
+        const {
+            client_id,
+            product_name,
+            quantity,
+            contact_person,
+            cat_no,
+            has_sample,
+            has_film,
+            has_laba,
+            shipping_address,
+            special_instructions,
+            sample_type,
+            completion_date,
+            design_specs
+        } = parsedData.data
+
         const insertPayload: any = {
-            ...parsedData.data,
-            sales_person_id: user.id
+            client_id,
+            product_name,
+            quantity,
+            contact_person,
+            cat_no,
+            has_sample,
+            has_film,
+            has_laba,
+            shipping_address,
+            special_instructions,
+            sample_type,
+            sales_person_id: user.id,
+            design_specs: (sample_type === 'design' && design_specs && design_specs.length > 0) ? design_specs : null
         }
 
-        // Handle Date formatting properly if `completion_date` exists for design sample
-        if (insertPayload.completion_date) {
-            insertPayload.completion_date = new Date(insertPayload.completion_date).toISOString().split('T')[0]
-        }
-
-        // Clean up empty arrays
-        if (!insertPayload.design_specs || insertPayload.design_specs.length === 0) {
-            insertPayload.design_specs = null
+        if (sample_type === 'design' && completion_date) {
+            insertPayload.completion_date = new Date(completion_date).toISOString().split('T')[0]
         }
 
         const { error: insertError } = await supabase

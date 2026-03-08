@@ -20,11 +20,14 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Image as ImageIcon, PackageSearch } from 'lucide-react'
+import { Image as ImageIcon, PackageSearch, Plus } from 'lucide-react'
 import Image from 'next/image'
+import { SampleForm } from './sample-form'
+import { useRouter } from 'next/navigation'
 
 interface SampleListProps {
-    samples: SampleRequestWithRelations[]
+    initialSamples: SampleRequestWithRelations[]
+    clients: any[]
 }
 
 const getStatusBadge = (status: string) => {
@@ -40,11 +43,13 @@ const getStatusBadge = (status: string) => {
     }
 }
 
-export function SampleList({ samples }: SampleListProps) {
+export function SampleList({ initialSamples, clients }: SampleListProps) {
+    const router = useRouter()
     const [selectedImage, setSelectedImage] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [isFormOpen, setIsFormOpen] = useState(false)
 
-    const filteredSamples = samples.filter(sample =>
+    const filteredSamples = initialSamples.filter(sample =>
         sample.clients?.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sample.product_name.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -53,9 +58,18 @@ export function SampleList({ samples }: SampleListProps) {
         <>
             <div className="bg-card/30 backdrop-blur-xl border border-border/50 rounded-xl overflow-hidden shadow-[0_0_30px_theme(colors.primary.DEFAULT)/5]">
                 <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-center bg-card/40 gap-4">
-                    <h3 className="text-lg font-bold flex items-center gap-2 shrink-0">
-                        <PackageSearch className="h-5 w-5 text-primary" /> 나의 샘플 요청 현황
-                    </h3>
+                    <div className="flex items-center gap-4 shrink-0">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                            <PackageSearch className="h-5 w-5 text-primary" /> 나의 샘플 요청 현황
+                        </h3>
+                        <Button
+                            onClick={() => setIsFormOpen(true)}
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg shadow-primary/20"
+                        >
+                            <Plus className="h-4 w-4 mr-1" /> 새 샘플 요청
+                        </Button>
+                    </div>
                     <div className="relative w-full sm:max-w-xs">
                         <input
                             type="text"
@@ -145,6 +159,18 @@ export function SampleList({ samples }: SampleListProps) {
                     <div className="p-4 bg-muted/30 text-sm text-center text-muted-foreground">
                         샘플실에서 등록된 실물 확인용 사진입니다.
                     </div>
+                </DialogContent>
+            </Dialog>
+            {/* New Sample Request Modal */}
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden bg-slate-950 border-border/40">
+                    <SampleForm
+                        clients={clients}
+                        onSuccess={() => {
+                            setIsFormOpen(false)
+                            router.refresh()
+                        }}
+                    />
                 </DialogContent>
             </Dialog>
         </>

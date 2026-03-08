@@ -43,15 +43,10 @@ export default async function SamplePage() {
             <div className="absolute top-20 left-10 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
             <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-            {/* Top: List & Status (100% Width) */}
-            <div className="w-full">
-                <SampleList samples={samples} />
-            </div>
-
-            {/* Bottom: Register Form (100% Width) */}
-            <div className="w-full">
-                <SampleForm clients={clients} />
+            {/* UI Redesign: List only (100% width) with Add Button in Header */}
+            <div className="flex flex-col gap-6">
+                <SampleList initialSamples={samples} clients={clients} />
             </div>
         </div>
-    )
+    );
 }
