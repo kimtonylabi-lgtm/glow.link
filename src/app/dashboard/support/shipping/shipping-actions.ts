@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyRoleForAction } from '@/lib/supabase/queries'
 import { revalidatePath } from 'next/cache'
 
@@ -101,9 +100,10 @@ export async function createShipment(payload: {
             shipped_quantity: payload.shippedQuantity,
             shipping_date: payload.shippingDate,
             delivery_address: payload.deliveryAddress || '',
-            shipping_method: payload.shippingMethod,
             shipping_memo: payload.shippingMemo || '',
-            handler_id: userId,
+            shipping_method: payload.shippingMethod,
+            is_force_closed: payload.forceComplete, // [추가] 정공법: DB 컬럼에 직접 저장하여 트리거가 감지하도록 함
+            handler_id: (await supabase.auth.getUser()).data.user?.id,
             status: 'shipped',
             // [방어] carrier_name/contact 등 존재하지 않는 컬럼 제거하여 500 에러 해결
             tracking_number: '',
@@ -117,15 +117,8 @@ export async function createShipment(payload: {
         }
     }
 
-    // [강제 종료] 잔량이 남아도 forceComplete 옵션이 true 라면 상태를 'shipped' 로 강제로 오버라이드.
-    // 일반 계정은 orders 테이블 업데이트 권한(RLS)이 제한될 수 있으므로 Admin 클라이언트 사용.
-    if (payload.forceComplete) {
-        const adminSupabase = createAdminClient()
-        await adminSupabase
-            .from('orders')
-            .update({ status: 'shipped' })
-            .eq('id', payload.orderId)
-    }
+    // [정공법] 잔량 상관없이 완료 체크 시, 트리거가 is_force_closed를 감지하여
+    // orders.status를 'shipped'로 자동 전환하므로 여기서의 수동 업데이트는 불필요해짐.
 
     // DB 트리거가 orders.status를 자동으로 갱신함
     revalidatePath('/dashboard/sales/order')

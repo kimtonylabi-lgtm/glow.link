@@ -35,15 +35,21 @@ export async function getPendingShippingOrders() {
         const totalOrderedQuantity = order.order_items.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
         const totalShippedQuantity = order.shipping_orders.reduce((sum: number, ship: any) => sum + (ship.shipped_quantity || 0), 0)
 
-        // Is it fully shipped?
-        const isFullyShipped = totalShippedQuantity >= totalOrderedQuantity && totalOrderedQuantity > 0
+        // [수정] DB status가 'shipped'인 경우를 최우선으로 신뢰.
+        // is_force_closed로 강제완료된 오더는 수량과 무관하게 DB에서 status='shipped'이므로
+        // 수량 비교만으로는 강제완료 오더를 "출하 완료"로 표시할 수 없음.
+        const isFullyShipped = order.status === 'shipped' ||
+            (totalShippedQuantity >= totalOrderedQuantity && totalOrderedQuantity > 0)
+
+        // [수정] client_product_name: order_items 배열에서 값이 있는 첫 항목을 검색
+        // Supabase JOIN 데이터는 order_items 배열 내 중첩 객체이므로, 상위 레벨에 없음
+        const clientProductName = order.order_items?.find((i: any) => i.client_product_name)?.client_product_name || null
 
         return {
             ...order,
             client_name: order.clients?.company_name || '알 수 없음',
             product_name: order.order_items?.[0]?.products?.name || '제품 표시 불가',
-            // [안정화] 검색을 통해 실제 값이 있는 첫 번째 항목의 매칭 제품명을 가져옴
-            client_product_name: order.order_items?.find((i: any) => i.client_product_name)?.client_product_name || null,
+            client_product_name: clientProductName,
             total_ordered_quantity: order.total_quantity || totalOrderedQuantity,
             total_shipped_quantity: totalShippedQuantity,
             is_fully_shipped: isFullyShipped,
