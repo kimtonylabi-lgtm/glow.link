@@ -33,13 +33,26 @@ interface SampleListProps {
 const getStatusBadge = (status: string) => {
     switch (status) {
         case 'pending':
-            return <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.5)]">대기중</Badge>
+            return <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.3)]">대기중</Badge>
         case 'processing':
-            return <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.5)]">제작중</Badge>
+            return <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]">제작중</Badge>
         case 'shipped':
-            return <Badge className="bg-green-500/20 text-green-400 border border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]">발송완료</Badge>
+            return <Badge className="bg-green-500/20 text-green-400 border border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.3)]">발송완료</Badge>
         default:
             return <Badge variant="outline">알 수 없음</Badge>
+    }
+}
+
+const getSampleTypeBadge = (type: string) => {
+    switch (type) {
+        case 'random':
+            return <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-tighter shadow-[0_0_5px_rgba(59,130,246,0.2)]">랜덤</Badge>
+        case 'ct':
+            return <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-tighter shadow-[0_0_5px_rgba(249,115,22,0.2)]">CT</Badge>
+        case 'design':
+            return <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-tighter shadow-[0_0_8px_rgba(168,85,247,0.33)]">디자인</Badge>
+        default:
+            return <Badge variant="outline" className="whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-tighter">ETC</Badge>
     }
 }
 
@@ -91,7 +104,8 @@ export function SampleList({ initialSamples, clients }: SampleListProps) {
                         <Table>
                             <TableHeader className="bg-muted/30">
                                 <TableRow className="border-border/50 hover:bg-transparent h-10">
-                                    <TableHead className="font-semibold text-foreground px-3 text-xs">번호</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs w-[100px]">번호</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs text-center w-[60px]">구분</TableHead>
                                     <TableHead className="font-semibold text-foreground px-3 text-xs">고객사</TableHead>
                                     <TableHead className="font-semibold text-foreground px-3 text-xs">제품명</TableHead>
                                     <TableHead className="font-semibold text-foreground px-3 text-xs text-center">수량</TableHead>
@@ -105,6 +119,9 @@ export function SampleList({ initialSamples, clients }: SampleListProps) {
                                     <TableRow key={sample.id} className="border-border/50 hover:bg-card/60 transition-colors h-11">
                                         <TableCell className="font-mono text-primary font-bold whitespace-nowrap px-3 py-1 text-xs">
                                             {sample.sample_no || '-'}
+                                        </TableCell>
+                                        <TableCell className="text-center px-2 py-1">
+                                            {getSampleTypeBadge(sample.sample_type)}
                                         </TableCell>
                                         <TableCell className="font-semibold whitespace-nowrap px-3 py-1 text-sm">
                                             {sample.clients?.company_name}
