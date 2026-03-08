@@ -64,12 +64,18 @@ export default async function DashboardHome() {
 
     const draftQuotationCount = draftQuotationsRes.count || 0
 
+    // ④ 영업 실적 (KPI) 데이터 추가 로드 (Home에서 직접 사용)
+    const currentMonthStr = today.toISOString().slice(0, 7) // yyyy-MM
+    const { getSalesPlanning } = await import('./sales/planning/actions')
+    const planningData = await getSalesPlanning(currentMonthStr)
+
     return (
         <HomeActionBoard
             name={name}
             urgentOrders={urgentOrders as any[]}
             pendingShipping={pendingShipping as any[]}
             draftQuotationCount={draftQuotationCount}
+            planningData={planningData.success ? planningData : null}
         />
     )
 }
