@@ -295,58 +295,60 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 </div>
                             </div>
 
-                            {/* [Row 3 (4 Columns)]: Cat No. | 견본유무 | 필름유무 | 라바유무 */}
-                            <div className="w-full grid grid-cols-1 md:grid-cols-4">
-                                <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">CAT NO.</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="cat_no"
-                                        render={({ field }) => (
-                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 text-[13px]" placeholder="카탈로그 번호" />
-                                        )}
-                                    />
+                            {/* [Row 3 (4 Columns)]: Cat No. | 견본유무 | 필름유무 | 라바유무 - DESIGN ONLY */}
+                            {sampleType === 'design' && (
+                                <div className="w-full grid grid-cols-1 md:grid-cols-4 border-t border-slate-700">
+                                    <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
+                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">CAT NO.</div>
+                                        <FormField
+                                            control={form.control}
+                                            name="cat_no"
+                                            render={({ field }) => (
+                                                <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 text-[13px]" placeholder="카탈로그 번호" />
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
+                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">견본유무</div>
+                                        <FormField
+                                            control={form.control}
+                                            name="has_sample"
+                                            render={({ field }) => (
+                                                <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
+                                                    <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
+                                                    <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
+                                                </div>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
+                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">필름유무</div>
+                                        <FormField
+                                            control={form.control}
+                                            name="has_film"
+                                            render={({ field }) => (
+                                                <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
+                                                    <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
+                                                    <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
+                                                </div>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="flex h-11">
+                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">라바유무</div>
+                                        <FormField
+                                            control={form.control}
+                                            name="has_laba"
+                                            render={({ field }) => (
+                                                <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
+                                                    <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
+                                                    <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
+                                                </div>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">견본유무</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="has_sample"
-                                        render={({ field }) => (
-                                            <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
-                                                <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
-                                                <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
-                                            </div>
-                                        )}
-                                    />
-                                </div>
-                                <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">필름유무</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="has_film"
-                                        render={({ field }) => (
-                                            <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
-                                                <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
-                                                <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
-                                            </div>
-                                        )}
-                                    />
-                                </div>
-                                <div className="flex h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">라바유무</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="has_laba"
-                                        render={({ field }) => (
-                                            <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
-                                                <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
-                                                <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
-                                            </div>
-                                        )}
-                                    />
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* BOM Table Section (Cloned from reference image) */}
