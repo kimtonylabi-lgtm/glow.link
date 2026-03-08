@@ -20,14 +20,24 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             return { error: '입력값이 올바르지 않습니다.' }
         }
 
-        const insertPayload = {
+        const insertPayload: any = {
             ...parsedData.data,
             sales_person_id: user.id
         }
 
+        // Handle Date formatting properly if `completion_date` exists for design sample
+        if (insertPayload.completion_date) {
+            insertPayload.completion_date = new Date(insertPayload.completion_date).toISOString().split('T')[0]
+        }
+
+        // Clean up empty arrays
+        if (!insertPayload.design_specs || insertPayload.design_specs.length === 0) {
+            insertPayload.design_specs = null
+        }
+
         const { error: insertError } = await supabase
             .from('sample_requests')
-            .insert(insertPayload as any)
+            .insert(insertPayload)
 
         if (insertError) {
             return { error: insertError.message }
