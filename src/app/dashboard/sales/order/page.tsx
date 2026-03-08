@@ -47,7 +47,7 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
 
     // 3. Build Query for Quotations
     let quoteQuery = (supabase.from('quotations' as any) as any).select(`
-        id, version_no, status, total_amount, is_current, created_at, client_id,
+        id, version_no, status, supply_price, total_amount, is_current, created_at, client_id,
         clients (company_name),
         quotation_items (
             quantity,

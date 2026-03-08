@@ -106,7 +106,7 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                                 <TableHead>고객사</TableHead>
                                 <TableHead>제품명</TableHead>
                                 <TableHead>MOQ</TableHead>
-                                <TableHead className="text-right">견적 총액</TableHead>
+                                <TableHead className="text-right">단가총액</TableHead>
                                 <TableHead className="text-right">작업</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -156,7 +156,7 @@ export function QuotationList({ quotations }: { quotations: any[] }) {
                                             {Number(quote.quotation_items?.[0]?.quantity || 0).toLocaleString()}
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-bold text-primary">
-                                            ₩{quote.total_amount?.toLocaleString() || '0'}
+                                            ₩{Number(quote.supply_price || 0).toLocaleString()}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-2">
