@@ -113,9 +113,17 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
             });
             form.reset();
             onSuccess?.();
-            window.location.reload(); // Refresh to show new data if needed, or rely on revalidatePath
+            window.location.reload();
         }
         setIsLoading(false);
+    }
+
+    function onError(errors: any) {
+        console.error("Form Validation Errors:", errors);
+        toast.error('입력 오류', {
+            description: '필수 항목을 모두 정확히 입력해주세요.',
+            position: 'top-right'
+        });
     }
 
     return (
@@ -132,7 +140,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-slate-800">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
 
                         {/* 1. 최상단 3단 ToggleGroup (샘플 종류) */}
                         <FormField
@@ -171,9 +179,10 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                         <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm flex flex-col font-sans shadow-xl">
 
                             {/* [Row 1]: 샘플번호 | 고객사 | 담당자 | 요청수량 - ADJUSTED RATIOS */}
-                            <div className="w-full flex flex-col md:flex-row border-b border-slate-700">
-                                <div className="flex-none w-full md:w-[150px] flex border-r border-slate-700 h-11 bg-slate-900/50">
-                                    <div className="w-[65px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">번호</div>
+                            <div className="w-full grid grid-cols-1 md:grid-cols-12 border-b border-slate-700">
+                                {/* 번호 (2/12) */}
+                                <div className="md:col-span-2 flex border-r border-slate-700 h-11 bg-slate-900/50">
+                                    <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">번호</div>
                                     <FormField
                                         control={form.control}
                                         name="sample_no"
@@ -182,8 +191,10 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         )}
                                     />
                                 </div>
-                                <div className="flex-1 flex border-r border-slate-700 h-11">
-                                    <div className="w-[75px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
+
+                                {/* 고객사 (4/12) */}
+                                <div className="md:col-span-4 flex border-r border-slate-700 h-11">
+                                    <div className="w-[70px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -195,9 +206,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                                 return (
                                                     <Popover open={open} onOpenChange={setOpen}>
                                                         <PopoverTrigger asChild>
-                                                            <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
-                                                                {field.value ? (clients.find(c => c.id === field.value)?.company_name || field.value) : "고객사 검색 또는 입력"}
-                                                                <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0 ml-2" />
+                                                            <Button variant="ghost" className="w-full h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
+                                                                <span className="truncate">{field.value ? (clients.find(c => c.id === field.value)?.company_name || field.value) : "고객사 검색/입력"}</span>
+                                                                <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0 ml-1" />
                                                             </Button>
                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-[400px] p-0 bg-slate-950 border-slate-700 shadow-2xl z-[100]">
@@ -248,21 +259,25 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         <FormMessage className="absolute -bottom-5 left-2 text-[10px]" />
                                     </FormItem>
                                 </div>
-                                <div className="flex-none w-full md:w-[120px] flex border-r border-slate-700 h-11">
-                                    <div className="w-[65px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
+
+                                {/* 담당자 (3/12) */}
+                                <div className="md:col-span-3 flex border-r border-slate-700 h-11">
+                                    <div className="w-[70px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
                                             name="contact_person"
                                             render={({ field }) => (
-                                                <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-100 font-medium placeholder:text-slate-600 text-[12px]" placeholder="이름" />
+                                                <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-100 font-medium placeholder:text-slate-600 text-[13px]" placeholder="이름" />
                                             )}
                                         />
-                                        <FormMessage className="absolute -bottom-5 left-0 text-[9px] bg-slate-900 px-1 z-10" />
+                                        <FormMessage className="absolute -bottom-5 left-0 text-[10px] bg-slate-900 px-1 z-10" />
                                     </FormItem>
                                 </div>
-                                <div className="flex-none w-full md:w-[180px] flex h-11 bg-primary/5">
-                                    <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
+
+                                {/* 수량 (3/12) */}
+                                <div className="md:col-span-3 flex h-11 bg-primary/5">
+                                    <div className="w-[70px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -275,7 +290,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                                     value={field.value ?? ""}
                                                     onChange={e => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
                                                     className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-primary font-bold text-[16px] px-1"
-                                                    placeholder="숫자 입력"
+                                                    placeholder="수량"
                                                 />
                                             )}
                                         />
