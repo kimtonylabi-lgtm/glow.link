@@ -66,20 +66,22 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             }
         }
 
-        // [해결책 2] 서버단 무조건 재채번 - 프론트엔드 번호는 무시하고 최신 번호로 덮어씀
+        // [해결책 2] 서버단 무조건 재채번 - 프론트엔드 번호는 단순 참고용이며, 무조건 최신 번호로 덮어씀
         const { success: seqSuccess, nextNo: freshSampleNo } = await getNextSampleNo(sample_type);
         if (!seqSuccess || !freshSampleNo) {
+            console.error(`[actions.ts] Failed to generate next number for type: ${sample_type}`);
             return { error: '샘플 번호 생성 실패' };
         }
 
-        console.log(`[actions.ts] Overwriting sample_no from "${sample_no}" to "${freshSampleNo}"`);
+        console.log(`[actions.ts] FORCING OVERWRITE: Frontend suggested "${sample_no}", Server using "${freshSampleNo}"`);
 
+        // 프론트엔드에서 보낸 sample_no를 완전히 배제하고 서버에서 새로 생성한 번호만 사용
         const insertPayload: any = {
             client_id: final_client_id,
             product_name,
             quantity,
             contact_person,
-            sample_no: freshSampleNo, // 서버에서 딴 새 번호로 강제 덮어쓰기
+            sample_no: freshSampleNo, // 서버에서 딴 새 번호로 강제 할당 (절대적)
             cat_no: (sample_type === 'design') ? cat_no : null,
             has_sample: has_sample ?? false,
             has_film: has_film ?? false,
@@ -95,7 +97,7 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             insertPayload.completion_date = new Date(completion_date).toISOString().split('T')[0]
         }
 
-        console.log("[actions.ts] Final Payload for Insert:", JSON.stringify(insertPayload, null, 2));
+        console.log("[actions.ts] FINAL DATABASE INSERT PAYLOAD:", JSON.stringify(insertPayload, null, 2));
 
         const { data: insertedData, error: insertError } = await supabase
             .from('sample_requests')
@@ -104,12 +106,13 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             .single()
 
         if (insertError) {
-            console.error("[actions.ts] DB Insert Error:", insertError);
-            return { error: `등록 실패: ${insertError.message}` }
+            console.error("[actions.ts] CRITICAL DB INSERT ERROR:", insertError);
+            return { error: `등록 실패 (DB): ${insertError.message}` }
         }
 
         revalidatePath('/dashboard/sales/sample')
         revalidatePath('/dashboard/sample_team')
+
         return { success: true, data: insertedData }
     } catch (err: unknown) {
         if (err instanceof Error) {

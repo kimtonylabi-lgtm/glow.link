@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { sampleRequestSchema, SampleRequestFormValues } from '@/lib/validations/sample'
@@ -108,6 +109,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
     // Removed auto-reset of fields to keep data enabled for all types
 
+    const router = useRouter();
+
     async function onSubmit(data: SampleRequestFormValues) {
         setIsLoading(true);
         console.log("Submitting Data:", data);
@@ -121,6 +124,13 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                 description: '샘플실로 요청이 정상적으로 전달되었습니다.',
                 position: 'top-center'
             });
+
+            // [해결책 1] 서버 데이터 동기화 및 캐시 날리기
+            router.refresh();
+
+            // [해결책 2] 다음 번호 즉시 새로고침 (Trigger)
+            setRefreshTrigger(prev => prev + 1);
+
             form.reset();
             onSuccess?.();
         }
