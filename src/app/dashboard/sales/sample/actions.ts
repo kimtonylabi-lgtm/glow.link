@@ -1,11 +1,12 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { sampleRequestSchema, type SampleRequestFormValues } from '@/lib/validations/sample'
 
 // 영업팀: 새로운 샘플 요청 등록
 export async function addSampleRequest(data: SampleRequestFormValues) {
+    noStore(); // [긴급] Server Action 내 캐시 강제 무효화
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
@@ -158,15 +159,40 @@ export async function updateSampleStatus(id: string, newStatus: string, imageUrl
 }
 
 export async function getNextSampleNo(sampleType: string) {
+    noStore(); // [긴급] 채번 시 캐시된 데이터 반환 방지
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).rpc('get_next_sample_seq_v2', { p_type: sampleType })
 
-    if (error) {
-        console.error('Error fetching next sequence:', error)
-        return { success: false, nextNo: `${sampleType[0].toUpperCase()}-AUTO` }
+    // [해결책] 단순히 건수(count)를 세지 말고, 실제 DB에서 가장 큰 번호를 실시간 조회 (Gaps/Delete 대응)
+    const prefix = sampleType === 'random' ? 'R' : sampleType === 'ct' ? 'C' : 'D'
+
+    const { data: maxItem, error: maxError } = await (supabase as any)
+        .from('sample_requests')
+        .select('sample_no')
+        .eq('sample_type', sampleType)
+        .order('sample_no', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (maxError) {
+        console.error('[actions.ts] Max check error:', maxError);
+        // DB 조회 실패 시 RPC로 폴백하되, 역시 캐시 영향 최소화
+        const { data: rpcData } = await (supabase as any).rpc('get_next_sample_seq_v2', { p_type: sampleType });
+        const nextVal = (rpcData || 0) + 1;
+        return { success: true, nextNo: `${prefix}${String(nextVal).padStart(6, '0')}` }
     }
 
-    const nextVal = (data || 0) + 1
-    const prefix = sampleType === 'random' ? 'R' : sampleType === 'ct' ? 'C' : 'D'
-    return { success: true, nextNo: `${prefix}${String(nextVal).padStart(6, '0')}` }
+    let nextVal = 1;
+    if (maxItem && (maxItem as any).sample_no) {
+        // 문자를 제외한 숫자 부분 추출 (e.g. R000005 -> 5)
+        const numericPart = (maxItem as any).sample_no.replace(/[^0-9]/g, '');
+        const currentNum = parseInt(numericPart);
+        if (!isNaN(currentNum)) {
+            nextVal = currentNum + 1;
+        }
+    }
+
+    const finalNo = `${prefix}${String(nextVal).padStart(6, '0')}`;
+    console.log(`[actions.ts] Next real-time sequence for ${sampleType}: ${finalNo}`);
+
+    return { success: true, nextNo: finalNo }
 }
