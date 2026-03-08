@@ -51,6 +51,7 @@ export default async function OrderPage(props: { searchParams: Promise<{ tab?: s
         clients (company_name),
         quotation_items (
             quantity,
+            unit_price,
             products (name)
         )
     `).eq('is_current', true).order('created_at', { ascending: false })
