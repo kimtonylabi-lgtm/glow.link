@@ -101,6 +101,7 @@ export interface SampleRequest {
     has_film: boolean;
     has_laba: boolean;
     sample_type: 'random' | 'ct' | 'design';
+    sample_no: string;
     contact_person?: string | null;
     special_instructions?: string | null;
 }

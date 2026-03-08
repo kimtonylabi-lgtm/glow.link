@@ -13,6 +13,7 @@ export const sampleRequestSchema = z.object({
     product_name: z.string().min(2, { message: '제품명을 상세히 입력해주세요. (최소 2자)' }),
     quantity: z.number().min(1, { message: '수량은 1개 이상이어야 합니다.' }),
     contact_person: z.string().min(1, { message: '담당자 성함을 입력해주세요.' }),
+    sample_no: z.string().optional(),
     cat_no: z.string(),
     has_sample: z.boolean(),
     has_film: z.boolean(),

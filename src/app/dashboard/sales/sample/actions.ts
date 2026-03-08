@@ -32,6 +32,7 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             shipping_address,
             special_instructions,
             sample_type,
+            sample_no,
             completion_date,
             design_specs
         } = parsedData.data
@@ -41,6 +42,7 @@ export async function addSampleRequest(data: SampleRequestFormValues) {
             product_name,
             quantity,
             contact_person,
+            sample_no,
             cat_no,
             has_sample,
             has_film,
@@ -108,4 +110,17 @@ export async function updateSampleStatus(id: string, newStatus: string, imageUrl
         }
         return { error: 'Unknown API error' }
     }
+}
+
+export async function getNextSampleNo() {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('get_next_sample_seq')
+
+    if (error) {
+        console.error('Error fetching next sequence:', error)
+        return { success: false, nextNo: 'D-AUTO' }
+    }
+
+    const nextVal = (data || 0) + 1
+    return { success: true, nextNo: `D${String(nextVal).padStart(6, '0')}` }
 }

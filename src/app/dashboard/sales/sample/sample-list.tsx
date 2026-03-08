@@ -91,6 +91,7 @@ export function SampleList({ initialSamples, clients }: SampleListProps) {
                         <Table>
                             <TableHeader className="bg-muted/30">
                                 <TableRow className="border-border/50 hover:bg-transparent h-10">
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs">번호</TableHead>
                                     <TableHead className="font-semibold text-foreground px-3 text-xs">고객사</TableHead>
                                     <TableHead className="font-semibold text-foreground px-3 text-xs">제품명</TableHead>
                                     <TableHead className="font-semibold text-foreground px-3 text-xs text-center">수량</TableHead>
@@ -102,6 +103,9 @@ export function SampleList({ initialSamples, clients }: SampleListProps) {
                             <TableBody>
                                 {filteredSamples.map((sample) => (
                                     <TableRow key={sample.id} className="border-border/50 hover:bg-card/60 transition-colors h-11">
+                                        <TableCell className="font-mono text-primary font-bold whitespace-nowrap px-3 py-1 text-xs">
+                                            {sample.sample_no || '-'}
+                                        </TableCell>
                                         <TableCell className="font-semibold whitespace-nowrap px-3 py-1 text-sm">
                                             {sample.clients?.company_name}
                                         </TableCell>

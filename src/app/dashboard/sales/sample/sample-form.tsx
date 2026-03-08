@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { sampleRequestSchema, SampleRequestFormValues } from '@/lib/validations/sample'
-import { addSampleRequest } from './actions'
+import { addSampleRequest, getNextSampleNo } from './actions'
 import { Client } from '@/types/crm'
 import { Button } from '@/components/ui/button'
 import {
@@ -57,6 +57,7 @@ interface SampleFormProps {
 export function SampleForm({ clients, onSuccess }: SampleFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
+    const [sampleNo, setSampleNo] = useState('D......')
 
     const form = useForm<SampleRequestFormValues>({
         resolver: zodResolver(sampleRequestSchema),
@@ -66,15 +67,27 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
             product_name: '',
             quantity: 1,
             contact_person: '',
-            special_instructions: '',
+            sample_no: '',
+            cat_no: '',
             has_sample: false,
             has_film: false,
             has_laba: false,
-            design_specs: [{ part_name: '', injection_material: '', injection_color: '', coating: '', printing: '' }],
             shipping_address: '',
-            cat_no: '',
+            special_instructions: '',
+            design_specs: [{ part_name: '', injection_material: '', injection_color: '', coating: '', printing: '' }]
         },
     })
+
+    useEffect(() => {
+        const fetchNextNo = async () => {
+            const result = await getNextSampleNo()
+            if (result.success) {
+                setSampleNo(result.nextNo)
+                form.setValue('sample_no', result.nextNo)
+            }
+        }
+        fetchNextNo()
+    }, [form])
 
     const sampleType = form.watch('sample_type')
 
@@ -83,17 +96,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
         name: "design_specs",
     })
 
-    // Reset irrelevant fields when switching type from 'design' to others
-    useEffect(() => {
-        if (sampleType !== 'design') {
-            form.setValue('completion_date', undefined)
-            form.setValue('cat_no', '')
-            form.setValue('has_sample', false)
-            form.setValue('has_film', false)
-            form.setValue('has_laba', false)
-            form.setValue('design_specs', [])
-        }
-    }, [sampleType, form])
+    // Removed auto-reset of fields to keep data enabled for all types
 
     async function onSubmit(data: SampleRequestFormValues) {
         setIsLoading(true)
@@ -158,21 +161,32 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                             )}
                         />
 
-                        {/* 2. Dynamic 3-Column Grid Layout */}
-                        <div className="w-full border-t border-l border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm flex flex-col font-sans shadow-xl">
-                            {/* [Row 1]: 고객사 | 고객사 담당 | 요청 수량 */}
-                            <div className="w-full grid grid-cols-1 md:grid-cols-3">
+                        {/* 2. Dynamic Grid Layout - REFACTORED TO USER SPEC */}
+                        <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm flex flex-col font-sans shadow-xl">
+
+                            {/* [Row 1 (4 Columns)]: 샘플번호 | 고객사 | 담당자 | 요청수량 */}
+                            <div className="w-full grid grid-cols-1 md:grid-cols-4">
+                                <div className="flex border-r border-b border-slate-700 h-11 bg-slate-900/50">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">샘플번호</div>
+                                    <FormField
+                                        control={form.control}
+                                        name="sample_no"
+                                        render={({ field }) => (
+                                            <Input {...field} readOnly className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-3 text-primary font-mono font-bold text-[13px]" />
+                                        )}
+                                    />
+                                </div>
                                 <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[12px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-wider">고객사</div>
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">고객사</div>
                                     <FormField
                                         control={form.control}
                                         name="client_id"
                                         render={({ field }) => (
                                             <Popover>
                                                 <PopoverTrigger asChild>
-                                                    <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-4 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0">
+                                                    <Button variant="ghost" className="flex-1 h-full flex justify-between items-center px-3 rounded-none hover:bg-slate-800 text-slate-100 font-semibold focus-visible:ring-0 text-[13px] truncate">
                                                         {field.value ? clients.find(c => c.id === field.value)?.company_name : "고객사 선택"}
-                                                        <ChevronsUpDown className="w-4 h-4 opacity-50" />
+                                                        <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0" />
                                                     </Button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-[300px] p-0 bg-slate-900 border-slate-700 shadow-2xl">
@@ -196,48 +210,48 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                     />
                                 </div>
                                 <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[12px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-wider">고객사 담당</div>
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
                                     <FormField
                                         control={form.control}
                                         name="contact_person"
                                         render={({ field }) => (
-                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-4 text-slate-100 font-medium placeholder:text-slate-600" placeholder="성함 입력" />
+                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-100 font-medium placeholder:text-slate-600 text-[13px]" placeholder="이름" />
                                         )}
                                     />
                                 </div>
-                                <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[12px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-wider">요청수량</div>
+                                <div className="flex border-b border-slate-700 h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">요청수량</div>
                                     <FormField
                                         control={form.control}
                                         name="quantity"
                                         render={({ field }) => (
-                                            <Input type="number" min={1} {...field} onChange={e => field.onChange(parseInt(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 font-mono text-[16px]" />
+                                            <Input type="number" min={1} {...field} onChange={e => field.onChange(parseInt(e.target.value))} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 text-center text-slate-100 font-mono text-[15px]" />
                                         )}
                                     />
                                 </div>
                             </div>
 
-                            {/* [Row 2]: 제품명 | 완료요청일 | Cat No. */}
+                            {/* [Row 2 (2 Columns, 2:1 ratio)]: 제품명 | 완료요청일 */}
                             <div className="w-full grid grid-cols-1 md:grid-cols-3">
-                                <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[12px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-wider">제품명</div>
+                                <div className="md:col-span-2 flex border-r border-b border-slate-700 h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">제품명</div>
                                     <FormField
                                         control={form.control}
                                         name="product_name"
                                         render={({ field }) => (
-                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-4 text-slate-100 font-bold placeholder:text-slate-600 text-[14px]" placeholder="제품명 입력" />
+                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-4 text-slate-100 font-bold placeholder:text-slate-600 text-[14px]" placeholder="제품명을 상세히 입력하세요" />
                                         )}
                                     />
                                 </div>
-                                <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">완료요청일</div>
+                                <div className="flex border-b border-slate-700 h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">완료요청일</div>
                                     <FormField
                                         control={form.control}
                                         name="completion_date"
                                         render={({ field }) => (
                                             <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
-                                                <PopoverTrigger asChild disabled={sampleType !== 'design'}>
-                                                    <Button variant="ghost" className="flex-1 h-full flex justify-between px-4 rounded-none hover:bg-slate-800 text-slate-100 focus-visible:ring-0 disabled:opacity-30">
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="ghost" className="flex-1 h-full flex justify-between px-4 rounded-none hover:bg-slate-800 text-slate-100 focus-visible:ring-0">
                                                         {field.value ? format(field.value, 'yyyy-MM-dd') : <span className="text-slate-600">날짜 선택</span>}
                                                         <CalendarIcon className="w-4 h-4 opacity-50" />
                                                     </Button>
@@ -249,62 +263,60 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         )}
                                     />
                                 </div>
-                                <div className="flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">Cat No.</div>
+                            </div>
+
+                            {/* [Row 3 (4 Columns)]: Cat No. | 견본유무 | 필름유무 | 라바유무 */}
+                            <div className="w-full grid grid-cols-1 md:grid-cols-4">
+                                <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">CAT NO.</div>
                                     <FormField
                                         control={form.control}
                                         name="cat_no"
                                         render={({ field }) => (
-                                            <Input {...field} disabled={sampleType !== 'design'} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 disabled:opacity-30" placeholder="카탈로그 번호" />
+                                            <Input {...field} className="flex-1 h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 text-[13px]" placeholder="카탈로그 번호" />
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">견본유무</div>
+                                    <FormField
+                                        control={form.control}
+                                        name="has_sample"
+                                        render={({ field }) => (
+                                            <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
+                                                <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
+                                                <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">필름유무</div>
+                                    <FormField
+                                        control={form.control}
+                                        name="has_film"
+                                        render={({ field }) => (
+                                            <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
+                                                <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
+                                                <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex h-11">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">라바유무</div>
+                                    <FormField
+                                        control={form.control}
+                                        name="has_laba"
+                                        render={({ field }) => (
+                                            <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
+                                                <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
+                                                <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
+                                            </div>
                                         )}
                                     />
                                 </div>
                             </div>
-
-                            {/* [Row 3]: 견본유무 | 필름유무 | 라바유무 */}
-                            {sampleType === 'design' && (
-                                <div className="w-full grid grid-cols-1 md:grid-cols-3 animate-in slide-in-from-top-4 duration-300">
-                                    <div className="flex border-r border-b border-slate-700 h-11">
-                                        <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">견본유무</div>
-                                        <FormField
-                                            control={form.control}
-                                            name="has_sample"
-                                            render={({ field }) => (
-                                                <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
-                                                    <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
-                                                    <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
-                                                </div>
-                                            )}
-                                        />
-                                    </div>
-                                    <div className="flex border-r border-b border-slate-700 h-11">
-                                        <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">필름유무</div>
-                                        <FormField
-                                            control={form.control}
-                                            name="has_film"
-                                            render={({ field }) => (
-                                                <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
-                                                    <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
-                                                    <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
-                                                </div>
-                                            )}
-                                        />
-                                    </div>
-                                    <div className="flex border-r border-b border-slate-700 h-11">
-                                        <div className="w-[100px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">라바유무</div>
-                                        <FormField
-                                            control={form.control}
-                                            name="has_laba"
-                                            render={({ field }) => (
-                                                <div className="flex-1 flex p-1.5 gap-1 items-center bg-slate-900/50">
-                                                    <button type="button" onClick={() => field.onChange(true)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>있음</button>
-                                                    <button type="button" onClick={() => field.onChange(false)} className={`flex-1 h-full rounded text-[11px] font-bold transition-all ${!field.value ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800 border border-slate-700/50'}`}>없음</button>
-                                                </div>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* BOM Table Section (Cloned from reference image) */}
