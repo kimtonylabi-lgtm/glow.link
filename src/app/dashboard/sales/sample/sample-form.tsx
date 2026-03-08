@@ -192,25 +192,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
                             {/* [Row 1]: 샘플번호 | 고객사 | 담당자 | 요청수량 - ADJUSTED RATIOS */}
                             <div className="w-full grid grid-cols-1 md:grid-cols-12 border-b border-slate-700">
-                                {/* 번호 (2/12) */}
-                                <div className="md:col-span-2 flex border-r border-slate-700 h-11 bg-slate-900/50">
-                                    <div className="w-[45px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">번호</div>
-                                    <FormField
-                                        control={form.control}
-                                        name="sample_no"
-                                        render={({ field }) => (
-                                            <Input
-                                                value="[등록 시 자동 부여]"
-                                                readOnly
-                                                className="flex-1 h-full border-0 rounded-none bg-slate-900/30 shadow-none focus-visible:ring-0 px-2 text-primary font-mono font-bold text-[11px]"
-                                            />
-                                        )}
-                                    />
-                                </div>
-
-                                {/* 고객사 (4/12) */}
-                                <div className="md:col-span-4 flex border-r border-slate-700 h-11">
-                                    <div className="w-[50px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter text-center">고객사</div>
+                                {/* 고객사 (6/12) */}
+                                <div className="md:col-span-6 flex flex-col md:flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
+                                    <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter text-center py-1.5 md:py-0">고객사</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -227,7 +211,7 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                                                 <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0 ml-1" />
                                                             </Button>
                                                         </PopoverTrigger>
-                                                        <PopoverContent className="w-[400px] p-0 bg-slate-950 border-slate-700 shadow-2xl z-[100]">
+                                                        <PopoverContent className="w-[300px] md:w-[400px] p-0 bg-slate-950 border-slate-700 shadow-2xl z-[100]">
                                                             <Command className="bg-transparent">
                                                                 <CommandInput
                                                                     placeholder="고객사명 검색..."
@@ -277,8 +261,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 </div>
 
                                 {/* 담당자 (3/12) */}
-                                <div className="md:col-span-3 flex border-r border-slate-700 h-11">
-                                    <div className="w-[50px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">담당자</div>
+                                <div className="md:col-span-3 flex flex-col md:flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
+                                    <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter py-1.5 md:py-0">담당자</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -292,8 +276,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                 </div>
 
                                 {/* 수량 (3/12) */}
-                                <div className="md:col-span-3 flex h-11 bg-primary/5">
-                                    <div className="w-[50px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">수량</div>
+                                <div className="md:col-span-3 flex flex-col md:flex-row border-b md:border-b-0 border-slate-700 h-auto md:h-11 bg-primary/5">
+                                    <div className="w-full md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter py-1.5 md:py-0">수량</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -317,8 +301,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
 
                             {/* [Row 2 (2 Columns, 2:1 ratio)]: 제품명 | 완료요청일 */}
                             <div className="w-full grid grid-cols-1 md:grid-cols-3">
-                                <div className="md:col-span-2 flex border-r border-b border-slate-700 h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter">제품명</div>
+                                <div className="md:col-span-2 flex flex-col md:flex-row border-b border-slate-700 h-auto md:h-11 md:border-r">
+                                    <div className="w-full md:w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 uppercase tracking-tighter py-1.5 md:py-0">제품명</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -330,8 +314,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         <FormMessage className="absolute -bottom-5 left-4 text-[10px]" />
                                     </FormItem>
                                 </div>
-                                <div className="flex border-b border-slate-700 h-11">
-                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">완료요청일</div>
+                                <div className="flex flex-col md:flex-row border-b border-slate-700 h-auto md:h-11">
+                                    <div className="w-full md:w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 tracking-tighter py-1.5 md:py-0">완료요청일</div>
                                     <FormItem className="flex-1 h-full relative">
                                         <FormField
                                             control={form.control}
@@ -358,8 +342,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                             {/* [Row 3 (4 Columns)]: Cat No. | 견본유무 | 필름유무 | 라바유무 - DESIGN ONLY */}
                             {sampleType === 'design' && (
                                 <div className="w-full grid grid-cols-1 md:grid-cols-4 border-t border-slate-700">
-                                    <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
-                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter">CAT NO.</div>
+                                    <div className="flex flex-col md:flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
+                                        <div className="w-full md:w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 tracking-tighter py-1.5 md:py-0">CAT NO.</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
                                                 control={form.control}
@@ -371,8 +355,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                             <FormMessage className="absolute -bottom-5 left-0 text-[9px]" />
                                         </FormItem>
                                     </div>
-                                    <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
-                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">견본유무</div>
+                                    <div className="flex flex-col md:flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
+                                        <div className="w-full md:w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 py-1.5 md:py-0">견본유무</div>
                                         <FormField
                                             control={form.control}
                                             name="has_sample"
@@ -384,8 +368,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                             )}
                                         />
                                     </div>
-                                    <div className="flex border-r border-slate-700 md:border-b-0 border-b h-11">
-                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">필름유무</div>
+                                    <div className="flex flex-col md:flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11">
+                                        <div className="w-full md:w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 py-1.5 md:py-0">필름유무</div>
                                         <FormField
                                             control={form.control}
                                             name="has_film"
@@ -397,8 +381,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                             )}
                                         />
                                     </div>
-                                    <div className="flex h-11">
-                                        <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1">라바유무</div>
+                                    <div className="flex flex-col md:flex-row h-auto md:h-11">
+                                        <div className="w-full md:w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-700 text-center px-1 py-1.5 md:py-0">라바유무</div>
                                         <FormField
                                             control={form.control}
                                             name="has_laba"
@@ -417,8 +401,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                         {/* BOM Table Section (Cloned from reference image) */}
                         {sampleType === 'design' && (
                             <div className="space-y-4 animate-in fade-in duration-500">
-                                <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-hidden text-sm shadow-xl">
-                                    <table className="w-full text-center border-collapse">
+                                <div className="w-full border border-slate-700 bg-slate-900 rounded-sm overflow-x-auto text-sm shadow-xl scrollbar-thin scrollbar-thumb-slate-700">
+                                    <table className="min-w-[700px] w-full text-center border-collapse">
                                         <thead className="bg-slate-800 text-slate-400 border-b border-slate-700">
                                             <tr>
                                                 <th className="font-bold py-3 px-3 border-r border-slate-700 w-[20%]" rowSpan={2}>부품명</th>
