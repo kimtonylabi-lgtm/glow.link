@@ -38,23 +38,19 @@ export default async function SamplePage() {
     const samples = (samplesData || []) as SampleRequestWithRelations[]
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh]">
+        <div className="p-4 md:p-6 lg:p-8 relative min-h-[80vh] flex flex-col gap-10">
             {/* Decorative Lights */}
             <div className="absolute top-20 left-10 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
             <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Left Column: Register Form */}
-                <div className="lg:col-span-4 xl:col-span-3">
-                    <div className="sticky top-6">
-                        <SampleForm clients={clients} />
-                    </div>
-                </div>
+            {/* Top: List & Status (100% Width) */}
+            <div className="w-full">
+                <SampleList samples={samples} />
+            </div>
 
-                {/* Right Column: List & Status */}
-                <div className="lg:col-span-8 xl:col-span-9">
-                    <SampleList samples={samples} />
-                </div>
+            {/* Bottom: Register Form (100% Width) */}
+            <div className="w-full">
+                <SampleForm clients={clients} />
             </div>
         </div>
     )

@@ -42,64 +42,79 @@ const getStatusBadge = (status: string) => {
 
 export function SampleList({ samples }: SampleListProps) {
     const [selectedImage, setSelectedImage] = useState<string | null>(null)
+    const [searchTerm, setSearchTerm] = useState('')
+
+    const filteredSamples = samples.filter(sample =>
+        sample.clients?.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sample.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     return (
         <>
             <div className="bg-card/30 backdrop-blur-xl border border-border/50 rounded-xl overflow-hidden shadow-[0_0_30px_theme(colors.primary.DEFAULT)/5]">
-                <div className="p-6 border-b border-border/50 flex justify-between items-center bg-card/40">
-                    <h3 className="text-xl font-bold flex items-center gap-2">
+                <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-center bg-card/40 gap-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 shrink-0">
                         <PackageSearch className="h-5 w-5 text-primary" /> 나의 샘플 요청 현황
                     </h3>
+                    <div className="relative w-full sm:max-w-xs">
+                        <input
+                            type="text"
+                            placeholder="고객사, 제품명 검색..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-muted/50 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium"
+                        />
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                    {samples.length === 0 ? (
-                        <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-                            <PackageSearch className="h-12 w-12 mb-4 opacity-20" />
-                            아직 요청한 샘플 내역이 없습니다.
+                    {filteredSamples.length === 0 ? (
+                        <div className="p-10 text-center text-muted-foreground flex flex-col items-center">
+                            <PackageSearch className="h-10 w-10 mb-3 opacity-20" />
+                            {searchTerm ? '검색 결과가 없습니다.' : '아직 요청한 샘플 내역이 없습니다.'}
                         </div>
                     ) : (
                         <Table>
-                            <TableHeader className="bg-muted/50">
-                                <TableRow className="border-border/50 hover:bg-transparent">
-                                    <TableHead className="font-semibold text-foreground">고객사</TableHead>
-                                    <TableHead className="font-semibold text-foreground">제품명</TableHead>
-                                    <TableHead className="font-semibold text-foreground text-center">수량</TableHead>
-                                    <TableHead className="font-semibold text-foreground text-center">요청일</TableHead>
-                                    <TableHead className="font-semibold text-foreground text-center">상태</TableHead>
-                                    <TableHead className="font-semibold text-foreground text-center">첨부사진</TableHead>
+                            <TableHeader className="bg-muted/30">
+                                <TableRow className="border-border/50 hover:bg-transparent h-10">
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs">고객사</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs">제품명</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs text-center">수량</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs text-center">요청일</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs text-center">상태</TableHead>
+                                    <TableHead className="font-semibold text-foreground px-3 text-xs text-center">첨부사진</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {samples.map((sample) => (
-                                    <TableRow key={sample.id} className="border-border/50 hover:bg-card/60 transition-colors">
-                                        <TableCell className="font-medium whitespace-nowrap">
+                                {filteredSamples.map((sample) => (
+                                    <TableRow key={sample.id} className="border-border/50 hover:bg-card/60 transition-colors h-11">
+                                        <TableCell className="font-semibold whitespace-nowrap px-3 py-1 text-sm">
                                             {sample.clients?.company_name}
                                         </TableCell>
-                                        <TableCell className="max-w-[200px] truncate" title={sample.product_name}>
+                                        <TableCell className="max-w-[150px] md:max-w-[250px] lg:max-w-[350px] truncate px-3 py-1 text-sm" title={sample.product_name}>
                                             {sample.product_name}
                                         </TableCell>
-                                        <TableCell className="text-center">
+                                        <TableCell className="text-center px-3 py-1 text-sm whitespace-nowrap font-medium">
                                             {sample.quantity}개
                                         </TableCell>
-                                        <TableCell className="text-center text-muted-foreground whitespace-nowrap">
+                                        <TableCell className="text-center text-muted-foreground whitespace-nowrap px-3 py-1 text-[13px]">
                                             {format(new Date(sample.request_date), 'MM-dd HH:mm', { locale: ko })}
                                         </TableCell>
-                                        <TableCell className="text-center whitespace-nowrap">
+                                        <TableCell className="text-center whitespace-nowrap px-3 py-1">
                                             {getStatusBadge(sample.status)}
                                         </TableCell>
-                                        <TableCell className="text-center">
+                                        <TableCell className="text-center px-3 py-1">
                                             {sample.completion_image_url ? (
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => setSelectedImage(sample.completion_image_url!)}
-                                                    className="h-8 shadow-[0_0_10px_theme(colors.primary.DEFAULT)/20] hover:shadow-[0_0_15px_theme(colors.primary.DEFAULT)/40] transition-all bg-primary/10 hover:bg-primary/20 text-primary"
+                                                    className="h-7 px-2 text-[11px] shadow-[0_0_10px_theme(colors.primary.DEFAULT)/10] hover:shadow-[0_0_15px_theme(colors.primary.DEFAULT)/30] transition-all bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
                                                 >
-                                                    <ImageIcon className="h-4 w-4 mr-2" /> 사진 보기
+                                                    <ImageIcon className="h-3.5 w-3.5 mr-1" /> 사진
                                                 </Button>
                                             ) : (
-                                                <span className="text-xs text-muted-foreground opacity-50">-</span>
+                                                <span className="text-xs text-muted-foreground opacity-30">-</span>
                                             )}
                                         </TableCell>
                                     </TableRow>

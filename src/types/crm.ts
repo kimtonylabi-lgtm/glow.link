@@ -100,8 +100,8 @@ export interface SampleRequest {
     film_color: string | null;
     rubber_color: string | null;
     sample_type: 'random' | 'ct' | 'design';
-    contact_person: string | null;
-    special_instructions: string | null;
+    contact_person?: string | null;
+    special_instructions?: string | null;
 }
 
 export interface SampleRequestWithRelations extends SampleRequest {

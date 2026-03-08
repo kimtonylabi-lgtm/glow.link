@@ -14,7 +14,7 @@ export const sampleRequestSchema = z.object({
     quantity: z.number().min(1, { message: '수량은 1개 이상이어야 합니다.' }),
     shipping_address: z.string().optional(),
     contact_person: z.string().min(2, { message: '고객사 담당자명을 입력해주세요.' }),
-    special_instructions: z.string().min(1, { message: '특이사항을 입력해주세요. (없으면 "없음" 입력)' }),
+    special_instructions: z.string().optional(),
     sample_type: z.enum(['random', 'ct', 'design']),
     completion_date: z.date().optional(),
     cat_no: z.string().optional(),

@@ -445,10 +445,10 @@ export function SampleForm({ clients }: SampleFormProps) {
                             name="special_instructions"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="font-semibold text-muted-foreground text-xs">특이사항 (메모) *</FormLabel>
+                                    <FormLabel className="font-semibold text-muted-foreground text-xs">특이사항 (메모)</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="요구사항이나 배송지, 특이사항을 자유롭게 작성 (없으면 '없음' 기재)"
+                                            placeholder="요구사항이나 배송지, 특기사항 등 (필요 시 작성)"
                                             {...field}
                                             className="bg-background border-border/40 min-h-[100px] resize-none shadow-sm"
                                         />
