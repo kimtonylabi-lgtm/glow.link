@@ -260,10 +260,10 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                     </FormItem>
                                 </div>
 
-                                <div className="md:col-span-6 grid grid-cols-2 md:flex md:flex-row h-auto md:h-11">
-                                    {/* 담당자 (PC: 3/12, Mobile: 1/2 of Row) */}
-                                    <div className="flex flex-row border-r border-slate-700 h-auto md:h-11 md:flex-1">
-                                        <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">담당자</div>
+                                <div className="md:col-span-6 grid grid-cols-1 md:flex md:flex-row h-auto md:h-11">
+                                    {/* 담당자 (PC: 3/12, Mobile: 1/1) */}
+                                    <div className="flex flex-row border-b md:border-b-0 md:border-r border-slate-700 h-auto md:h-11 md:flex-1">
+                                        <div className="w-[85px] md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">담당자</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
                                                 control={form.control}
@@ -276,9 +276,9 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         </FormItem>
                                     </div>
 
-                                    {/* 수량 (PC: 3/12, Mobile: 1/2 of Row) */}
-                                    <div className="flex flex-row h-auto md:h-11 bg-primary/5 md:flex-1">
-                                        <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">수량</div>
+                                    {/* 수량 (PC: 3/12, Mobile: 1/1) */}
+                                    <div className="flex flex-row h-auto md:h-11 bg-primary/5 md:flex-1 border-b md:border-b-0 border-slate-700">
+                                        <div className="w-[85px] md:w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 border-r border-slate-700 uppercase tracking-tighter py-2 md:py-0">수량</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
                                                 control={form.control}
@@ -316,8 +316,8 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                         <FormMessage className="absolute -bottom-5 left-4 text-[10px]" />
                                     </FormItem>
                                 </div>
-                                <div className="md:col-span-3 grid grid-cols-1 md:block bg-primary/5">
-                                    <div className={`flex flex-row ${sampleType === 'design' ? 'grid grid-cols-2 md:flex' : ''} h-auto md:h-11`}>
+                                <div className="md:col-span-3 grid grid-cols-1 md:block bg-primary/5 border-b md:border-b-0 border-slate-700">
+                                    <div className="flex flex-row h-auto md:h-11">
                                         <div className="w-[85px] md:w-[90px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter py-2 md:py-0">완료요청일</div>
                                         <FormItem className="flex-1 h-full relative">
                                             <FormField
@@ -339,23 +339,26 @@ export function SampleForm({ clients, onSuccess }: SampleFormProps) {
                                             />
                                             <FormMessage className="absolute -bottom-5 right-4 text-[10px]" />
                                         </FormItem>
-
-                                        {/* Mobile Only CAT NO layout (Date & CAT 50/50 in Mobile) */}
-                                        {sampleType === 'design' && (
-                                            <div className="md:hidden flex flex-row border-l border-slate-700 h-auto">
-                                                <div className="w-[60px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter py-2">CAT</div>
-                                                <FormField
-                                                    control={form.control}
-                                                    name="cat_no"
-                                                    render={({ field }) => (
-                                                        <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-2 text-slate-300 text-[12px] min-h-[30px]" placeholder="번호" />
-                                                    )}
-                                                />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
+
+                            {/* [Row 3 (Design): CAT NO Mobile Only] */}
+                            {sampleType === 'design' && (
+                                <div className="md:hidden flex flex-row border-b border-slate-700 h-auto">
+                                    <div className="w-[85px] bg-slate-800 text-slate-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-r border-slate-700 text-center px-1 tracking-tighter py-2">CAT 번호</div>
+                                    <FormItem className="flex-1 h-full relative">
+                                        <FormField
+                                            control={form.control}
+                                            name="cat_no"
+                                            render={({ field }) => (
+                                                <Input {...field} className="h-full border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 px-3 text-slate-300 text-[13px] min-h-[40px]" placeholder="번호 입력" />
+                                            )}
+                                        />
+                                        <FormMessage className="absolute -bottom-5 left-4 text-[10px]" />
+                                    </FormItem>
+                                </div>
+                            )}
 
                             {/* [Row 3 (4 Columns)]: PC ONLY CAT NO | 견본 | 필름 | 라바 - PERFECT 1:1:1:1 RATIO */}
                             {sampleType === 'design' && (
